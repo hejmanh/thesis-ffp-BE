@@ -1,0 +1,37 @@
+{
+  "name": "ffp-be",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hejmanh/thesis-ffp-BE.git"
+  },
+  "author": "manh-und-sha",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hejmanh/thesis-ffp-BE/issues"
+  },
+  "homepage": "https://github.com/hejmanh/thesis-ffp-BE#readme",
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.6.0",
+    "dotenv": "^17.4.2",
+    "eslint": "^10.2.1",
+    "express": "^5.2.1",
+    "install": "^0.13.0",
+    "nodemon": "^3.1.14",
+    "npm": "^11.13.0",
+    "prettier": "^3.8.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "helmet": "^8.1.0"
+  }
+}
