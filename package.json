@@ -5,7 +5,8 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsx watch src/server.ts"
   },
   "repository": {
     "type": "git",
@@ -19,6 +20,7 @@
   "homepage": "https://github.com/hejmanh/thesis-ffp-BE#readme",
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^25.6.0",
     "dotenv": "^17.4.2",
     "eslint": "^10.2.1",
@@ -32,6 +34,8 @@
   },
   "dependencies": {
     "cors": "^2.8.6",
-    "helmet": "^8.1.0"
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
+    "tsx": "^4.21.0"
   }
 }
