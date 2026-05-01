@@ -23,6 +23,8 @@ npm run dev
 ## Project Structure
 
 ```
+db/
+|-- migrations/                   # SQL migrations
 src/
 |-- app.ts                        # Express app setup
 |-- server.ts                     # Server entry

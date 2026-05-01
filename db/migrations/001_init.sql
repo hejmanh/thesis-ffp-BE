@@ -58,6 +58,12 @@ CREATE TABLE currency (
     code TEXT
 );
 
+ALTER TABLE currency
+ALTER COLUMN code SET NOT NULL;
+
+ALTER TABLE currency
+ADD CONSTRAINT uq_currency_code UNIQUE (code);
+
 CREATE TABLE country (
     id SERIAL PRIMARY KEY,
     code TEXT UNIQUE,
