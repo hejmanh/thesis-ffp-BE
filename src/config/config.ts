@@ -12,7 +12,7 @@ interface Config {
 interface DatabaseConfig {
     host: string;
     port: number;
-    name: string;
+    database: string;
     user: string;
     password: string;
 }
@@ -33,14 +33,14 @@ const config: Config = {
     database: {
         host: process.env.DB_HOST || 'localhost',
         port: Number(process.env.DB_PORT) || 5432,
-        name: process.env.DB_DATABASE || 'ffp',
+        database: process.env.DB_DATABASE || 'ffp',
         user: process.env.DB_USER || 'postgres',
         password: process.env.DB_PASSWORD || 'postgres',
     },
 
     // CORS settings
     cors: {
-        origin: process.env.CORS_ORIGIN || '*',
+        origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
         methods: 'GET,POST,PUT,DELETE',
         allowedHeaders: 'Content-Type,Authorization',
         credentials: true,
