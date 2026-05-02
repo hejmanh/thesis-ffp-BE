@@ -21,6 +21,7 @@ CREATE TABLE credential (
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE UNIQUE INDEX unique_email_lower ON credential(LOWER(email));
 
 -- TOKENS
 CREATE TABLE refresh_token (
