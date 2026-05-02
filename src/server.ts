@@ -6,7 +6,7 @@ function startServer(): Promise<void> {
   return new Promise((resolve, reject) => {
     const server = app.listen(config.port, () => {
       console.log(`Server is running on port ${config.port}`);
-      console.log(`API documentation available at http://localhost:3000/api-docs`);
+      console.log(`API documentation available at http://localhost:${config.port}/api-docs`);
       resolve();
     });
 
