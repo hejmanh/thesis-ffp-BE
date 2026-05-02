@@ -1,12 +1,13 @@
 import { Pool } from 'pg';
 import type { PoolClient } from 'pg';
+import config from './config';
 
 export const pool = new Pool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATABASE,
-    port: Number(process.env.DB_PORT) || 5432,
+    host: config.database.host,
+    user: config.database.user,
+    password: config.database.password,
+    database: config.database.database,
+    port: config.database.port,
 
     max: 10, // maximum number of clients in the pool
     idleTimeoutMillis: 30000, // close idle clients after 30 seconds
