@@ -179,7 +179,8 @@ CREATE TABLE life_expectancy_estimation (
     age NUMERIC,
 
     country_id INT REFERENCES country(id),
-    sex_type_id INT REFERENCES sex_type(id)
+    sex_type_id INT REFERENCES sex_type(id),
+    CONSTRAINT uq_life_expectancy_country_sex UNIQUE (country_id, sex_type_id)
 );
 
 -- LIFE STAGES PROFILE
@@ -190,7 +191,8 @@ CREATE TABLE life_stage_profile (
     life_stage_range_id INT NOT NULL REFERENCES life_stage_range(id),
 
     initial_annual_savings NUMERIC,
-    growth_rate NUMERIC
+    growth_rate NUMERIC,
+    CONSTRAINT uq_life_stage_profile_profile_range UNIQUE (profile_id, life_stage_range_id)
 );
 
 -- POST-FFP ASSETS
@@ -211,13 +213,13 @@ CREATE TABLE scenario (
     uid UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
 
     profile_id INT NOT NULL REFERENCES profile(id) ON DELETE CASCADE,
-    scenario_type_id INT REFERENCES scenario_type(id)
+    scenario_type_id INT NOT NULL REFERENCES scenario_type(id)
 );
 
 -- SCENARIO SUBTYPES
 CREATE TABLE scenario_1 (
     id SERIAL PRIMARY KEY,
-    scenario_id INT UNIQUE REFERENCES scenario(id) ON DELETE CASCADE,
+    scenario_id INT NOT NULL UNIQUE REFERENCES scenario(id) ON DELETE CASCADE,
 
     input_ffp_age INT,
     input_ffp_annual_spending NUMERIC,
@@ -226,7 +228,7 @@ CREATE TABLE scenario_1 (
 
 CREATE TABLE scenario_2 (
     id SERIAL PRIMARY KEY,
-    scenario_id INT UNIQUE REFERENCES scenario(id) ON DELETE CASCADE,
+    scenario_id INT NOT NULL UNIQUE REFERENCES scenario(id) ON DELETE CASCADE,
 
     input_ffp_annual_spending NUMERIC,
     output_ffp_age INT
@@ -234,7 +236,7 @@ CREATE TABLE scenario_2 (
 
 CREATE TABLE scenario_3 (
     id SERIAL PRIMARY KEY,
-    scenario_id INT UNIQUE REFERENCES scenario(id) ON DELETE CASCADE,
+    scenario_id INT NOT NULL UNIQUE REFERENCES scenario(id) ON DELETE CASCADE,
 
     input_ffp_age INT,
     output_ffp_annual_spending NUMERIC
@@ -242,7 +244,7 @@ CREATE TABLE scenario_3 (
 
 CREATE TABLE scenario_4 (
     id SERIAL PRIMARY KEY,
-    scenario_id INT UNIQUE REFERENCES scenario(id) ON DELETE CASCADE,
+    scenario_id INT NOT NULL UNIQUE REFERENCES scenario(id) ON DELETE CASCADE,
 
     input_ffp_age INT,
     output_annual_saving NUMERIC
