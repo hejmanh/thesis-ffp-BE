@@ -6,5 +6,5 @@ export const notFoundHandler = (
     res: Response,
     next: NextFunction
 ) => {
-    next(notFound(`Cannot ${req.method} ${req.originalUrl} tettt`));
+    next(notFound(`Cannot ${req.method} ${req.originalUrl}`));
 }

@@ -33,7 +33,7 @@ export const errorHandler = (
     });
 
     res.status(statusCode).json({
-        sucess: false,
+        success: false,
         error: {
             message: isOperational ? message : 'Something went wrong',
             ...(config.nodeEnv === 'development' && { 
