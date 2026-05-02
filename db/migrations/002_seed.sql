@@ -998,7 +998,7 @@ INSERT INTO life_stage_range (stage_no, title, beginning_age, ending_age) VALUES
     (3, 'Adolescence', 9, 18),
     (4, 'Early Adulthood', 19, 45),
     (5, 'Middle Adulthood', 46, 65),
-    (6, 'Later Adulthood', 65, NULL);
+    (6, 'Later Adulthood', 66, NULL);
 
 -- post-ffp asset
 INSERT INTO asset_type (code, title) VALUES
