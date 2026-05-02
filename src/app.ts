@@ -1,4 +1,9 @@
 import express from 'express';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import cors from 'cors';
@@ -8,6 +13,14 @@ import { errorHandler } from '@/middlewares/errorHandlers.js';
 import config from '@/config/config.js';
 
 const app = express();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// API documentation
+const swaggerPath = path.resolve(__dirname, 'docs', 'swagger.yaml');
+const swaggerDocument = YAML.parse(fs.readFileSync(swaggerPath, 'utf8'));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // security middlewares
 app.use(helmet()); // set http security headers
