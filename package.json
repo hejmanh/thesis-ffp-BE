@@ -23,6 +23,8 @@
     "@types/morgan": "^1.9.10",
     "@types/node": "^25.6.0",
     "@types/pg": "^8.20.0",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/yamljs": "^0.2.34",
     "eslint": "^10.2.1",
     "install": "^0.13.0",
     "nodemon": "^3.1.14",
@@ -38,6 +40,8 @@
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "morgan": "^1.10.1",
-    "pg": "^8.20.0"
+    "pg": "^8.20.0",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   }
 }
