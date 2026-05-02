@@ -49,6 +49,24 @@ CREATE TABLE email_verification_token (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE OR REPLACE FUNCTION expire_old_email_verification_tokens()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE email_verification_token
+    SET used_at = NOW()
+    WHERE user_account_id = NEW.user_account_id
+      AND used_at IS NULL
+      AND expires_at <= NOW();
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_expire_old_email_verification_tokens
+BEFORE INSERT ON email_verification_token
+FOR EACH ROW
+EXECUTE FUNCTION expire_old_email_verification_tokens();
+
 CREATE UNIQUE INDEX uq_email_token_active ON email_verification_token(user_account_id)
 WHERE used_at IS NULL;
 
