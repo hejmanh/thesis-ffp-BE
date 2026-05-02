@@ -2,7 +2,7 @@ import { AppError } from "./AppError.js"
 
 export const badRequest = (msg = "Bad Request") => new AppError(msg, 400);
 
-export const unauthorize = (msg = "Unauthorized") => new AppError(msg, 401);
+export const unauthorized = (msg = "Unauthorized") => new AppError(msg, 401);
 
 export const forbidden = (msg = "Forbidded") => new AppError(msg, 403);
 
