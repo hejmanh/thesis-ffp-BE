@@ -18,7 +18,7 @@ const refreshCookieOptions = {
   httpOnly: true,
   secure: config.nodeEnv === 'production',
   sameSite: 'strict' as const,
-  path: '/api/v1/auth/refresh',
+  path: '/api/v1/auth',
 };
 
 const csrfCookieOptions = {
