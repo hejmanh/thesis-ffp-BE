@@ -1,11 +1,19 @@
-import { asyncHandler } from '@/utils/asyncHandler.js';
-import express from 'express';
+import { Router } from 'express';
 import type { Request, Response } from 'express';
-
-const router = express.Router();
+import { asyncHandler } from '@/utils/asyncHandler.js';
+import authRoutes from '@/modules/auth/auth.routes.js';
+import { query } from '@/database/query.js';
+const router = Router();
 
 router.get('/health', asyncHandler(async (req: Request, res: Response) => {
-  res.json({ status: 'ok' });
+  await query('SELECT 1');
+
+  res.json({
+    success: true,
+    data: { status: 'ok' },
+  });
 }));
+
+router.use('/auth', authRoutes);
 
 export default router;

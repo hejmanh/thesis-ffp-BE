@@ -1,0 +1,159 @@
+import crypto from 'crypto';
+import { createUser, findUserByEmail } from './auth.repository.js';
+import { hashPassword, comparePassword } from '@/utils/auth/hash.js';
+import { generateAccessToken, generateRefreshToken, hashToken } from '@/utils/auth/token.js';
+import { sendVerificationEmail } from '@/utils/email/index.js';
+import { execQuery } from '@/database/query.js';
+import { withTransaction } from '@/database/transaction.js';
+import config from '@/config/config.js';
+import type { RegisterDto } from './dto/register.dto.js';
+import type { LoginRequestDto, LoginResponseDto } from './dto/login.dto.js';
+import type { UserDto } from './dto/user.dto.js';
+import { badRequest, unauthorized, forbidden, internal } from "@/utils/error.js";
+import { pool } from '@/database/index.js';
+
+
+export const register = async (data: RegisterDto) => {
+    const existingUser = await findUserByEmail(data.email);
+    if (existingUser) throw badRequest('Email already exists');
+
+    const hashedPassword = await hashPassword(data.password);
+    const { rawToken, hashedToken } = await withTransaction(async (client) => {
+        const userId = await createUser(data.email, hashedPassword, client);
+
+        // verification token
+        const rawToken = crypto.randomBytes(32).toString('hex');
+        const hashedToken = hashToken(rawToken);
+
+        await execQuery(
+            client,
+            `INSERT INTO email_verification_token (user_account_id, token_hash, expires_at)
+            VALUES ($1, $2, NOW() + $3::interval)`,
+            [userId, hashedToken, config.security.emailVerificationExpiresIn]
+        );
+
+        return { rawToken, hashedToken };
+    });
+
+    if (config.nodeEnv !== 'production') {
+        console.log('Email verification token (dev):', rawToken);
+    }
+
+    try {
+        await sendVerificationEmail(data.email, rawToken);
+    } catch (err) {
+        await execQuery(
+            pool,
+            `UPDATE email_verification_token
+            SET used_at = NOW()
+            WHERE token_hash = $1`,
+            [hashedToken]
+        );
+
+        throw internal('Failed to send verification email');
+    }
+}
+
+export const login = async (data: LoginRequestDto): Promise<LoginResponseDto & { refreshToken: string }> => {
+    const user = await findUserByEmail(data.email);
+    if (!user) throw unauthorized('Invalid credentials');
+
+    const match = await comparePassword(data.password, user.hashed_password);
+    if (!match) throw unauthorized('Invalid credentials');
+
+    if (!user.is_email_verified) throw forbidden('Email not verified');
+
+    const accessToken = generateAccessToken({ userId: user.id });
+    const { raw: refreshTokenRaw, hashed: refreshTokenHashed } = generateRefreshToken({ userId: user.id });
+
+    await execQuery(
+        pool,
+        `INSERT INTO refresh_token (user_account_id, token_hash, expires_at)
+        VALUES ($1, $2, NOW() + $3::interval)`,
+        [user.id, refreshTokenHashed, config.security.refreshTokenExpiresIn]
+    );
+    
+    const userDto: UserDto = {
+        id: user.uid,
+        email: user.email,
+    };
+
+    return {
+        accessToken: accessToken,
+        refreshToken: refreshTokenRaw,
+        user: userDto,
+    }
+}
+
+export const verifyEmail = async (token: string) => {
+    const hashedToken = hashToken(token);
+    
+    const res = await execQuery(
+        pool,
+        `SELECT user_account_id FROM email_verification_token
+        WHERE token_hash = $1 AND expires_at > NOW() AND used_at IS NULL`,
+        [hashedToken]
+    );
+
+    const record = res.rows[0];
+    if (!record) throw badRequest('Invalid or expired token');
+
+    await execQuery(
+        pool,
+        `UPDATE credential SET is_email_verified = true
+        WHERE user_account_id = $1`,
+        [record.user_account_id]
+    );
+
+    await execQuery(
+        pool,
+        `UPDATE email_verification_token
+        SET used_at = NOW()
+        WHERE token_hash = $1`,
+        [hashedToken]
+    );
+}
+
+export const refresh = async (rawToken: string) => {
+    const hashedToken = hashToken(rawToken);
+
+    return withTransaction(async (client) => {
+        const res = await execQuery(
+            client,
+            `SELECT id, user_account_id FROM refresh_token
+            WHERE token_hash = $1 AND revoked = false AND expires_at > NOW()`,
+            [hashedToken]
+        );
+
+        const token = res.rows[0];
+        if (!token) throw unauthorized('Invalid refresh token');
+
+        await execQuery(
+            client,
+            `UPDATE refresh_token SET revoked = true WHERE id = $1`,
+            [token.id]
+        );
+
+        const accessToken = generateAccessToken({ userId: token.user_account_id });
+        const { raw: newRawToken, hashed: newHashedToken } = generateRefreshToken({ userId: token.user_account_id });
+
+        await execQuery(
+            client,
+            `INSERT INTO refresh_token (user_account_id, token_hash, expires_at)
+            VALUES ($1, $2, NOW() + $3::interval)`,
+            [token.user_account_id, newHashedToken, config.security.refreshTokenExpiresIn]
+        );
+
+        return { accessToken, refreshToken: newRawToken };
+    });
+};
+
+export const logout = async (rawToken: string) => {
+    const hashedToken = hashToken(rawToken);
+
+    await execQuery(
+        pool,
+        `UPDATE refresh_token SET revoked = true WHERE token_hash = $1`,
+        [hashedToken]
+    );
+};
