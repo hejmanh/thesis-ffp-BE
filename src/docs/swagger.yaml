@@ -179,6 +179,8 @@ components:
                   type: string
                 user:
                   $ref: '#/components/schemas/User'
+                isFirstLogin:
+                  type: boolean
     RefreshResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponseBase'
