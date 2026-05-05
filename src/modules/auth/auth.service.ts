@@ -1,5 +1,9 @@
 import crypto from 'crypto';
-import { createUser, findUserByEmail } from './auth.repository.js';
+import {
+  createProfile,
+  createUser,
+  findUserByEmail,
+} from './auth.repository.js';
 import { hashPassword, comparePassword } from '@/utils/auth/hash.js';
 import {
   generateAccessToken,
@@ -28,6 +32,15 @@ export const register = async (data: RegisterDto) => {
   const hashedPassword = await hashPassword(data.password);
   const { rawToken, hashedToken } = await withTransaction(async (client) => {
     const userId = await createUser(data.email, hashedPassword, client);
+
+    await createProfile(
+      userId,
+      data.name,
+      data.birthYear,
+      data.countryId,
+      data.sexTypeId,
+      client,
+    );
 
     // verification token
     const rawToken = crypto.randomBytes(32).toString('hex');
@@ -75,7 +88,7 @@ export const login = async (
 
   const accessToken = generateAccessToken({ userId: user.id });
   const { raw: refreshTokenRaw, hashed: refreshTokenHashed } =
-    generateRefreshToken({ userId: user.id });
+    generateRefreshToken();
   const isFirstLogin = user.last_login_at == null;
 
   await execQuery(
@@ -154,9 +167,7 @@ export const refresh = async (rawToken: string) => {
     );
 
     const accessToken = generateAccessToken({ userId: token.user_account_id });
-    const { raw: newRawToken, hashed: newHashedToken } = generateRefreshToken({
-      userId: token.user_account_id,
-    });
+    const { raw: newRawToken, hashed: newHashedToken } = generateRefreshToken();
 
     await execQuery(
       client,

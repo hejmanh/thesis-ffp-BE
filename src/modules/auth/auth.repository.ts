@@ -26,6 +26,22 @@ export const createUser = async (
   return userId;
 };
 
+export const createProfile = async (
+  userAccountId: number,
+  name: string,
+  birthYear: number,
+  countryId: number,
+  sexTypeId: number,
+  client: QueryClient = pool,
+) => {
+  await execQuery(
+    client,
+    `INSERT INTO profile (user_account_id, name, birth_year, country_id, sex_type_id)
+        VALUES ($1, $2, $3, $4, $5)`,
+    [userAccountId, name, birthYear, countryId, sexTypeId],
+  );
+};
+
 export const findUserByEmail = async (
   email: string,
   client: QueryClient = pool,

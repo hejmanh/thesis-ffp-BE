@@ -6,9 +6,7 @@ describe('Auth Service', () => {
     vi.clearAllMocks();
   });
 
-  it('should be tested', () => {
-    expect(true).toBe(true);
-  });
+  it.todo('should add unit tests for auth service methods');
 
   // TODO: Add tests after implementing auth service methods
   // Example test structure:

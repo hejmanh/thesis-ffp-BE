@@ -3,10 +3,7 @@ import { describe, it, expect } from 'vitest';
 // import { errorLogger } from './error.js';
 
 describe('Error utilities', () => {
-  it('should have error handling utilities', () => {
-    // TODO: Add error utility tests
-    expect(true).toBe(true);
-  });
+  it.todo('should cover error utility helpers');
 
   // Example tests:
   // it('should log errors properly', () => {

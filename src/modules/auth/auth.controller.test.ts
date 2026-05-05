@@ -5,9 +5,7 @@ describe('Auth Controller', () => {
     vi.clearAllMocks();
   });
 
-  it('should be tested', () => {
-    expect(true).toBe(true);
-  });
+  it.todo('should add request-level auth controller tests');
 
   // TODO: Add tests after implementing auth controller methods
   // Example test structure using supertest:
