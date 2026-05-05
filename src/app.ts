@@ -22,7 +22,7 @@ const __dirname = path.dirname(__filename);
 // API documentation
 const swaggerPath = path.resolve(__dirname, 'docs', 'swagger.yaml');
 const swaggerDocument = YAML.parse(fs.readFileSync(swaggerPath, 'utf8'));
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, undefined, swaggerUiOptions));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerUiOptions));
 
 // security middlewares
 app.use(helmet()); // set http security headers
