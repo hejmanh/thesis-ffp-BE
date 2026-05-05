@@ -4,15 +4,17 @@
     // File Layout
     // "rootDir": "./src",
     // "outDir": "./dist",
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },
+    "ignoreDeprecations": "6.0",
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "nodenext",
     "target": "esnext",
-    "types": [],
+    "types": ["vitest/globals", "node"],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],

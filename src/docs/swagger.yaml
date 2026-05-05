@@ -4,12 +4,219 @@ info:
   version: 1.0.0
 
 servers:
-  - url: /
+  - url: /api/v1
 
 paths:
-  /api/health:
+  /health:
     get:
       summary: Health check
       responses:
         200:
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /health/ready:
+    get:
+      summary: Readiness check
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /auth/register:
+    post:
+      summary: Register user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /auth/login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        200:
+          description: OK
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Refresh token cookie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+
+  /auth/refresh:
+    post:
+      summary: Refresh access token
+      parameters:
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Refresh token cookie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+
+  /auth/logout:
+    post:
+      summary: Logout user
+      parameters:
+        - in: header
+          name: X-CSRF-Token
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+
+  /auth/verify-email:
+    get:
+      summary: Verify email
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+components:
+  schemas:
+    ApiResponseBase:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+    HealthResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: ok
+    MessageResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                message:
+                  type: string
+    EmptyResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: External UUID
+        email:
+          type: string
+          format: email
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    LoginResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                accessToken:
+                  type: string
+                user:
+                  $ref: '#/components/schemas/User'
+                isFirstLogin:
+                  type: boolean
+    RefreshResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                accessToken:
+                  type: string
+    RegisterRequest:
+      type: object
+      required: [email, password, name, birthYear, countryId, sexTypeId]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        name:
+          type: string
+        birthYear:
+          type: integer
+        countryId:
+          type: integer
+        sexTypeId:
+          type: integer

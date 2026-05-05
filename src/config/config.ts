@@ -7,6 +7,8 @@ interface Config {
     nodeEnv: string;
     database: DatabaseConfig;
     cors: CorsConfig;
+    jwt: JwtConfig;
+    security: SecurityConfig;
 }
 
 interface DatabaseConfig {
@@ -15,6 +17,22 @@ interface DatabaseConfig {
     database: string;
     user: string;
     password: string;
+    max: number;
+    idleTimeoutMillis: number;
+    connectionTimeoutMillis: number;
+    maxLifetimeSeconds: number;
+}
+
+interface JwtConfig {
+    accessSecret: string;
+    accessExpiresIn: string;
+    refreshSecret: string;
+    refreshExpiresIn: string;
+}
+
+interface SecurityConfig {
+    refreshTokenExpiresIn: string;
+    emailVerificationExpiresIn: string;
 }
 
 interface CorsConfig {
@@ -24,26 +42,51 @@ interface CorsConfig {
     credentials: boolean;
 }
 
+const requireEnv = (key: string) => {
+    const value = process.env[key];
+    if (!value) throw new Error(`Missing required env var: ${key}`);
+    return value;
+};
+
+const nodeEnv = process.env.NODE_ENV || 'development';
+const isProd = nodeEnv === 'production';
+
 const config: Config = {
     // server settings
     port: Number(process.env.PORT) || 3000,
-    nodeEnv: process.env.NODE_ENV || 'development',
+    nodeEnv,
 
     // database settings
     database: {
-        host: process.env.DB_HOST || 'localhost',
+        host: isProd ? requireEnv('DB_HOST') : (process.env.DB_HOST || 'localhost'),
         port: Number(process.env.DB_PORT) || 5432,
-        database: process.env.DB_DATABASE || 'ffp',
-        user: process.env.DB_USER || 'postgres',
-        password: process.env.DB_PASSWORD || 'postgres',
+        database: isProd ? requireEnv('DB_DATABASE') : (process.env.DB_DATABASE || 'ffp'),
+        user: isProd ? requireEnv('DB_USER') : (process.env.DB_USER || 'postgres'),
+        password: isProd ? requireEnv('DB_PASSWORD') : (process.env.DB_PASSWORD || 'postgres'),
+        max: Number(process.env.DB_MAX) || 10,
+        idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT_MS) || 30000,
+        connectionTimeoutMillis: Number(process.env.DB_CONN_TIMEOUT_MS) || 2000,
+        maxLifetimeSeconds: Number(process.env.DB_MAX_LIFETIME_SECONDS) || 300,
     },
 
     // CORS settings
     cors: {
         origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
         methods: 'GET,POST,PUT,DELETE',
-        allowedHeaders: 'Content-Type,Authorization',
+        allowedHeaders: 'Content-Type,Authorization,X-CSRF-Token',
         credentials: true,
+    },
+
+    jwt: {
+        accessSecret: isProd ? requireEnv('JWT_ACCESS_SECRET') : (process.env.JWT_ACCESS_SECRET || 'dev-access-secret'),
+        accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
+        refreshSecret: isProd ? requireEnv('JWT_REFRESH_SECRET') : (process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret'),
+        refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+    },
+
+    security: {
+        refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7 days',
+        emailVerificationExpiresIn: process.env.EMAIL_VERIFICATION_EXPIRES_IN || '1 day',
     },
 };
 
