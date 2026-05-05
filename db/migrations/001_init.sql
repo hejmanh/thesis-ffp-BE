@@ -125,7 +125,7 @@ CREATE TABLE profile (
     user_account_id INT NOT NULL UNIQUE
         REFERENCES user_account(id) ON DELETE CASCADE,
 
-    name TEXT,
+    name TEXT NOT NULL,
     birth_year INT,
     current_savings NUMERIC,
 

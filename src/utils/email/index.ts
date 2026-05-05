@@ -33,7 +33,7 @@ export const sendVerificationEmail = async (to: string, token: string) => {
 
   const transporter = createTransporter();
 
-  const expiresText = config.security?.emailVerificationExpiresIn || '24 hours';
+  const expiresText = config.security.emailVerificationExpiresIn || '24 hours';
 
   const html = `
             <div style="font-family: Arial, sans-serif; background: #f4f8ff; margin: 0; padding: 0;">
