@@ -36,8 +36,15 @@ export const createProfile = async (
 ) => {
   await execQuery(
     client,
-    `INSERT INTO profile (user_account_id, name, birth_year, country_id, sex_type_id)
-        VALUES ($1, $2, $3, $4, $5)`,
+    `INSERT INTO profile (
+        user_account_id,
+        name,
+        birth_year,
+        country_id,
+        sex_type_id,
+        preferred_currency_id
+      )
+        VALUES ($1, $2, $3, $4, $5, (SELECT currency_id FROM country WHERE id = $4))`,
     [userAccountId, name, birthYear, countryId, sexTypeId],
   );
 };
