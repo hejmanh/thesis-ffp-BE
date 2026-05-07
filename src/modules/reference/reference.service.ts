@@ -113,10 +113,14 @@ export const getLifeStageRanges = async (
     minBeginningAge,
   );
 
-  const data =
-    currentAge != null
-      ? adjustFirstBeginningAge(result.rows, currentAge)
-      : result.rows;
+  const shouldAdjustFirstBeginningAge =
+    currentAge != null &&
+    sort === 'asc' &&
+    (pagination == null || pagination.offset === 0);
+
+  const data = shouldAdjustFirstBeginningAge
+    ? adjustFirstBeginningAge(result.rows, currentAge)
+    : result.rows;
 
   return {
     data,
