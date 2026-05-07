@@ -2,7 +2,10 @@ import type { Pagination } from '@/utils/pagination.js';
 import { buildPaginationMeta } from '@/utils/pagination.js';
 import { adjustFirstBeginningAge } from '@/utils/lifeStage.js';
 import { badRequest } from '@/utils/error.js';
-import type { PaginationOptions, SortDirection } from './reference.repository.js';
+import type {
+  PaginationOptions,
+  SortDirection,
+} from './reference.repository.js';
 import {
   listAlcoholConsumptionTypes,
   listAssetTypes,
@@ -16,7 +19,9 @@ import {
   listSmokingTypes,
 } from './reference.repository.js';
 
-const toPaginationOptions = (pagination: Pagination | null): PaginationOptions => {
+const toPaginationOptions = (
+  pagination: Pagination | null,
+): PaginationOptions => {
   if (!pagination) return null;
 
   return {
@@ -104,7 +109,9 @@ export const getLifeStageRanges = async (
     }
 
     currentAge = derivedAge;
-    minBeginningAge = derivedAge;
+    if (sort === 'asc') {
+      minBeginningAge = derivedAge;
+    }
   }
 
   const result = await listLifeStageRanges(
@@ -118,9 +125,11 @@ export const getLifeStageRanges = async (
     sort === 'asc' &&
     (pagination == null || pagination.offset === 0);
 
-  const data = shouldAdjustFirstBeginningAge
-    ? adjustFirstBeginningAge(result.rows, currentAge)
-    : result.rows;
+  let data = result.rows;
+
+  if (shouldAdjustFirstBeginningAge && currentAge != null) {
+    data = adjustFirstBeginningAge(result.rows, currentAge);
+  }
 
   return {
     data,
@@ -157,7 +166,10 @@ export const getDietQualityTypes = async (
   pagination: Pagination | null,
   sort: SortDirection,
 ) => {
-  const result = await listDietQualityTypes(toPaginationOptions(pagination), sort);
+  const result = await listDietQualityTypes(
+    toPaginationOptions(pagination),
+    sort,
+  );
   return {
     data: result.rows,
     meta: buildPaginationMeta(result.totalCount, pagination),
