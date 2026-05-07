@@ -11,6 +11,7 @@ router.get(
     res.json({
       success: true,
       data: { status: 'ok' },
+      message: 'OK',
     });
   }),
 );
@@ -23,6 +24,7 @@ router.get(
     res.json({
       success: true,
       data: { status: 'ok' },
+      message: 'OK',
     });
   }),
 );

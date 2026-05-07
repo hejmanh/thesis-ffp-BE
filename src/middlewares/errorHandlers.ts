@@ -51,12 +51,10 @@ export const errorHandler = (
 
   res.status(statusCode).json({
     success: false,
-    error: {
-      message: isOperational ? message : 'Something went wrong',
-      ...(errorDetails && { details: errorDetails }),
-      ...(config.nodeEnv === 'development' && {
-        stack: err instanceof Error ? err.stack : undefined,
-      }),
-    },
+    message: isOperational ? message : 'Something went wrong',
+    ...(errorDetails && { errors: errorDetails }),
+    ...(config.nodeEnv !== 'production' && {
+      stack: err instanceof Error ? err.stack : undefined,
+    }),
   });
 };

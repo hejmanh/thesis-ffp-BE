@@ -1,10 +1,20 @@
 export type ApiResponse<T> = {
-    success: true;
-    data: T;
+  success: true;
+  data: T;
+  message?: string;
+  meta?: Record<string, unknown>;
 };
 
-export type ApiMessageResponse = ApiResponse<{ message: string }>;
+export type ApiEmptyResponse = ApiResponse<null>;
 
-export type ApiEmptyResponse = {
-    success: true;
+export type ApiErrorDetail = {
+  path?: string;
+  message: string;
+};
+
+export type ApiErrorResponse = {
+  success: false;
+  message: string;
+  errors?: ApiErrorDetail[];
+  meta?: Record<string, unknown>;
 };
