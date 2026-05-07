@@ -1,7 +1,7 @@
 export type PaginationParams = {
-  page?: number | undefined;
-  pageSize?: number | undefined;
-  sort?: 'asc' | 'desc' | undefined;
+  page?: number;
+  pageSize?: number;
+  sort?: 'asc' | 'desc';
 };
 
 export type Pagination = {
