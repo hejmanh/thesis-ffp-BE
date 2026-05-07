@@ -151,7 +151,7 @@ EMAIL_PASS=
 
 ## Prerequisites
 
-* Node.js
+* Node.js 18+
 * npm
 * PostgreSQL
 

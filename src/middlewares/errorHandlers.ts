@@ -53,7 +53,7 @@ export const errorHandler = (
     success: false,
     message: isOperational ? message : 'Something went wrong',
     ...(errorDetails && { errors: errorDetails }),
-    ...(config.nodeEnv !== 'production' && {
+    ...(config.nodeEnv === 'development' && {
       stack: err instanceof Error ? err.stack : undefined,
     }),
   });

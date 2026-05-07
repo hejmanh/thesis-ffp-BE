@@ -8,25 +8,19 @@ const normalizeValue = (value: RawValue) => {
   return value;
 };
 
-const optionalPositiveInt = z.preprocess(
-  (value) => {
-    const normalized = normalizeValue(value as RawValue);
-    if (normalized === undefined) return undefined;
-    const parsed = Number.parseInt(String(normalized), 10);
-    return Number.isNaN(parsed) ? normalized : parsed;
-  },
-  z.number().int().positive().optional(),
-);
+const optionalPositiveInt = z.preprocess((value) => {
+  const normalized = normalizeValue(value as RawValue);
+  if (normalized === undefined) return undefined;
+  const parsed = Number.parseInt(String(normalized), 10);
+  return Number.isNaN(parsed) ? undefined : parsed;
+}, z.number().int().positive().optional());
 
-const optionalInt = z.preprocess(
-  (value) => {
-    const normalized = normalizeValue(value as RawValue);
-    if (normalized === undefined) return undefined;
-    const parsed = Number.parseInt(String(normalized), 10);
-    return Number.isNaN(parsed) ? normalized : parsed;
-  },
-  z.number().int().optional(),
-);
+const optionalInt = z.preprocess((value) => {
+  const normalized = normalizeValue(value as RawValue);
+  if (normalized === undefined) return undefined;
+  const parsed = Number.parseInt(String(normalized), 10);
+  return Number.isNaN(parsed) ? undefined : parsed;
+}, z.number().int().optional());
 
 const sortDirection = z.preprocess(
   (value) => {
