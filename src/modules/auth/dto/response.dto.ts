@@ -1,11 +1,11 @@
-import type { ApiResponse, ApiMessageResponse, ApiEmptyResponse } from '@/types/api-response.js';
+import type { ApiResponse, ApiEmptyResponse } from '@/types/api-response.js';
 
-export type RegisterResponseDto = ApiMessageResponse;
+export type RegisterResponseDto = ApiEmptyResponse;
 
-export type VerifyEmailResponseDto = ApiMessageResponse;
+export type VerifyEmailResponseDto = ApiEmptyResponse;
 
 export type RefreshResponseDto = ApiResponse<{
-    accessToken: string;
+  accessToken: string;
 }>;
 
 export type LogoutResponseDto = ApiEmptyResponse;

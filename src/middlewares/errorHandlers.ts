@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { AppError } from '@/utils/AppError.js';
+import { buildErrorPayload } from '@/utils/errorResponse.js';
 import config from '@/config/config.js';
 import { ZodError } from 'zod';
 
@@ -49,14 +50,13 @@ export const errorHandler = (
         }))
       : undefined;
 
-  res.status(statusCode).json({
-    success: false,
-    error: {
-      message: isOperational ? message : 'Something went wrong',
-      ...(errorDetails && { details: errorDetails }),
-      ...(config.nodeEnv === 'development' && {
-        stack: err instanceof Error ? err.stack : undefined,
-      }),
-    },
+  const payload = buildErrorPayload({
+    message: isOperational ? message : 'Something went wrong',
+    ...(errorDetails && { errors: errorDetails }),
+    ...(config.nodeEnv === 'development' && err instanceof Error
+      ? { stack: err.stack }
+      : {}),
   });
+
+  res.status(statusCode).json(payload);
 };

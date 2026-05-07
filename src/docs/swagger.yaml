@@ -6,9 +6,15 @@ info:
 servers:
   - url: /api/v1
 
+tags:
+  - name: Health
+  - name: Auth
+  - name: Reference
+
 paths:
   /health:
     get:
+      tags: [Health]
       summary: Health check
       responses:
         200:
@@ -20,6 +26,7 @@ paths:
 
   /health/ready:
     get:
+      tags: [Health]
       summary: Readiness check
       responses:
         200:
@@ -31,6 +38,7 @@ paths:
 
   /auth/register:
     post:
+      tags: [Auth]
       summary: Register user
       requestBody:
         required: true
@@ -44,10 +52,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageResponse'
+                $ref: '#/components/schemas/EmptyResponse'
 
   /auth/login:
     post:
+      tags: [Auth]
       summary: Login user
       requestBody:
         required: true
@@ -70,6 +79,7 @@ paths:
 
   /auth/refresh:
     post:
+      tags: [Auth]
       summary: Refresh access token
       parameters:
         - in: header
@@ -92,6 +102,7 @@ paths:
 
   /auth/logout:
     post:
+      tags: [Auth]
       summary: Logout user
       parameters:
         - in: header
@@ -109,6 +120,7 @@ paths:
 
   /auth/verify-email:
     get:
+      tags: [Auth]
       summary: Verify email
       parameters:
         - in: query
@@ -122,16 +134,234 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageResponse'
+                $ref: '#/components/schemas/EmptyResponse'
+
+  /reference/currencies:
+    get:
+      tags: [Reference]
+      summary: List currencies
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyListResponse'
+
+  /reference/countries:
+    get:
+      tags: [Reference]
+      summary: List countries
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CountryListResponse'
+
+  /reference/sex-types:
+    get:
+      tags: [Reference]
+      summary: List sex types
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SexTypeListResponse'
+
+  /reference/asset-types:
+    get:
+      tags: [Reference]
+      summary: List asset types
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetTypeListResponse'
+
+  /reference/scenario-types:
+    get:
+      tags: [Reference]
+      summary: List scenario types
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioTypeListResponse'
+
+  /reference/life-stage-ranges:
+    get:
+      tags: [Reference]
+      summary: List life stage ranges
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/BirthYear'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LifeStageRangeListResponse'
+
+  /reference/smoking-types:
+    get:
+      tags: [Reference]
+      summary: List smoking types
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SmokingTypeListResponse'
+
+  /reference/physical-activity-types:
+    get:
+      tags: [Reference]
+      summary: List physical activity types
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhysicalActivityTypeListResponse'
+
+  /reference/diet-quality-types:
+    get:
+      tags: [Reference]
+      summary: List diet quality types
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DietQualityTypeListResponse'
+
+  /reference/alcohol-consumption-types:
+    get:
+      tags: [Reference]
+      summary: List alcohol consumption types
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlcoholConsumptionTypeListResponse'
 
 components:
+  parameters:
+    Page:
+      in: query
+      name: page
+      schema:
+        type: integer
+        minimum: 1
+    PageSize:
+      in: query
+      name: pageSize
+      schema:
+        type: integer
+        minimum: 1
+    Sort:
+      in: query
+      name: sort
+      schema:
+        type: string
+        enum: [asc, desc]
+    BirthYear:
+      in: query
+      name: birthYear
+      schema:
+        type: integer
   schemas:
+    PaginationQuery:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+        sort:
+          type: string
+          enum: [asc, desc]
     ApiResponseBase:
       type: object
       properties:
         success:
           type: boolean
           example: true
+        message:
+          type: string
+    ApiErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+    ErrorDetail:
+      type: object
+      properties:
+        path:
+          type: string
+        message:
+          type: string
     HealthResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponseBase'
@@ -143,22 +373,15 @@ components:
                 status:
                   type: string
                   example: ok
-    MessageResponse:
+    EmptyResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponseBase'
         - type: object
           properties:
             data:
               type: object
-              properties:
-                message:
-                  type: string
-    EmptyResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
+              nullable: true
+              example: null
     User:
       type: object
       properties:
@@ -220,3 +443,254 @@ components:
           type: integer
         sexTypeId:
           type: integer
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalCount:
+          type: integer
+        totalPages:
+          type: integer
+    Currency:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+    Country:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        currencyId:
+          type: integer
+          nullable: true
+        currencyCode:
+          type: string
+          nullable: true
+    SexType:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+    AssetType:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+    ScenarioType:
+      type: object
+      properties:
+        id:
+          type: integer
+        no:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+    LifeStageRange:
+      type: object
+      properties:
+        id:
+          type: integer
+        stageNo:
+          type: integer
+          nullable: true
+        title:
+          type: string
+        beginningAge:
+          type: integer
+          nullable: true
+        endingAge:
+          type: integer
+          nullable: true
+    SmokingType:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        adjustmentYears:
+          type: number
+          nullable: true
+    PhysicalActivityType:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        adjustmentYears:
+          type: number
+          nullable: true
+    DietQualityType:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        adjustmentYears:
+          type: number
+          nullable: true
+    AlcoholConsumptionType:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+        adjustmentYears:
+          type: number
+          nullable: true
+    CurrencyListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Currency'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+    CountryListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Country'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+    SexTypeListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/SexType'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+    AssetTypeListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AssetType'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+    ScenarioTypeListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ScenarioType'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+    LifeStageRangeListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/LifeStageRange'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+    SmokingTypeListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/SmokingType'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+    PhysicalActivityTypeListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/PhysicalActivityType'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+    DietQualityTypeListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/DietQualityType'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+    AlcoholConsumptionTypeListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AlcoholConsumptionType'
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'

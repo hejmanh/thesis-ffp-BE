@@ -36,7 +36,8 @@ export const registerHandler = asyncHandler(
 
     res.status(201).json({
       success: true,
-      data: { message: 'Check your email to verify your account' },
+      data: null,
+      message: 'Check your email to verify your account',
     });
   },
 );
@@ -50,7 +51,8 @@ export const verifyEmailHandler = asyncHandler(
 
     res.json({
       success: true,
-      data: { message: 'Email verified' },
+      data: null,
+      message: 'Email verified',
     });
   },
 );
@@ -73,6 +75,7 @@ export const loginHandler = asyncHandler(
         user: user,
         isFirstLogin: isFirstLogin,
       },
+      message: 'Login successful',
     });
   },
 );
@@ -91,6 +94,7 @@ export const refreshHandler = asyncHandler(
     res.json({
       success: true,
       data: { accessToken: response.accessToken },
+      message: 'Token refreshed',
     });
   },
 );
@@ -104,6 +108,6 @@ export const logoutHandler = asyncHandler(
 
     res.clearCookie('refreshToken', refreshCookieOptions);
     res.clearCookie('csrfToken', csrfCookieOptions);
-    res.json({ success: true });
+    res.json({ success: true, data: null, message: 'Logged out' });
   },
 );
