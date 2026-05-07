@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is a web-based Financial Freedom Planning (FFP) system designed to help users estimate and analyze their path toward financial independence.
+This project is a web-based Financial Freedom Point (FFP) system designed to help users estimate and analyze their path toward financial independence.
 
 The system combines:
 
