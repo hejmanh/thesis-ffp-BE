@@ -24,14 +24,16 @@ const applyPagination = (
   sql: string,
   params: unknown[],
   pagination: PaginationOptions,
+  orderBy: string,
 ) => {
-  if (!pagination) return { sql, params };
+  const orderedSql = `${sql} ORDER BY ${orderBy}`;
+  if (!pagination) return { sql: orderedSql, params };
 
   const limitIndex = params.length + 1;
   const offsetIndex = params.length + 2;
 
   return {
-    sql: `${sql} LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
+    sql: `${orderedSql} LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
     params: [...params, pagination.limit, pagination.offset],
   };
 };
@@ -46,9 +48,8 @@ export const listCurrencies = async (
   );
 
   const baseSql = 'SELECT id, code FROM currency';
-  const { sql, params } = applyPagination(baseSql, [], pagination);
-  const finalSql = `${sql} ORDER BY id ${sort}`;
-  const rowsRes = await execQuery(pool, finalSql, params);
+  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const rowsRes = await execQuery(pool, sql, params);
 
   return {
     rows: rowsRes.rows as CurrencyDto[],
@@ -76,9 +77,8 @@ export const listCountries = async (
     LEFT JOIN currency cur ON cur.id = c.currency_id
   `;
 
-  const { sql, params } = applyPagination(baseSql, [], pagination);
-  const finalSql = `${sql} ORDER BY c.id ${sort}`;
-  const rowsRes = await execQuery(pool, finalSql, params);
+  const { sql, params } = applyPagination(baseSql, [], pagination, `c.id ${sort}`);
+  const rowsRes = await execQuery(pool, sql, params);
 
   return {
     rows: rowsRes.rows as CountryDto[],
@@ -96,9 +96,8 @@ export const listSexTypes = async (
   );
 
   const baseSql = 'SELECT id, code, title FROM sex_type';
-  const { sql, params } = applyPagination(baseSql, [], pagination);
-  const finalSql = `${sql} ORDER BY id ${sort}`;
-  const rowsRes = await execQuery(pool, finalSql, params);
+  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const rowsRes = await execQuery(pool, sql, params);
 
   return {
     rows: rowsRes.rows as SexTypeDto[],
@@ -116,9 +115,8 @@ export const listAssetTypes = async (
   );
 
   const baseSql = 'SELECT id, code, title FROM asset_type';
-  const { sql, params } = applyPagination(baseSql, [], pagination);
-  const finalSql = `${sql} ORDER BY id ${sort}`;
-  const rowsRes = await execQuery(pool, finalSql, params);
+  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const rowsRes = await execQuery(pool, sql, params);
 
   return {
     rows: rowsRes.rows as AssetTypeDto[],
@@ -136,9 +134,8 @@ export const listScenarioTypes = async (
   );
 
   const baseSql = 'SELECT id, no, title, description FROM scenario_type';
-  const { sql, params } = applyPagination(baseSql, [], pagination);
-  const finalSql = `${sql} ORDER BY id ${sort}`;
-  const rowsRes = await execQuery(pool, finalSql, params);
+  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const rowsRes = await execQuery(pool, sql, params);
 
   return {
     rows: rowsRes.rows as ScenarioTypeDto[],
@@ -176,9 +173,13 @@ export const listLifeStageRanges = async (
     ${whereClause}
   `;
 
-  const { sql, params } = applyPagination(baseSql, whereParams, pagination);
-  const finalSql = `${sql} ORDER BY id ${sort}`;
-  const rowsRes = await execQuery(pool, finalSql, params);
+  const { sql, params } = applyPagination(
+    baseSql,
+    whereParams,
+    pagination,
+    `id ${sort}`,
+  );
+  const rowsRes = await execQuery(pool, sql, params);
 
   return {
     rows: rowsRes.rows as LifeStageRangeDto[],
@@ -204,9 +205,8 @@ export const listSmokingTypes = async (
     FROM smoking_type
   `;
 
-  const { sql, params } = applyPagination(baseSql, [], pagination);
-  const finalSql = `${sql} ORDER BY id ${sort}`;
-  const rowsRes = await execQuery(pool, finalSql, params);
+  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const rowsRes = await execQuery(pool, sql, params);
 
   return {
     rows: rowsRes.rows as SmokingTypeDto[],
@@ -232,9 +232,8 @@ export const listPhysicalActivityTypes = async (
     FROM physical_activity_type
   `;
 
-  const { sql, params } = applyPagination(baseSql, [], pagination);
-  const finalSql = `${sql} ORDER BY id ${sort}`;
-  const rowsRes = await execQuery(pool, finalSql, params);
+  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const rowsRes = await execQuery(pool, sql, params);
 
   return {
     rows: rowsRes.rows as PhysicalActivityTypeDto[],
@@ -260,9 +259,8 @@ export const listDietQualityTypes = async (
     FROM diet_quality_type
   `;
 
-  const { sql, params } = applyPagination(baseSql, [], pagination);
-  const finalSql = `${sql} ORDER BY id ${sort}`;
-  const rowsRes = await execQuery(pool, finalSql, params);
+  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const rowsRes = await execQuery(pool, sql, params);
 
   return {
     rows: rowsRes.rows as DietQualityTypeDto[],
@@ -288,9 +286,8 @@ export const listAlcoholConsumptionTypes = async (
     FROM alcohol_consumption_type
   `;
 
-  const { sql, params } = applyPagination(baseSql, [], pagination);
-  const finalSql = `${sql} ORDER BY id ${sort}`;
-  const rowsRes = await execQuery(pool, finalSql, params);
+  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const rowsRes = await execQuery(pool, sql, params);
 
   return {
     rows: rowsRes.rows as AlcoholConsumptionTypeDto[],
