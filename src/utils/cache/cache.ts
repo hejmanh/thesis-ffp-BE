@@ -13,7 +13,6 @@ export const withCache = async <T>(
       const cachedData = await redisClient.get(key);
 
       if (cachedData) {
-        // console.log(`[Cache] HIT: ${key}`);
         return JSON.parse(cachedData) as T;
       }
     } catch (err) {
@@ -21,7 +20,6 @@ export const withCache = async <T>(
     }
   }
 
-  // console.log(`[Cache] MISS: ${key}`);
   const data = await fetchFunction();
 
   if (isRedisAvailable()) {
@@ -41,6 +39,7 @@ export const withCache = async <T>(
 
 export const invalidateCache = async (pattern: string) => {
   if (!isRedisAvailable()) {
+    console.warn(`[Cache] Invalidation skipped — Redis unavailable`);
     return;
   }
 
