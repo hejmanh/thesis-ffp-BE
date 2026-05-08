@@ -53,6 +53,25 @@ const requireEnv = (key: string) => {
   return value;
 };
 
+const parseSaltRounds = (value: string | undefined) => {
+  const fallback = 10;
+
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
+    return fallback;
+  }
+
+  if (parsed < 4 || parsed > 31) {
+    return fallback;
+  }
+
+  return parsed;
+};
+
 const nodeEnv = process.env.NODE_ENV || 'development';
 const isProd = nodeEnv === 'production';
 
@@ -98,7 +117,7 @@ const config: Config = {
   },
 
   security: {
-    saltRounds: Number(process.env.BCRYPT_SALT_ROUNDS) || 10,
+    saltRounds: parseSaltRounds(process.env.BCRYPT_SALT_ROUNDS),
     refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7 days',
     emailVerificationExpiresIn:
       process.env.EMAIL_VERIFICATION_EXPIRES_IN || '1 day',
