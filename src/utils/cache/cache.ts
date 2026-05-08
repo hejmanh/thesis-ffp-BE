@@ -1,38 +1,48 @@
 import { redisClient } from './redis.js';
 
+const isRedisAvailable = (): boolean => redisClient.isOpen && redisClient.isReady;
+
 export const withCache = async <T>(
   key: string,
   ttlSeconds: number | null,
   fetchFunction: () => Promise<T>,
 ): Promise<T> => {
-  try {
-    const cachedData = await redisClient.get(key);
+  if (isRedisAvailable()) {
+    try {
+      const cachedData = await redisClient.get(key);
 
-    if (cachedData) {
-      // console.log(`[Cache] HIT: ${key}`);
-      return JSON.parse(cachedData) as T;
+      if (cachedData) {
+        // console.log(`[Cache] HIT: ${key}`);
+        return JSON.parse(cachedData) as T;
+      }
+    } catch (err) {
+      console.error(`[Cache] Read error, falling through to DB: `, err);
     }
-  } catch (err) {
-    console.error(`[Cache] Read error, falling through to DB: `, err);
   }
 
   // console.log(`[Cache] MISS: ${key}`);
   const data = await fetchFunction();
 
-  try {
-    if (ttlSeconds !== null) {
-      await redisClient.setEx(key, ttlSeconds, JSON.stringify(data));
-    } else {
-      await redisClient.set(key, JSON.stringify(data));
+  if (isRedisAvailable()) {
+    try {
+      if (ttlSeconds !== null) {
+        await redisClient.setEx(key, ttlSeconds, JSON.stringify(data));
+      } else {
+        await redisClient.set(key, JSON.stringify(data));
+      }
+    } catch (err) {
+      console.error(`[Cache] Write error: `, err);
     }
-  } catch (err) {
-    console.error(`[Cache] Write error: `, err);
   }
 
   return data;
 };
 
 export const invalidateCache = async (pattern: string) => {
+  if (!isRedisAvailable()) {
+    return;
+  }
+
   let cursor = '0';
   let totalDeleted = 0;
 
