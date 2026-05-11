@@ -1,24 +1,15 @@
--- Fix email verification token function: invalidate all previous unused tokens, not just expired ones
+-- Fix email verification token function: invalidate all previous unused tokens
 CREATE OR REPLACE FUNCTION expire_old_email_verification_tokens()
 RETURNS TRIGGER AS $$
 BEGIN
     UPDATE email_verification_token
     SET used_at = NOW()
     WHERE user_account_id = NEW.user_account_id
-      AND used_at IS NULL
-      AND id != NEW.id;
+  AND used_at IS NULL;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
--- Fix email verification trigger: BEFORE -> AFTER so NEW.id is available
-DROP TRIGGER IF EXISTS trg_expire_old_email_verification_tokens ON email_verification_token;
-
-CREATE TRIGGER trg_expire_old_email_verification_tokens
-AFTER INSERT ON email_verification_token
-FOR EACH ROW
-EXECUTE FUNCTION expire_old_email_verification_tokens();
 
 -- Password reset token table
 CREATE TABLE password_reset_token (
@@ -38,16 +29,15 @@ BEGIN
     UPDATE password_reset_token
     SET used_at = NOW()
     WHERE credential_id = NEW.credential_id
-      AND used_at IS NULL
-      AND id != NEW.id;
+  AND used_at IS NULL;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- Password reset token trigger
+-- Password reset token trigger: invalidate before unique index checks
 CREATE TRIGGER trg_invalidate_old_password_reset_tokens
-AFTER INSERT ON password_reset_token
+BEFORE INSERT ON password_reset_token
 FOR EACH ROW
 EXECUTE FUNCTION invalidate_old_password_reset_tokens();
 

@@ -193,8 +193,10 @@ export const resetPassword = async (token: string, password: string) => {
   await withTransaction(async (client) => {
     const res = await execQuery(
       client,
-      `SELECT id, credential_id FROM password_reset_token
-          WHERE token_hash = $1 AND expires_at > NOW() AND used_at IS NULL`,
+      `SELECT prt.id, prt.credential_id, c.user_account_id
+          FROM password_reset_token prt
+          JOIN credential c ON c.id = prt.credential_id
+          WHERE prt.token_hash = $1 AND prt.expires_at > NOW() AND prt.used_at IS NULL`,
       [hashedToken],
     );
 
@@ -207,6 +209,12 @@ export const resetPassword = async (token: string, password: string) => {
       client,
       `UPDATE credential SET hashed_password = $1 WHERE id = $2`,
       [hashedPassword, record.credential_id],
+    );
+
+    await execQuery(
+      client,
+      `UPDATE refresh_token SET revoked = true WHERE user_account_id = $1`,
+      [record.user_account_id],
     );
 
     await execQuery(

@@ -32,7 +32,7 @@ export const generateEmailVerificationToken = (): GeneratedToken => {
   const raw = crypto.randomBytes(32).toString('hex');
   const hashed = hashToken(raw);
   return { raw, hashed };
-}
+};
 
 export const verifyAccessToken = (token: string): TokenPayload => {
   const secret = config.jwt.accessSecret;
