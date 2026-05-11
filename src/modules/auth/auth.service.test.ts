@@ -1,15 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as authService from './auth.service.js';
 import { execQuery } from '@/database/query.js';
-import { sendPasswordResetEmail } from '@/utils/email/index.js';
-import { generateEmailVerificationToken } from '@/utils/auth/token.js';
+import { sendPasswordResetEmail } from '@/modules/email/email.service.js';
+import { generateOneTimeToken } from '@/utils/auth/token.js';
+import { withTransaction } from '@/database/transaction.js';
+import { hashPassword } from '@/utils/auth/hash.js';
 
 vi.mock('@/database/query.js', () => ({
   execQuery: vi.fn(),
 }));
 
-vi.mock('@/utils/email/index.js', () => ({
+vi.mock('@/database/transaction.js', () => ({
+  withTransaction: vi.fn(),
+}));
+
+vi.mock('@/utils/auth/hash.js', () => ({
+  hashPassword: vi.fn(),
+  comparePassword: vi.fn(),
+}));
+
+vi.mock('@/modules/email/email.service.js', () => ({
   sendPasswordResetEmail: vi.fn(),
+  sendVerificationEmail: vi.fn(),
 }));
 
 vi.mock('@/utils/auth/token.js', async () => {
@@ -19,7 +31,7 @@ vi.mock('@/utils/auth/token.js', async () => {
 
   return {
     ...actual,
-    generateEmailVerificationToken: vi.fn(),
+    generateOneTimeToken: vi.fn(),
   };
 });
 
@@ -40,7 +52,7 @@ describe('Auth Service - requestPasswordReset', () => {
       return Promise.resolve({ rows: [] });
     });
 
-    asMock(generateEmailVerificationToken)
+    asMock(generateOneTimeToken)
       .mockReturnValueOnce({ raw: 'raw-1', hashed: 'hash-1' })
       .mockReturnValueOnce({ raw: 'raw-2', hashed: 'hash-2' });
 
@@ -73,7 +85,7 @@ describe('Auth Service - requestPasswordReset', () => {
       return Promise.resolve({ rows: [] });
     });
 
-    asMock(generateEmailVerificationToken).mockReturnValue({
+    asMock(generateOneTimeToken).mockReturnValue({
       raw: 'raw-1',
       hashed: 'hash-1',
     });
@@ -89,5 +101,67 @@ describe('Auth Service - requestPasswordReset', () => {
     );
 
     expect(markUsedCall).toBeTruthy();
+  });
+});
+
+describe('Auth Service - resetPassword', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('updates credential, revokes refresh tokens, and marks reset token used', async () => {
+    const execQueryMock = asMock(execQuery);
+    execQueryMock.mockImplementation((_client, query) => {
+      if (query.includes('FROM password_reset_token')) {
+        return Promise.resolve({
+          rows: [{ id: 11, credential_id: 22, user_account_id: 33 }],
+        });
+      }
+
+      return Promise.resolve({ rows: [] });
+    });
+
+    asMock(hashPassword).mockResolvedValue('hashed-new-password');
+    asMock(withTransaction).mockImplementation(async (callback) =>
+      callback({} as any),
+    );
+
+    await expect(
+      authService.resetPassword('raw-token', 'new-pass'),
+    ).resolves.toBeUndefined();
+
+    const updateCredentialCall = execQueryMock.mock.calls.find((call) =>
+      (call[1] as string).includes('UPDATE credential SET hashed_password'),
+    );
+    const revokeRefreshCall = execQueryMock.mock.calls.find((call) =>
+      (call[1] as string).includes('UPDATE refresh_token SET revoked = true'),
+    );
+    const markUsedCall = execQueryMock.mock.calls.find((call) =>
+      (call[1] as string).includes('UPDATE password_reset_token'),
+    );
+
+    expect(updateCredentialCall).toBeTruthy();
+    expect(revokeRefreshCall).toBeTruthy();
+    expect(markUsedCall).toBeTruthy();
+    expect(withTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('throws when the reset token is invalid', async () => {
+    const execQueryMock = asMock(execQuery);
+    execQueryMock.mockImplementation((_client, query) => {
+      if (query.includes('FROM password_reset_token')) {
+        return Promise.resolve({ rows: [] });
+      }
+
+      return Promise.resolve({ rows: [] });
+    });
+
+    asMock(withTransaction).mockImplementation(async (callback) =>
+      callback({} as any),
+    );
+
+    await expect(
+      authService.resetPassword('raw-token', 'new-pass'),
+    ).rejects.toBeTruthy();
   });
 });

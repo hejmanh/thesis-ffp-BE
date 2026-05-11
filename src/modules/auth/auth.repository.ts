@@ -1,7 +1,6 @@
 import { pool } from '@/database/index.js';
 import { execQuery, type QueryClient } from '@/database/query.js';
-
-const normalizeEmail = (email: string) => email.trim().toLowerCase();
+import { normalizeEmail } from '@/utils/normalizeEmail.js';
 
 export const createUser = async (
   email: string,

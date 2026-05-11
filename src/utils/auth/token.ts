@@ -28,7 +28,7 @@ export const generateRefreshToken = (): GeneratedToken => {
   return { raw, hashed };
 };
 
-export const generateEmailVerificationToken = (): GeneratedToken => {
+export const generateOneTimeToken = (): GeneratedToken => {
   const raw = crypto.randomBytes(32).toString('hex');
   const hashed = hashToken(raw);
   return { raw, hashed };

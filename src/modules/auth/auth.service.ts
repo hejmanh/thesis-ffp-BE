@@ -7,20 +7,21 @@ import {
 import { hashPassword, comparePassword } from '@/utils/auth/hash.js';
 import {
   generateAccessToken,
-  generateEmailVerificationToken,
+  generateOneTimeToken,
   generateRefreshToken,
   hashToken,
 } from '@/utils/auth/token.js';
 import {
   sendVerificationEmail,
   sendPasswordResetEmail,
-} from '@/utils/email/index.js';
+} from '@/modules/email/email.service.js';
 import { execQuery } from '@/database/query.js';
 import { withTransaction } from '@/database/transaction.js';
 import config from '@/config/config.js';
 import type { RegisterDto } from './dto/register.dto.js';
 import type { LoginRequestDto, LoginResponseDto } from './dto/login.dto.js';
 import type { UserDto } from './dto/user.dto.js';
+import { normalizeEmail } from '@/utils/normalizeEmail.js';
 import {
   badRequest,
   unauthorized,
@@ -33,9 +34,10 @@ export const register = async (data: RegisterDto) => {
   const existingUser = await findUserByEmail(data.email);
   if (existingUser) throw badRequest('Email already exists');
 
+  const normalizedEmail = normalizeEmail(data.email);
   const hashedPassword = await hashPassword(data.password);
   const { rawToken, hashedToken } = await withTransaction(async (client) => {
-    const userId = await createUser(data.email, hashedPassword, client);
+    const userId = await createUser(normalizedEmail, hashedPassword, client);
 
     await createProfile(
       userId,
@@ -47,7 +49,7 @@ export const register = async (data: RegisterDto) => {
     );
 
     // verification token
-    const { raw: rawToken, hashed: hashedToken } = generateEmailVerificationToken();
+    const { raw: rawToken, hashed: hashedToken } = generateOneTimeToken();
 
     await execQuery(
       client,
@@ -64,7 +66,7 @@ export const register = async (data: RegisterDto) => {
   }
 
   try {
-    await sendVerificationEmail(data.email, rawToken);
+    await sendVerificationEmail(normalizedEmail, rawToken);
   } catch (err) {
     await execQuery(
       pool,
@@ -150,17 +152,17 @@ export const verifyEmail = async (token: string) => {
 };
 
 export const requestPasswordReset = async (email: string) => {
+  const normalizedEmail = normalizeEmail(email);
   const res = await execQuery(
     pool,
     `SELECT id FROM credential WHERE email = $1`,
-    [email.trim().toLowerCase()],
+    [normalizedEmail],
   );
 
   const credential = res.rows[0];
   if (!credential) return;
 
-  const { raw: rawToken, hashed: hashedToken } =
-    generateEmailVerificationToken();
+  const { raw: rawToken, hashed: hashedToken } = generateOneTimeToken();
 
   await execQuery(
     pool,
@@ -177,7 +179,7 @@ export const requestPasswordReset = async (email: string) => {
   }
 
   try {
-    await sendPasswordResetEmail(email, rawToken);
+    await sendPasswordResetEmail(normalizedEmail, rawToken);
   } catch (err) {
     await execQuery(
       pool,
