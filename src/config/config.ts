@@ -34,6 +34,7 @@ interface SecurityConfig {
   saltRounds: number;
   refreshTokenExpiresIn: string;
   emailVerificationExpiresIn: string;
+  passwordResetExpiresIn: string;
 }
 
 interface CorsConfig {
@@ -124,6 +125,7 @@ const config: Config = {
     refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7 days',
     emailVerificationExpiresIn:
       process.env.EMAIL_VERIFICATION_EXPIRES_IN || '1 day',
+    passwordResetExpiresIn: process.env.PASSWORD_RESET_EXPIRES_IN || '1 day',
   },
 
   redis: {

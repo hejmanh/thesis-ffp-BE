@@ -4,6 +4,10 @@ export type RegisterResponseDto = ApiEmptyResponse;
 
 export type VerifyEmailResponseDto = ApiEmptyResponse;
 
+export type ForgotPasswordResponseDto = ApiEmptyResponse;
+
+export type ResetPasswordResponseDto = ApiEmptyResponse;
+
 export type RefreshResponseDto = ApiResponse<{
   accessToken: string;
 }>;

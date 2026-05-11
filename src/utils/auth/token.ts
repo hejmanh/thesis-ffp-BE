@@ -7,7 +7,7 @@ export type TokenPayload = {
   userId: number;
 };
 
-export type GeneratedRefreshToken = {
+export type GeneratedToken = {
   raw: string;
   hashed: string;
 };
@@ -22,8 +22,14 @@ export const generateAccessToken = (payload: TokenPayload): string => {
   return jwt.sign(payload, secret, { expiresIn });
 };
 
-export const generateRefreshToken = (): GeneratedRefreshToken => {
+export const generateRefreshToken = (): GeneratedToken => {
   const raw = crypto.randomBytes(40).toString('hex');
+  const hashed = hashToken(raw);
+  return { raw, hashed };
+};
+
+export const generateOneTimeToken = (): GeneratedToken => {
+  const raw = crypto.randomBytes(32).toString('hex');
   const hashed = hashToken(raw);
   return { raw, hashed };
 };
