@@ -75,9 +75,8 @@ const parseSaltRounds = (value: string | undefined) => {
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 const isProd = nodeEnv === 'production';
-const redisUrl =
-  process.env.REDIS_URL || (isProd ? '' : 'redis://localhost:6379');
-const redisEnabled = isProd ? Boolean(process.env.REDIS_URL) : true;
+const redisUrl = process.env.REDIS_URL || '';
+const redisEnabled = Boolean(process.env.REDIS_URL);
 
 const config: Config = {
   // server settings
