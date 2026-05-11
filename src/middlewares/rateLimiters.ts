@@ -21,3 +21,13 @@ export const emailVerificationLimiter = rateLimit({
   }),
   skip: (req) => !req.query.token, // only apply if token is present
 });
+
+export const passwordResetLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 5 req / 1 hour
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: buildErrorPayload({
+    message: 'Too many password reset attempts, please try again later',
+  }),
+});

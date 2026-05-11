@@ -2,10 +2,14 @@ import type { Request, Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginRequestDto } from './dto/login.dto.js';
+import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
+import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import * as authService from './auth.service.js';
 import type {
   RegisterResponseDto,
   VerifyEmailResponseDto,
+  ForgotPasswordResponseDto,
+  ResetPasswordResponseDto,
   RefreshResponseDto,
   LogoutResponseDto,
 } from './dto/response.dto.js';
@@ -76,6 +80,34 @@ export const loginHandler = asyncHandler(
         isFirstLogin: isFirstLogin,
       },
       message: 'Login successful',
+    });
+  },
+);
+
+export const forgotPasswordHandler = asyncHandler(
+  async (req: Request, res: Response<ForgotPasswordResponseDto>) => {
+    const data = ForgotPasswordDto.parse(req.body);
+
+    await authService.requestPasswordReset(data.email);
+
+    res.json({
+      success: true,
+      data: null,
+      message: 'Check your email to reset your password',
+    });
+  },
+);
+
+export const resetPasswordHandler = asyncHandler(
+  async (req: Request, res: Response<ResetPasswordResponseDto>) => {
+    const data = ResetPasswordDto.parse(req.body);
+
+    await authService.resetPassword(data.token, data.password);
+
+    res.json({
+      success: true,
+      data: null,
+      message: 'Password reset successful',
     });
   },
 );

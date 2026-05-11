@@ -10,7 +10,10 @@ import {
   generateRefreshToken,
   hashToken,
 } from '@/utils/auth/token.js';
-import { sendVerificationEmail } from '@/utils/email/index.js';
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+} from '@/utils/email/index.js';
 import { execQuery } from '@/database/query.js';
 import { withTransaction } from '@/database/transaction.js';
 import config from '@/config/config.js';
@@ -144,6 +147,76 @@ export const verifyEmail = async (token: string) => {
         WHERE token_hash = $1`,
     [hashedToken],
   );
+};
+
+export const requestPasswordReset = async (email: string) => {
+  const res = await execQuery(
+    pool,
+    `SELECT id FROM credential WHERE email = $1`,
+    [email.trim().toLowerCase()],
+  );
+
+  const credential = res.rows[0];
+  if (!credential) return;
+
+  const { raw: rawToken, hashed: hashedToken } = generateRefreshToken();
+
+  await execQuery(
+    pool,
+    `INSERT INTO password_reset_token (credential_id, token_hash, expires_at)
+        VALUES ($1, $2, NOW() + $3::interval)`,
+    [credential.id, hashedToken, config.security.passwordResetExpiresIn],
+  );
+
+  if (config.nodeEnv !== 'production') {
+    console.log('Password reset token (dev):', rawToken);
+  }
+
+  try {
+    await sendPasswordResetEmail(email, rawToken);
+  } catch (err) {
+    await execQuery(
+      pool,
+      `UPDATE password_reset_token
+          SET used_at = NOW()
+          WHERE token_hash = $1`,
+      [hashedToken],
+    );
+
+    throw internal('Failed to send password reset email');
+  }
+};
+
+export const resetPassword = async (token: string, password: string) => {
+  const hashedToken = hashToken(token);
+
+  await withTransaction(async (client) => {
+    const res = await execQuery(
+      client,
+      `SELECT id, credential_id FROM password_reset_token
+          WHERE token_hash = $1 AND expires_at > NOW() AND used_at IS NULL`,
+      [hashedToken],
+    );
+
+    const record = res.rows[0];
+    if (!record) throw badRequest('Invalid or expired token');
+
+    const hashedPassword = await hashPassword(password);
+
+    await execQuery(
+      client,
+      `UPDATE credential SET hashed_password = $1 WHERE id = $2`,
+      [hashedPassword, record.credential_id],
+    );
+
+    await execQuery(
+      client,
+      `UPDATE password_reset_token
+          SET used_at = NOW()
+          WHERE id = $1`,
+      [record.id],
+    );
+  });
 };
 
 export const refresh = async (rawToken: string) => {
