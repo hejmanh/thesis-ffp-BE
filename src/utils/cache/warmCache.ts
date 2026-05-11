@@ -1,6 +1,12 @@
 import * as referenceService from '@/modules/reference/reference.service.js';
+import { isRedisAvailable } from './cache.js';
 
-export const warmCache = async () => {
+export const warmCache = async (): Promise<boolean> => {
+  if (!isRedisAvailable()) {
+    console.log('[Cache] Skipping warm-up because Redis is not available');
+    return false;
+  }
+
   console.log('[Cache] Warming reference cache...');
 
   await Promise.all([
@@ -16,4 +22,5 @@ export const warmCache = async () => {
   ]);
 
   console.log('[Cache] Reference cache warmed');
+  return true;
 };

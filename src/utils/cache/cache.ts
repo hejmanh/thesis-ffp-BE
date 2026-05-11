@@ -1,6 +1,6 @@
 import { redisClient } from './redis.js';
 
-const isRedisAvailable = (): boolean =>
+export const isRedisAvailable = (): boolean =>
   redisClient.isOpen && redisClient.isReady;
 
 export const withCache = async <T>(

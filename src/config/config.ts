@@ -45,6 +45,7 @@ interface CorsConfig {
 
 interface RedisConfig {
   redisUrl: string;
+  enabled: boolean;
 }
 
 const requireEnv = (key: string) => {
@@ -74,6 +75,9 @@ const parseSaltRounds = (value: string | undefined) => {
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 const isProd = nodeEnv === 'production';
+const redisUrl =
+  process.env.REDIS_URL || (isProd ? '' : 'redis://localhost:6379');
+const redisEnabled = isProd ? Boolean(process.env.REDIS_URL) : true;
 
 const config: Config = {
   // server settings
@@ -124,9 +128,8 @@ const config: Config = {
   },
 
   redis: {
-    redisUrl: isProd
-      ? requireEnv('REDIS_URL')
-      : process.env.REDIS_URL || 'redis://localhost:6379',
+    redisUrl,
+    enabled: redisEnabled,
   },
 };
 

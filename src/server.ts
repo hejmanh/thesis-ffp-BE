@@ -26,20 +26,23 @@ async function start() {
     process.exit(1);
   }
 
-  try {
-    await redisClient.connect();
-  } catch (error) {
-    console.warn('[Server] Redis unavailable, running without cache:', error);
-  }
+  if (config.redis.enabled) {
+    try {
+      await redisClient.connect();
+    } catch (error) {
+      console.warn('[Server] Redis unavailable, running without cache:', error);
+    }
 
-  if (redisClient.isOpen && redisClient.isReady) {
     try {
       await warmCache();
     } catch (error) {
-      console.warn('[Server] Cache warm-up failed, continuing without preloaded cache:', error);
+      console.warn(
+        '[Server] Cache warm-up failed, continuing without preloaded cache:',
+        error,
+      );
     }
   } else {
-    console.log('[Server] Skipping cache warm-up because Redis is not connected and ready');
+    console.log('[Server] Redis disabled, skipping cache connection');
   }
 
   await startServer();
