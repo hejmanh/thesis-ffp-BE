@@ -32,10 +32,14 @@ async function start() {
     console.warn('[Server] Redis unavailable, running without cache:', error);
   }
 
-  try {
-    await warmCache();
-  } catch (error) {
-    console.warn('[Server] Cache warm-up failed, continuing without preloaded cache:', error);
+  if (redisClient.isOpen && redisClient.isReady) {
+    try {
+      await warmCache();
+    } catch (error) {
+      console.warn('[Server] Cache warm-up failed, continuing without preloaded cache:', error);
+    }
+  } else {
+    console.log('[Server] Skipping cache warm-up because Redis is not connected and ready');
   }
 
   await startServer();
