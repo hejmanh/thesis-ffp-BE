@@ -129,15 +129,17 @@ FRONTEND_URL=http://localhost:3000
 
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=ffp
+DB_DATABASE=ffp
 DB_USER=
 DB_PASSWORD=
 
 JWT_ACCESS_SECRET=
-JWT_ACCESS_EXPIRES=15m
+JWT_ACCESS_EXPIRES_IN=15m
 JWT_REFRESH_SECRET=
-JWT_REFRESH_EXPIRES=7d
+JWT_REFRESH_EXPIRES_IN=7d
 BCRYPT_SALT_ROUNDS=
+
+REDIS_URL=redis://localhost:6379
 
 EMAIL_HOST=sandbox.smtp.mailtrap.io
 EMAIL_PORT=2525
@@ -151,9 +153,12 @@ EMAIL_PASS=
 
 ## Prerequisites
 
-* Node.js 18+
+* Node.js 18.19.0+
 * npm
 * PostgreSQL
+* Redis
+
+Redis is used for caching during server startup. If Redis is unavailable, the server will still start, but cache warming is skipped and the app will read from the database directly.
 
 ---
 
@@ -167,7 +172,7 @@ npm install
 
 ### 2. Configure environment variables
 
-Create a `.env` file using the example configuration above.
+Create a `.env` file using the example configuration above, then adjust the database, JWT, email, and Redis values for your environment.
 
 ### 3. Create the database
 
@@ -175,7 +180,7 @@ Create a PostgreSQL database for the project.
 
 ### 4. Run database migrations
 
-Execute migration files located in:
+Execute the migration files located in:
 
 ```text
 db/migrations/
@@ -186,6 +191,8 @@ db/migrations/
 ```bash
 npm run dev
 ```
+
+The API will be available at `http://localhost:<PORT>` and the Swagger UI at `/api-docs`.
 
 ---
 

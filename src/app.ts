@@ -13,6 +13,7 @@ import { notFoundHandler } from '@/middlewares/notFound.js';
 import { errorHandler } from '@/middlewares/errorHandlers.js';
 import config from '@/config/config.js';
 import { swaggerUiOptions } from '@/docs/swaggerOptions.js';
+import responseTime from 'response-time';
 
 const app = express();
 
@@ -22,7 +23,11 @@ const __dirname = path.dirname(__filename);
 // API documentation
 const swaggerPath = path.resolve(__dirname, 'docs', 'swagger.yaml');
 const swaggerDocument = YAML.parse(fs.readFileSync(swaggerPath, 'utf8'));
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerUiOptions));
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, swaggerUiOptions),
+);
 
 // security middlewares
 app.use(helmet()); // set http security headers
@@ -39,6 +44,9 @@ if (config.nodeEnv === 'development') {
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true })); // parse form data
 app.use(cookieParser());
+
+// request timing
+app.use(responseTime());
 
 // mount all routes under /api
 app.use('/api/v1', routes);
