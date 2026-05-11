@@ -26,7 +26,7 @@ describe('invalidateCache', () => {
   });
 
   it('should no-op when redis is not ready', async () => {
-    await expect(invalidateCache('reference:*')).resolves.toBeUndefined();
+    await expect(invalidateCache('ref:*')).resolves.toBeUndefined();
 
     expect(redisClientMock.scan).not.toHaveBeenCalled();
     expect(redisClientMock.del).not.toHaveBeenCalled();
@@ -37,7 +37,7 @@ describe('invalidateCache', () => {
     redisClientMock.isReady = true;
     redisClientMock.scan.mockRejectedValue(new Error('Redis down'));
 
-    await expect(invalidateCache('reference:*')).resolves.toBeUndefined();
+    await expect(invalidateCache('ref:*')).resolves.toBeUndefined();
 
     expect(redisClientMock.scan).toHaveBeenCalledTimes(1);
     expect(redisClientMock.del).not.toHaveBeenCalled();
