@@ -7,6 +7,7 @@ import {
 import { hashPassword, comparePassword } from '@/utils/auth/hash.js';
 import {
   generateAccessToken,
+  generateEmailVerificationToken,
   generateRefreshToken,
   hashToken,
 } from '@/utils/auth/token.js';
@@ -46,8 +47,7 @@ export const register = async (data: RegisterDto) => {
     );
 
     // verification token
-    const rawToken = crypto.randomBytes(32).toString('hex');
-    const hashedToken = hashToken(rawToken);
+    const { raw: rawToken, hashed: hashedToken } = generateEmailVerificationToken();
 
     await execQuery(
       client,
@@ -159,12 +159,16 @@ export const requestPasswordReset = async (email: string) => {
   const credential = res.rows[0];
   if (!credential) return;
 
-  const { raw: rawToken, hashed: hashedToken } = generateRefreshToken();
+  const { raw: rawToken, hashed: hashedToken } =
+    generateEmailVerificationToken();
 
   await execQuery(
     pool,
     `INSERT INTO password_reset_token (credential_id, token_hash, expires_at)
-        VALUES ($1, $2, NOW() + $3::interval)`,
+        VALUES ($1, $2, NOW() + $3::interval)
+        ON CONFLICT (credential_id) WHERE used_at IS NULL
+        DO UPDATE SET token_hash = EXCLUDED.token_hash,
+          expires_at = NOW() + $3::interval`,
     [credential.id, hashedToken, config.security.passwordResetExpiresIn],
   );
 
@@ -182,8 +186,8 @@ export const requestPasswordReset = async (email: string) => {
           WHERE token_hash = $1`,
       [hashedToken],
     );
-
-    throw internal('Failed to send password reset email');
+    console.error('Failed to send password reset email', err);
+    return;
   }
 };
 
