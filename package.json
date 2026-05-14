@@ -9,7 +9,10 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "dev": "tsx watch src/server.ts",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "migrate": "tsx src/migrate.ts",
+    "start": "npm run migrate && tsx src/server.ts",
+    "start-service": "docker compose up --build"
   },
   "repository": {
     "type": "git",
@@ -42,7 +45,6 @@
     "prettier": "^3.8.3",
     "supertest": "^6.3.3",
     "ts-node": "^10.9.2",
-    "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "vitest": "^1.0.4"
   },
@@ -63,6 +65,7 @@
     "swagger-ui-express": "^5.0.1",
     "yaml": "^2.8.1",
     "yamljs": "^0.3.0",
+    "tsx": "^4.21.0",
     "zod": "^4.4.3"
   }
 }

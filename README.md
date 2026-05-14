@@ -117,29 +117,28 @@ The system supports passive income sources such as:
 
 # Environment Variables
 
-Create a `.env` file in the project root.
+Create a `.env` file in the project root. This file is **required** — Docker will refuse to start without it.
+
+> `DB_HOST` and `REDIS_URL` do not need to be set in `.env` when running via Docker; they are automatically overridden to point at the Docker service names.
 
 Example:
 
 ```env
 PORT=5000
-NODE_ENV=development
+NODE_ENV=production
 CORS_ORIGIN=http://localhost:3000
 FRONTEND_URL=http://localhost:3000
 
-DB_HOST=localhost
 DB_PORT=5432
 DB_DATABASE=ffp
-DB_USER=
-DB_PASSWORD=
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
 
-JWT_ACCESS_SECRET=
+JWT_ACCESS_SECRET=your_access_secret
 JWT_ACCESS_EXPIRES_IN=15m
-JWT_REFRESH_SECRET=
+JWT_REFRESH_SECRET=your_refresh_secret
 JWT_REFRESH_EXPIRES_IN=7d
-BCRYPT_SALT_ROUNDS=
-
-REDIS_URL=redis://localhost:6379
+BCRYPT_SALT_ROUNDS=10
 
 EMAIL_HOST=sandbox.smtp.mailtrap.io
 EMAIL_PORT=2525
@@ -153,18 +152,14 @@ EMAIL_PASS=
 
 ## Prerequisites
 
-* Node.js 18.19.0+
-* npm
-* PostgreSQL
-* Redis
-
-Redis is used for caching during server startup. If Redis is unavailable, the server will still start, but cache warming is skipped and the app will read from the database directly.
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose)
+* npm (only needed to run the `npm run start-service` command)
 
 ---
 
-## Installation
+## Running with Docker
 
-### 1. Install dependencies
+### 1. Install dependencies (once)
 
 ```bash
 npm install
@@ -172,27 +167,31 @@ npm install
 
 ### 2. Configure environment variables
 
-Create a `.env` file using the example configuration above, then adjust the database, JWT, email, and Redis values for your environment.
+Create a `.env` file in the project root using the example above.
 
-### 3. Create the database
-
-Create a PostgreSQL database for the project.
-
-### 4. Run database migrations
-
-Execute the migration files located in:
-
-```text
-db/migrations/
-```
-
-### 5. Start the development server
+### 3. Start all services
 
 ```bash
-npm run dev
+npm run start-service
 ```
 
-The API will be available at `http://localhost:<PORT>` and the Swagger UI at `/api-docs`.
+This single command will:
+- Build the backend Docker image
+- Start PostgreSQL, Redis, and the backend in containers
+- Run all pending database migrations automatically
+- Serve the API at `http://localhost:<PORT>` and Swagger UI at `/api-docs`
+
+### Stopping
+
+```bash
+docker compose down
+```
+
+### Full reset (wipes database volume)
+
+```bash
+docker compose down -v
+```
 
 ---
 
