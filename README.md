@@ -117,9 +117,7 @@ The system supports passive income sources such as:
 
 # Environment Variables
 
-Create a `.env` file in the project root. This file is **required** — Docker will refuse to start without it.
-
-> `DB_HOST` and `REDIS_URL` do not need to be set in `.env` when running via Docker; they are automatically overridden to point at the Docker service names.
+Create a `.env` file in the project root.
 
 Example:
 
@@ -152,14 +150,14 @@ EMAIL_PASS=
 
 ## Prerequisites
 
-* [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose)
-* npm (only needed to run the `npm run start-service` command)
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+* npm
 
 ---
 
 ## Running with Docker
 
-### 1. Install dependencies (once)
+### 1. Install dependencies
 
 ```bash
 npm install
