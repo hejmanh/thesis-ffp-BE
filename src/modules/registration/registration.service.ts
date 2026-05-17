@@ -56,21 +56,30 @@ const smokingCodeAliases = new Map<string, string>([
 ]);
 
 const physicalActivityCodeAliases = new Map<string, string>([
+  ['high', 'active'],
   ['active', 'active'],
+  ['medium', 'moderate'],
   ['moderate', 'moderate'],
-  ['sedentary', 'sedentary']
+  ['low', 'sedentary'],
+  ['sedentary', 'sedentary'],
 ]);
 
 const dietQualityCodeAliases = new Map<string, string>([
+  ['high', 'healthy'],
   ['healthy', 'healthy'],
+  ['medium', 'average'],
   ['average', 'average'],
-  ['poor', 'poor']
+  ['low', 'poor'],
+  ['poor', 'poor'],
 ]);
 
 const alcoholConsumptionCodeAliases = new Map<string, string>([
   ['none', 'none'],
+  ['low', 'moderate'],
   ['moderate', 'moderate'],
-  ['heavy', 'heavy']
+  ['medium', 'moderate'],
+  ['heavy', 'heavy'],
+  ['high', 'heavy'],
 ]);
 
 const resolveReferenceCode = (
