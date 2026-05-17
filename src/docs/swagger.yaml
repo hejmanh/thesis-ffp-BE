@@ -9,6 +9,7 @@ servers:
 tags:
   - name: Health
   - name: Auth
+  - name: User Info
   - name: Reference
 
 paths:
@@ -164,6 +165,166 @@ paths:
           required: true
           schema:
             type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+
+  /user-info:
+    get:
+      tags: [User Info]
+      summary: Get user info
+      description: "Returns the current user's saved user info for the account page."
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfoEnvelope'
+    post:
+      tags: [User Info]
+      summary: Submit user info
+      description: 'Submits the final user info payload.'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInfoEnvelope'
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateUserInfoResponse'
+
+  /user-info/basic:
+    patch:
+      tags: [User Info]
+      summary: Update financial profile basic fields
+      description: 'Partially updates currentSavings, desiredLifeExpectancy, and/or currencyCode. At least one field must be provided. estimatedLifeExpectancy is read-only and cannot be changed here.'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFinancialProfileBasicRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+
+  /user-info/portfolio:
+    patch:
+      tags: [User Info]
+      summary: Update portfolio allocations
+      description: 'Updates both PRE_FFP and POST_FFP portfolio allocations. Both allocations must always be sent together.'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePortfolioAllocationsRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+
+  /user-info/stages:
+    patch:
+      tags: [User Info]
+      summary: Partially update stage data
+      description: 'Updates only the provided stage items (identified by lifeStageRangeId). Unmentioned stages are left unchanged.'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStageDataRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+
+  /user-info/assets:
+    patch:
+      tags: [User Info]
+      summary: Partially update asset data
+      description: 'Updates only the provided asset items (identified by assetId). Unmentioned assets are left unchanged.'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAssetDataRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+
+  /user-info/assets/{assetId}:
+    delete:
+      tags: [User Info]
+      summary: Delete a single post-FFP asset
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: assetId
+          required: true
+          schema:
+            type: integer
+          description: Row ID of the asset to delete (returned by GET /user-info)
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+
+  /user-info/lifestyle:
+    patch:
+      tags: [User Info]
+      summary: Update lifestyle profile
+      description: 'Updates all four lifestyle habits at once (smoking, physical activity, diet quality, alcohol consumption). All four fields are required.'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LifestyleProfileRequest'
       responses:
         200:
           description: OK
@@ -334,6 +495,11 @@ paths:
                 $ref: '#/components/schemas/AlcoholConsumptionTypeListResponse'
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   parameters:
     Page:
       in: query
@@ -495,6 +661,262 @@ components:
         password:
           type: string
           format: password
+    FinancialProfileRequest:
+      type: object
+      required: [desiredLifeExpectancy, currentSavings, currencyCode]
+      properties:
+        estimatedLifeExpectancy:
+          type: integer
+          description: Optional. If provided, it is ignored because the API derives the estimate from country, sex, and lifestyle inputs.
+        desiredLifeExpectancy:
+          type: integer
+        currentSavings:
+          type: number
+        currencyCode:
+          type: string
+          example: USD
+    PortfolioAllocationRequest:
+      type: object
+      required: [allocationType, u, mu, rf]
+      properties:
+        allocationType:
+          type: string
+          enum: [PRE_FFP, POST_FFP]
+        u:
+          type: number
+        mu:
+          type: number
+        rf:
+          type: number
+    LifestyleProfileRequest:
+      type: object
+      required:
+        [
+          smokingCode,
+          physicalActivityCode,
+          dietQualityCode,
+          alcoholConsumptionCode,
+        ]
+      properties:
+        smokingCode:
+          type: string
+          example: NON_SMOKER
+        physicalActivityCode:
+          type: string
+          description: Accepts canonical codes such as active, moderate, sedentary, and common aliases such as HIGH, MEDIUM, LOW.
+          example: HIGH
+        dietQualityCode:
+          type: string
+          description: Accepts canonical codes such as healthy, average, poor, and common aliases such as HIGH, MEDIUM, LOW.
+          example: MEDIUM
+        alcoholConsumptionCode:
+          type: string
+          description: Accepts canonical codes such as none, moderate, heavy, and common aliases such as LOW, MEDIUM, HIGH.
+          example: LOW
+    StageDataRequest:
+      type: object
+      required: [lifeStageRangeId, initialAnnualSavings, growthRate]
+      properties:
+        lifeStageRangeId:
+          type: integer
+          description: Life stage range ID previously returned by the server for this user's birth year.
+        initialAnnualSavings:
+          type: number
+        growthRate:
+          type: number
+    AssetDataRequest:
+      type: object
+      required: [assetTypeId, initialAnnualIncome, growthRate]
+      properties:
+        assetTypeId:
+          type: integer
+        initialAnnualIncome:
+          type: number
+        growthRate:
+          type: number
+    UpdateFinancialProfileBasicRequest:
+      type: object
+      description: At least one field must be provided. estimatedLifeExpectancy is read-only and excluded.
+      properties:
+        currentSavings:
+          type: number
+          minimum: 0
+        desiredLifeExpectancy:
+          type: integer
+          minimum: 1
+          maximum: 150
+        currencyCode:
+          type: string
+          description: 3-letter ISO currency code
+          example: USD
+    UpdatePortfolioAllocationsRequest:
+      type: array
+      description: Must contain exactly two items — one PRE_FFP and one POST_FFP.
+      minItems: 2
+      maxItems: 2
+      items:
+        $ref: '#/components/schemas/PortfolioAllocationRequest'
+    UpdateStageItemRequest:
+      type: object
+      required: [lifeStageRangeId]
+      description: At least one of initialAnnualSavings or growthRate must be provided.
+      properties:
+        lifeStageRangeId:
+          type: integer
+          description: Must be a lifeStageRangeId already in this profile.
+        initialAnnualSavings:
+          type: number
+        growthRate:
+          type: number
+    UpdateStageDataRequest:
+      type: array
+      minItems: 1
+      items:
+        $ref: '#/components/schemas/UpdateStageItemRequest'
+    UpdateAssetItemRequest:
+      type: object
+      required: [assetId]
+      description: At least one of initialAnnualIncome or growthRate must be provided.
+      properties:
+        assetId:
+          type: integer
+          description: Row ID of the asset to update (returned by GET /user-info).
+        initialAnnualIncome:
+          type: number
+          minimum: 0
+        growthRate:
+          type: number
+    UpdateAssetDataRequest:
+      type: array
+      minItems: 1
+      items:
+        $ref: '#/components/schemas/UpdateAssetItemRequest'
+    FinancialProfileData:
+      type: object
+      properties:
+        currentSavings:
+          type: number
+          nullable: true
+        desiredLifeExpectancy:
+          type: integer
+          nullable: true
+        estimatedLifeExpectancy:
+          type: integer
+          nullable: true
+        currencyCode:
+          type: string
+          nullable: true
+    PortfolioAllocationData:
+      type: object
+      properties:
+        allocationType:
+          type: string
+          enum: [PRE_FFP, POST_FFP]
+        u:
+          type: number
+          nullable: true
+        mu:
+          type: number
+          nullable: true
+        rf:
+          type: number
+          nullable: true
+    StageDataResponse:
+      type: object
+      properties:
+        lifeStageRangeId:
+          type: integer
+        stageNo:
+          type: integer
+          nullable: true
+        title:
+          type: string
+        beginningAge:
+          type: integer
+          nullable: true
+        endingAge:
+          type: integer
+          nullable: true
+        initialAnnualSavings:
+          type: number
+          nullable: true
+        growthRate:
+          type: number
+          nullable: true
+    AssetDataResponse:
+      type: object
+      properties:
+        assetId:
+          type: integer
+          description: Row ID of this asset — use this to update or delete the specific asset.
+        assetTypeCode:
+          type: string
+          nullable: true
+        assetTypeTitle:
+          type: string
+          nullable: true
+        initialAnnualIncome:
+          type: number
+          nullable: true
+        growthRate:
+          type: number
+          nullable: true
+    LifestyleProfileResponse:
+      type: object
+      properties:
+        smokingCode:
+          type: string
+          nullable: true
+        physicalActivityCode:
+          type: string
+          nullable: true
+        dietQualityCode:
+          type: string
+          nullable: true
+        alcoholConsumptionCode:
+          type: string
+          nullable: true
+    UserInfo:
+      type: object
+      required:
+        [
+          financialProfile,
+          portfolioAllocations,
+          lifestyleProfile,
+          stageData,
+          assetData,
+        ]
+      properties:
+        financialProfile:
+          $ref: '#/components/schemas/FinancialProfileRequest'
+        portfolioAllocations:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            $ref: '#/components/schemas/PortfolioAllocationRequest'
+        lifestyleProfile:
+          $ref: '#/components/schemas/LifestyleProfileRequest'
+        stageData:
+          type: array
+          items:
+            $ref: '#/components/schemas/StageDataRequest'
+        assetData:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetDataRequest'
+    UserInfoEnvelope:
+      type: object
+      properties:
+        userInfo:
+          $ref: '#/components/schemas/UserInfo'
+    CreateUserInfoResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/UserInfoEnvelope'
     PaginationMeta:
       type: object
       properties:

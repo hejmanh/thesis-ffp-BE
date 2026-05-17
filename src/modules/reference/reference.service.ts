@@ -226,7 +226,6 @@ export const getLifeStageRanges = async (
     cacheKey('lifeStageRanges', pagination, sort, { birthYear }),
     CACHE_TTL.DYNAMIC,
     async () => {
-      let minBeginningAge: number | undefined = undefined;
       let currentAge: number | undefined = undefined;
 
       if (birthYear != null) {
@@ -238,13 +237,12 @@ export const getLifeStageRanges = async (
           throw badRequest('birthYear cannot be in the future');
 
         currentAge = derivedAge;
-        if (sort === 'asc') minBeginningAge = derivedAge;
       }
 
       const result = await listLifeStageRanges(
         toPaginationOptions(pagination),
         sort,
-        minBeginningAge,
+        currentAge,
       );
 
       const shouldAdjust =

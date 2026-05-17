@@ -146,14 +146,14 @@ export const listScenarioTypes = async (
 export const listLifeStageRanges = async (
   pagination: PaginationOptions,
   sort: SortDirection,
-  minBeginningAge?: number,
+  currentAge?: number,
 ) => {
   const whereParams: unknown[] = [];
   let whereClause = '';
 
-  if (minBeginningAge != null) {
-    whereParams.push(minBeginningAge);
-    whereClause = `WHERE beginning_age >= $1`;
+  if (currentAge != null) {
+    whereParams.push(currentAge);
+    whereClause = `WHERE ending_age IS NULL OR ending_age >= $1`;
   }
 
   const countRes = await execQuery(
