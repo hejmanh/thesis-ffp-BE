@@ -148,12 +148,8 @@ export const updateLifestyleProfileHandler = asyncHandler(
     if (!userId) throw unauthorized('No token provided');
 
     const data = UpdateLifestyleProfileDto.parse(req.body);
-    await registrationService.updateLifestyleProfileService(userId, data);
+    const result = await registrationService.updateLifestyleProfileService(userId, data);
 
-    res.json({
-      success: true,
-      data: null,
-      message: 'Lifestyle profile updated',
-    });
+    res.json(result);
   },
 );

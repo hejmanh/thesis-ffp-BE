@@ -732,3 +732,15 @@ export const updateHabitsProfile = async (
     [profileId, smokingTypeId, physicalActivityTypeId, dietQualityTypeId, alcoholConsumptionTypeId],
   );
 };
+
+export const updateEstimatedLifeExpectancy = async (
+  profileId: number,
+  estimatedLifeExpectancy: number,
+  client: QueryClient = pool,
+) => {
+  await execQuery(
+    client,
+    `UPDATE profile SET estimated_life_expectancy = $2 WHERE id = $1`,
+    [profileId, estimatedLifeExpectancy],
+  );
+};

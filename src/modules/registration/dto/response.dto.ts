@@ -28,4 +28,12 @@ export type UpdatePortfolioAllocationsResponseDto = ApiEmptyResponse;
 export type UpdateStageDataResponseDto = ApiEmptyResponse;
 export type UpdateAssetDataResponseDto = ApiEmptyResponse;
 export type DeleteAssetResponseDto = ApiEmptyResponse;
-export type UpdateLifestyleProfileResponseDto = ApiEmptyResponse;
+export type UpdateLifestyleProfileResponseDto = {
+  lifestyleProfile: {
+    smokingCode: string;
+    physicalActivityCode: string;
+    dietQualityCode: string;
+    alcoholConsumptionCode: string;
+  };
+  estimatedLifeExpectancy: number;
+};

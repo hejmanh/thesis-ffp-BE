@@ -316,7 +316,7 @@ paths:
     patch:
       tags: [User Info]
       summary: Update lifestyle profile
-      description: 'Updates all four lifestyle habits at once (smoking, physical activity, diet quality, alcohol consumption). All four fields are required.'
+      description: 'Updates all four lifestyle habits at once (smoking, physical activity, diet quality, alcohol consumption). All four fields are required. Returns the updated lifestyle and recalculated estimated life expectancy.'
       security:
         - BearerAuth: []
       requestBody:
@@ -331,7 +331,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmptyResponse'
+                type: object
+                properties:
+                  lifestyleProfile:
+                    $ref: '#/components/schemas/LifestyleProfileRequest'
+                  estimatedLifeExpectancy:
+                    type: number
+                    example: 83
 
   /reference/currencies:
     get:
