@@ -115,7 +115,19 @@ const UpdateAssetItemDto = z
 
 export const UpdateAssetDataDto = z
   .array(UpdateAssetItemDto)
-  .min(1, 'At least one asset must be provided');
+  .min(1, 'At least one asset must be provided')
+  .superRefine((assets, ctx) => {
+    const seen = new Set<number>();
+    for (const asset of assets) {
+      if (seen.has(asset.assetId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Duplicate assetId: ${asset.assetId}`,
+        });
+      }
+      seen.add(asset.assetId);
+    }
+  });
 
 export type UpdateAssetDataDto = z.infer<typeof UpdateAssetDataDto>;
 

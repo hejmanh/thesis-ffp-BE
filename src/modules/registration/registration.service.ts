@@ -320,7 +320,6 @@ export const createUserInfo = async (
       financialProfile: {
         currentSavings: userInfo.financialProfile.currentSavings,
         desiredLifeExpectancy: userInfo.financialProfile.desiredLifeExpectancy,
-        estimatedLifeExpectancy,
         currencyCode: userInfo.financialProfile.currencyCode,
       },
       portfolioAllocations: userInfo.portfolioAllocations,
@@ -364,7 +363,14 @@ export const getUserInfo = async (userId: number) => {
       getHabitsProfileDetails(profile.profileId),
     ]);
 
-  if (!financialProfile || !lifestyleProfile) {
+  if (
+     !financialProfile ||
+     !lifestyleProfile ||
+     !lifestyleProfile.smokingCode ||
+     !lifestyleProfile.alcoholConsumptionCode ||
+     !lifestyleProfile.dietQualityCode ||
+     !lifestyleProfile.physicalActivityCode
+  ){
     throw notFound('User info not found');
   }
 

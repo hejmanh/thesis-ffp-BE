@@ -76,6 +76,9 @@ export const getEstimateLifeExpectancy = asyncHandler(
     const userId = req.userId;
     if (!userId) throw unauthorized('No token provided');
     const result = await referenceService.getEstimateLifeExpectancy(userId);
-    res.json(result);
+    res.json({
+       success: true,
+       data: result,
+     });
   },
 );

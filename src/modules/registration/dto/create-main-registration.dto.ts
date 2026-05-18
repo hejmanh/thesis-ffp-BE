@@ -20,12 +20,6 @@ const AssetDataDto = z.object({
 
 export const UserInfoDto = z.object({
   financialProfile: z.object({
-    estimatedLifeExpectancy: z
-      .number()
-      .int('estimatedLifeExpectancy must be an integer')
-      .min(1, 'estimatedLifeExpectancy must be at least 1')
-      .max(150, 'estimatedLifeExpectancy must be at most 150')
-      .optional(),
     desiredLifeExpectancy: z
       .number()
       .int('desiredLifeExpectancy must be an integer')

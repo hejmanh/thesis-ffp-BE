@@ -186,7 +186,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserInfoEnvelope'
+                $ref: '#/components/schemas/GetUserInfoResponse'
     post:
       tags: [User Info]
       summary: Submit user info
@@ -694,9 +694,6 @@ components:
       type: object
       required: [desiredLifeExpectancy, currentSavings, currencyCode]
       properties:
-        estimatedLifeExpectancy:
-          type: integer
-          description: Optional. If provided, it is ignored because the API derives the estimate from country, sex, and lifestyle inputs.
         desiredLifeExpectancy:
           type: integer
         currentSavings:
@@ -939,6 +936,47 @@ components:
       properties:
         userInfo:
           $ref: '#/components/schemas/UserInfo'
+    GetUserInfo:
+      type: object
+      required:
+        [
+          financialProfile,
+          portfolioAllocations,
+          lifestyleProfile,
+          stageData,
+          assetData,
+        ]
+      properties:
+        financialProfile:
+          $ref: '#/components/schemas/FinancialProfileData'
+        portfolioAllocations:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            $ref: '#/components/schemas/PortfolioAllocationData'
+        lifestyleProfile:
+          $ref: '#/components/schemas/LifestyleProfileResponse'
+        stageData:
+          type: array
+          items:
+            $ref: '#/components/schemas/StageDataRequest'
+        assetData:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetDataResponse'
+    GetUserInfoEnvelope:
+      type: object
+      properties:
+        userInfo:
+          $ref: '#/components/schemas/GetUserInfo'
+    GetUserInfoResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/GetUserInfoEnvelope'
     CreateUserInfoResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponseBase'

@@ -83,8 +83,8 @@ export const findProfileContextByUserId = async (
         p.sex_type_id AS "sexTypeId",
         (
           p.current_savings IS NOT NULL
-          OR p.desired_life_expectancy IS NOT NULL
-          OR p.estimated_life_expectancy IS NOT NULL
+          AND p.desired_life_expectancy IS NOT NULL
+          AND p.estimated_life_expectancy IS NOT NULL
         ) AS "hasFinancialProfile",
         EXISTS(
           SELECT 1
@@ -518,7 +518,6 @@ export const updateFinancialProfileBasic = async (
   fields: {
     currentSavings?: number;
     desiredLifeExpectancy?: number;
-    currencyCode?: string;
     preferredCurrencyId?: number;
   },
   client: QueryClient = pool,

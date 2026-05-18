@@ -81,7 +81,6 @@ describe('Registration Service', () => {
     const result = await registrationService.createUserInfo(99, {
       userInfo: {
         financialProfile: {
-          estimatedLifeExpectancy: 80,
           desiredLifeExpectancy: 90,
           currentSavings: 50000,
           currencyCode: 'USD',
@@ -138,7 +137,6 @@ describe('Registration Service', () => {
         financialProfile: {
           currentSavings: 50000,
           desiredLifeExpectancy: 90,
-          estimatedLifeExpectancy: 83,
           currencyCode: 'USD',
         },
         portfolioAllocations: [
