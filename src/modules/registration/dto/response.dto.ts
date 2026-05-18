@@ -29,6 +29,16 @@ export type UpdatePortfolioAllocationsResponseDto = ApiEmptyResponse;
 export type UpdateStageDataResponseDto = ApiEmptyResponse;
 export type UpdateAssetDataResponseDto = ApiEmptyResponse;
 export type DeleteAssetResponseDto = ApiEmptyResponse;
+
+type CreatedAssetItem = {
+  uid: string;
+  initialAnnualIncome: number;
+  growthRate: number;
+};
+
+export type CreateAssetsResponseDto = ApiResponse<CreatedAssetItem[]>;
+
+export type ListAssetsResponseDto = ApiResponse<AssetDataResponseItem[]>;
 export type UpdateLifestyleProfileResponseDto = {
   lifestyleProfile: {
     smokingCode: string;

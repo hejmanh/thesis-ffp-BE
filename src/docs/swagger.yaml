@@ -207,6 +207,89 @@ paths:
               schema:
                 $ref: '#/components/schemas/CreateUserInfoResponse'
 
+  /user-info/assets:
+    get:
+      tags: [User Info]
+      summary: List all assets
+      description: 'Returns all post-FFP assets for the authenticated user. Each item includes a uid for use in update and delete operations.'
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListAssetsResponse'
+        401:
+          description: Unauthorized
+        404:
+          description: Profile not found
+    post:
+      tags: [User Info]
+      summary: Add assets
+      description: 'Adds one or more post-FFP assets to the profile. Returns the uid and amounts for each newly created asset.'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAssetsRequest'
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAssetsResponse'
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+    patch:
+      tags: [User Info]
+      summary: Partially update asset data
+      description: 'Updates only the provided asset items (identified by uid). Unmentioned assets are left unchanged.'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAssetDataRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+
+  /user-info/assets/{uid}:
+    delete:
+      tags: [User Info]
+      summary: Delete a single post-FFP asset
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: uid
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: UUID of the asset to delete (returned by GET /user-info)
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+
   /user-info/basic:
     patch:
       tags: [User Info]
@@ -270,49 +353,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/EmptyResponse'
 
-  /user-info/assets:
-    patch:
-      tags: [User Info]
-      summary: Partially update asset data
-      description: 'Updates only the provided asset items (identified by uid). Unmentioned assets are left unchanged.'
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateAssetDataRequest'
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmptyResponse'
-
-  /user-info/assets/{uid}:
-    delete:
-      tags: [User Info]
-      summary: Delete a single post-FFP asset
-      security:
-        - BearerAuth: []
-      parameters:
-        - in: path
-          name: uid
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: UUID of the asset to delete (returned by GET /user-info)
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmptyResponse'
-
   /user-info/lifestyle:
     patch:
       tags: [User Info]
@@ -339,7 +379,6 @@ paths:
                   estimatedLifeExpectancy:
                     type: number
                     example: 83
-
   /reference/currencies:
     get:
       tags: [Reference]
@@ -715,6 +754,54 @@ components:
           type: number
         rf:
           type: number
+    CreateAssetItem:
+      type: object
+      required: [assetTypeId, initialAnnualIncome, growthRate]
+      properties:
+        assetTypeId:
+          type: integer
+        initialAnnualIncome:
+          type: number
+          minimum: 0
+        growthRate:
+          type: number
+    CreateAssetsRequest:
+      type: object
+      required: [assetData]
+      properties:
+        assetData:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/CreateAssetItem'
+    CreatedAssetItem:
+      type: object
+      properties:
+        uid:
+          type: string
+          format: uuid
+        initialAnnualIncome:
+          type: number
+        growthRate:
+          type: number
+    CreateAssetsResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreatedAssetItem'
+    ListAssetsResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/AssetDataResponse'
     LifestyleProfileRequest:
       type: object
       required:

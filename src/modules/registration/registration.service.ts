@@ -7,6 +7,7 @@ import type {
   UpdateStageDataDto,
   UpdateAssetDataDto,
   UpdateLifestyleProfileDto,
+  CreateAssetDataDto,
 } from './dto/update-financial-profile.dto.js';
 import {
   getFinancialProfileDetails,
@@ -28,6 +29,7 @@ import {
   insertHabitsProfile,
   insertLifeStageProfile,
   insertPostFfpAsset,
+  insertPostFfpAssetReturning,
   insertPortfolioProfile,
   listAssetDataDetails,
   listEligibleLifeStageRangeIds,
@@ -667,4 +669,54 @@ export const deleteAssetService = async (
   }
 
   await deletePostFfpAsset(profile.profileId, uid);
+};
+
+export const createAssetsService = async (
+  userId: number,
+  data: CreateAssetDataDto,
+) => {
+  const profile = await findProfileContextByUserId(userId);
+  if (!profile) throw notFound('Profile not found');
+
+  if (!profile.hasFinancialProfile) {
+    throw badRequest('User info must be created before adding assets');
+  }
+
+  const requestedAssetTypeIds = data.assetData.map((a) => a.assetTypeId);
+  const existingAssetTypeIds = await findExistingAssetTypeIds(requestedAssetTypeIds);
+  if (existingAssetTypeIds.length !== requestedAssetTypeIds.length) {
+    throw badRequest('One or more assetTypeId values are invalid');
+  }
+
+  const inserted: { uid: string; initialAnnualIncome: number; growthRate: number }[] = [];
+
+  await withTransaction(async (client) => {
+    for (const asset of data.assetData) {
+      const row = await insertPostFfpAssetReturning(
+        profile.profileId,
+        asset.assetTypeId,
+        asset.initialAnnualIncome,
+        asset.growthRate,
+        client,
+      );
+      inserted.push(row);
+    }
+  });
+
+  return inserted;
+};
+
+export const listAssetsService = async (userId: number) => {
+  const profile = await findProfileContextByUserId(userId);
+  if (!profile) throw notFound('Profile not found');
+
+  const assets = await listAssetDataDetails(profile.profileId);
+  return assets.map((asset) => ({
+    uid: asset.uid,
+    assetId: asset.assetId,
+    assetTypeCode: asset.assetTypeCode,
+    assetTypeTitle: asset.assetTypeTitle,
+    initialAnnualIncome: asset.initialAnnualIncome ?? 0,
+    growthRate: asset.growthRate ?? 0,
+  }));
 };

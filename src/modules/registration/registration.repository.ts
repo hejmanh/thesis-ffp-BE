@@ -429,6 +429,36 @@ export const insertPostFfpAsset = async (
   );
 };
 
+export const insertPostFfpAssetReturning = async (
+  profileId: number,
+  assetTypeId: number,
+  initialAnnualIncome: number,
+  growthRate: number,
+  client: QueryClient = pool,
+) => {
+  const res = await execQuery(
+    client,
+    `
+      INSERT INTO post_ffp_asset (
+        profile_id,
+        asset_type_id,
+        initial_annual_income,
+        growth_rate
+      )
+      VALUES ($1, $2, $3, $4)
+      RETURNING uid::text AS "uid", initial_annual_income AS "initialAnnualIncome", growth_rate AS "growthRate"
+    `,
+    [profileId, assetTypeId, initialAnnualIncome, growthRate],
+  );
+
+  const row = res.rows[0];
+  return {
+    uid: row.uid as string,
+    initialAnnualIncome: Number(row.initialAnnualIncome),
+    growthRate: Number(row.growthRate),
+  };
+};
+
 export const listAssetDataDetails = async (
   profileId: number,
   client: QueryClient = pool,

@@ -8,6 +8,7 @@ import {
   UpdateLifestyleProfileDto,
   UpdatePortfolioAllocationsDto,
   UpdateStageDataDto,
+  CreateAssetDataDto,
 } from './dto/update-financial-profile.dto.js';
 import type {
   UpdateAssetDataResponseDto,
@@ -18,6 +19,8 @@ import type {
   UpdateLifestyleProfileResponseDto,
   UpdatePortfolioAllocationsResponseDto,
   UpdateStageDataResponseDto,
+  CreateAssetsResponseDto,
+  ListAssetsResponseDto,
 } from './dto/response.dto.js';
 import * as registrationService from './registration.service.js';
 
@@ -151,5 +154,36 @@ export const updateLifestyleProfileHandler = asyncHandler(
     const result = await registrationService.updateLifestyleProfileService(userId, data);
 
     res.json(result);
+  },
+);
+
+export const createAssetsHandler = asyncHandler(
+  async (req: Request, res: Response<CreateAssetsResponseDto>) => {
+    const userId = req.userId;
+    if (!userId) throw unauthorized('No token provided');
+
+    const data = CreateAssetDataDto.parse(req.body);
+    const result = await registrationService.createAssetsService(userId, data);
+
+    res.status(201).json({
+      success: true,
+      data: result,
+      message: 'Assets created',
+    });
+  },
+);
+
+export const listAssetsHandler = asyncHandler(
+  async (req: Request, res: Response<ListAssetsResponseDto>) => {
+    const userId = req.userId;
+    if (!userId) throw unauthorized('No token provided');
+
+    const result = await registrationService.listAssetsService(userId);
+
+    res.json({
+      success: true,
+      data: result,
+      message: 'Assets retrieved',
+    });
   },
 );

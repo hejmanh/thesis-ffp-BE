@@ -1,5 +1,32 @@
 import { z } from 'zod';
 
+export const CreateAssetItemDto = z.object({
+  assetTypeId: z.number().int().positive(),
+  initialAnnualIncome: z.number().min(0, 'initialAnnualIncome must be at least 0'),
+  growthRate: z.number(),
+});
+
+export const CreateAssetDataDto = z
+  .object({
+    assetData: z
+      .array(CreateAssetItemDto)
+      .min(1, 'At least one asset must be provided')
+      .superRefine((assets, ctx) => {
+        const seen = new Set<number>();
+        for (const asset of assets) {
+          if (seen.has(asset.assetTypeId)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Duplicate assetTypeId: ${asset.assetTypeId}`,
+            });
+          }
+          seen.add(asset.assetTypeId);
+        }
+      }),
+  });
+
+export type CreateAssetDataDto = z.infer<typeof CreateAssetDataDto>;
+
 export const PortfolioAllocationItemDto = z.object({
   allocationType: z.enum(['PRE_FFP', 'POST_FFP']),
   u: z.number().min(0, 'u must be at least 0').max(1, 'u must be at most 1'),
