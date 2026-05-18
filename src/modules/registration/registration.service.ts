@@ -17,7 +17,7 @@ import {
   findDietQualityAdjustmentByCode,
   findDietQualityTypeIdByCode,
   findExistingAssetTypeIds,
-  findExistingAssetIdsForProfile,
+  findExistingAssetUidsForProfile,
   findExistingLifeStageRangeIdsForProfile,
   findLifeExpectancyByCountryAndSex,
   findPhysicalActivityAdjustmentByCode,
@@ -428,6 +428,7 @@ export const getUserInfo = async (userId: number) => {
         }
 
         return {
+          uid: asset.uid,
           assetId: asset.assetId,
           assetTypeCode: asset.assetTypeCode,
           assetTypeTitle: asset.assetTypeTitle,
@@ -627,13 +628,13 @@ export const updateAssetDataService = async (
   const profile = await findProfileContextByUserId(userId);
   if (!profile) throw notFound('Profile not found');
 
-  const existingIds = await findExistingAssetIdsForProfile(profile.profileId);
-  const existingIdSet = new Set(existingIds);
+  const existingUids = await findExistingAssetUidsForProfile(profile.profileId);
+  const existingUidSet = new Set(existingUids);
 
   for (const asset of data) {
-    if (!existingIdSet.has(asset.assetId)) {
+    if (!existingUidSet.has(asset.uid)) {
       throw badRequest(
-        `assetId ${asset.assetId} does not exist in this profile`,
+        `Asset with uid ${asset.uid} does not exist in this profile`,
       );
     }
   }
@@ -642,7 +643,7 @@ export const updateAssetDataService = async (
     for (const asset of data) {
       await updatePostFfpAsset(
         profile.profileId,
-        asset.assetId,
+        asset.uid,
         {
           ...(asset.initialAnnualIncome !== undefined && { initialAnnualIncome: asset.initialAnnualIncome }),
           ...(asset.growthRate !== undefined && { growthRate: asset.growthRate }),
@@ -655,15 +656,15 @@ export const updateAssetDataService = async (
 
 export const deleteAssetService = async (
   userId: number,
-  assetId: number,
+  uid: string,
 ) => {
   const profile = await findProfileContextByUserId(userId);
   if (!profile) throw notFound('Profile not found');
 
-  const existingIds = await findExistingAssetIdsForProfile(profile.profileId);
-  if (!existingIds.includes(assetId)) {
-    throw notFound(`Asset with id ${assetId} not found in this profile`);
+  const existingUids = await findExistingAssetUidsForProfile(profile.profileId);
+  if (!existingUids.includes(uid)) {
+    throw notFound(`Asset with uid ${uid} not found in this profile`);
   }
 
-  await deletePostFfpAsset(profile.profileId, assetId);
+  await deletePostFfpAsset(profile.profileId, uid);
 };

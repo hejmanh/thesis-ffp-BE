@@ -39,6 +39,7 @@ export type StageDataDetails = {
 };
 
 export type AssetDataDetails = {
+  uid: string;
   assetId: number;
   assetTypeCode: string | null;
   assetTypeTitle: string | null;
@@ -436,6 +437,7 @@ export const listAssetDataDetails = async (
     client,
     `
       SELECT
+        pfa.uid::text AS "uid",
         pfa.id AS "assetId",
         at.code AS "assetTypeCode",
         at.title AS "assetTypeTitle",
@@ -452,6 +454,7 @@ export const listAssetDataDetails = async (
   return res.rows.map(
     (row) =>
       ({
+        uid: row.uid as string,
         assetId: Number(row.assetId),
         assetTypeCode: row.assetTypeCode ?? null,
         assetTypeTitle: row.assetTypeTitle ?? null,
@@ -601,12 +604,12 @@ export const updateLifeStageProfile = async (
 
 export const updatePostFfpAsset = async (
   profileId: number,
-  assetId: number,
+  uid: string,
   fields: { initialAnnualIncome?: number; growthRate?: number },
   client: QueryClient = pool,
 ) => {
   const setClauses: string[] = [];
-  const values: unknown[] = [profileId, assetId];
+  const values: unknown[] = [profileId, uid];
   let idx = 3;
 
   if (fields.initialAnnualIncome !== undefined) {
@@ -625,7 +628,7 @@ export const updatePostFfpAsset = async (
     `
       UPDATE post_ffp_asset
       SET ${setClauses.join(', ')}
-      WHERE profile_id = $1 AND id = $2
+      WHERE profile_id = $1 AND uid = $2
     `,
     values,
   );
@@ -633,13 +636,13 @@ export const updatePostFfpAsset = async (
 
 export const deletePostFfpAsset = async (
   profileId: number,
-  assetId: number,
+  uid: string,
   client: QueryClient = pool,
 ) => {
   await execQuery(
     client,
-    `DELETE FROM post_ffp_asset WHERE profile_id = $1 AND id = $2`,
-    [profileId, assetId],
+    `DELETE FROM post_ffp_asset WHERE profile_id = $1 AND uid = $2`,
+    [profileId, uid],
   );
 };
 
@@ -656,17 +659,17 @@ export const findExistingLifeStageRangeIdsForProfile = async (
   return res.rows.map((row) => Number(row.id));
 };
 
-export const findExistingAssetIdsForProfile = async (
+export const findExistingAssetUidsForProfile = async (
   profileId: number,
   client: QueryClient = pool,
 ) => {
   const res = await execQuery(
     client,
-    `SELECT id FROM post_ffp_asset WHERE profile_id = $1`,
+    `SELECT uid::text AS uid FROM post_ffp_asset WHERE profile_id = $1`,
     [profileId],
   );
 
-  return res.rows.map((row) => Number(row.id));
+  return res.rows.map((row) => row.uid as string);
 };
 
 export type LifestyleProfileDetails = {

@@ -20,6 +20,6 @@ router.patch('/portfolio', authMiddleware, updatePortfolioAllocationsHandler);
 router.patch('/stages', authMiddleware, updateStageDataHandler);
 router.patch('/assets', authMiddleware, updateAssetDataHandler);
 router.patch('/lifestyle', authMiddleware, updateLifestyleProfileHandler);
-router.delete('/assets/:assetId', authMiddleware, deleteAssetHandler);
+router.delete('/assets/:uid', authMiddleware, deleteAssetHandler);
 
 export default router;

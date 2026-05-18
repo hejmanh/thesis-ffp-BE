@@ -464,7 +464,8 @@ describe('Registration Service', () => {
     ]);
     asMock(registrationRepository.listAssetDataDetails).mockResolvedValue([
       {
-        assetTypeId: 7,
+        uid: 'aaaaaaaa-0000-0000-0000-000000000007',
+        assetId: 7,
         assetTypeCode: 'rental',
         assetTypeTitle: 'Rental Income',
         initialAnnualIncome: 6000,
@@ -517,7 +518,8 @@ describe('Registration Service', () => {
         ],
         assetData: [
           {
-            assetTypeId: 7,
+            uid: 'aaaaaaaa-0000-0000-0000-000000000007',
+            assetId: 7,
             initialAnnualIncome: 6000,
             growthRate: 0.02,
           },

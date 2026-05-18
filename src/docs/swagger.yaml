@@ -274,7 +274,7 @@ paths:
     patch:
       tags: [User Info]
       summary: Partially update asset data
-      description: 'Updates only the provided asset items (identified by assetId). Unmentioned assets are left unchanged.'
+      description: 'Updates only the provided asset items (identified by uid). Unmentioned assets are left unchanged.'
       security:
         - BearerAuth: []
       requestBody:
@@ -291,7 +291,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/EmptyResponse'
 
-  /user-info/assets/{assetId}:
+  /user-info/assets/{uid}:
     delete:
       tags: [User Info]
       summary: Delete a single post-FFP asset
@@ -299,11 +299,12 @@ paths:
         - BearerAuth: []
       parameters:
         - in: path
-          name: assetId
+          name: uid
           required: true
           schema:
-            type: integer
-          description: Row ID of the asset to delete (returned by GET /user-info)
+            type: string
+            format: uuid
+          description: UUID of the asset to delete (returned by GET /user-info)
       responses:
         200:
           description: OK
@@ -801,12 +802,13 @@ components:
         $ref: '#/components/schemas/UpdateStageItemRequest'
     UpdateAssetItemRequest:
       type: object
-      required: [assetId]
+      required: [uid]
       description: At least one of initialAnnualIncome or growthRate must be provided.
       properties:
-        assetId:
-          type: integer
-          description: Row ID of the asset to update (returned by GET /user-info).
+        uid:
+          type: string
+          format: uuid
+          description: UUID of the asset to update (returned by GET /user-info).
         initialAnnualIncome:
           type: number
           minimum: 0
@@ -872,9 +874,12 @@ components:
     AssetDataResponse:
       type: object
       properties:
+        uid:
+          type: string
+          format: uuid
+          description: UUID of this asset — use this to update or delete the specific asset.
         assetId:
           type: integer
-          description: Row ID of this asset — use this to update or delete the specific asset.
         assetTypeCode:
           type: string
           nullable: true

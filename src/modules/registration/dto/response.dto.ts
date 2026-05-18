@@ -6,6 +6,7 @@ type UserInfoDataDto = {
 };
 
 type AssetDataResponseItem = {
+  uid: string;
   assetId: number;
   assetTypeCode: string | null;
   assetTypeTitle: string | null;

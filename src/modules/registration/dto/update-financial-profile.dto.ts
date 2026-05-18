@@ -97,7 +97,7 @@ export type UpdateStageDataDto = z.infer<typeof UpdateStageDataDto>;
 
 const UpdateAssetItemDto = z
   .object({
-    assetId: z.number().int().positive(),
+    uid: z.string().uuid('uid must be a valid UUID'),
     initialAnnualIncome: z
       .number()
       .min(0, 'initialAnnualIncome must be at least 0')
@@ -117,15 +117,15 @@ export const UpdateAssetDataDto = z
   .array(UpdateAssetItemDto)
   .min(1, 'At least one asset must be provided')
   .superRefine((assets, ctx) => {
-    const seen = new Set<number>();
+    const seen = new Set<string>();
     for (const asset of assets) {
-      if (seen.has(asset.assetId)) {
+      if (seen.has(asset.uid)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Duplicate assetId: ${asset.assetId}`,
+          message: `Duplicate uid: ${asset.uid}`,
         });
       }
-      seen.add(asset.assetId);
+      seen.add(asset.uid);
     }
   });
 

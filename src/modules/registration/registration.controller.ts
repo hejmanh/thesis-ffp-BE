@@ -127,12 +127,12 @@ export const deleteAssetHandler = asyncHandler(
     const userId = req.userId;
     if (!userId) throw unauthorized('No token provided');
 
-    const assetId = Number(req.params['assetId']);
-    if (!Number.isInteger(assetId) || assetId <= 0) {
-      throw badRequest('Invalid assetId');
+    const uid = String(req.params['uid']);
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid)) {
+      throw badRequest('Invalid uid');
     }
 
-    await registrationService.deleteAssetService(userId, assetId);
+    await registrationService.deleteAssetService(userId, uid);
 
     res.json({
       success: true,
