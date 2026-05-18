@@ -271,16 +271,11 @@ export const listDietQualityTypes = async (
 export const findLifeExpectancyByUserProfile = async (userId: number) => {
   const res = await execQuery(
     pool,
-    `
-      SELECT lee.age
-      FROM life_expectancy_estimation lee
-      JOIN profile p ON p.country_id = lee.country_id AND p.sex_type_id = lee.sex_type_id
-      WHERE p.user_account_id = $1
-    `,
+    `SELECT estimated_life_expectancy FROM profile WHERE user_account_id = $1`,
     [userId],
   );
 
-  const age = res.rows[0]?.age;
+  const age = res.rows[0]?.estimated_life_expectancy;
   return age == null ? null : Number(age);
 };
 

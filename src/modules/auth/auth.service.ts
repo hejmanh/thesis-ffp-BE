@@ -3,6 +3,7 @@ import {
   createProfile,
   createUser,
   findUserByEmail,
+  updateEstimatedLifeExpectancy,
 } from './auth.repository.js';
 import { hashPassword, comparePassword } from '@/utils/auth/hash.js';
 import {
@@ -47,6 +48,8 @@ export const register = async (data: RegisterDto) => {
       data.sexTypeId,
       client,
     );
+
+    await updateEstimatedLifeExpectancy(userId, client);
 
     // verification token
     const { raw: rawToken, hashed: hashedToken } = generateOneTimeToken();

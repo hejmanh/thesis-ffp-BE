@@ -48,6 +48,25 @@ export const createProfile = async (
   );
 };
 
+export const updateEstimatedLifeExpectancy = async (
+  userAccountId: number,
+  client: QueryClient = pool,
+) => {
+  await execQuery(
+    client,
+    `UPDATE profile
+      SET estimated_life_expectancy = (
+        SELECT lee.age
+        FROM life_expectancy_estimation lee
+        WHERE lee.country_id = profile.country_id
+          AND lee.sex_type_id = profile.sex_type_id
+        LIMIT 1
+      )
+      WHERE user_account_id = $1`,
+    [userAccountId],
+  );
+};
+
 export const findUserByEmail = async (
   email: string,
   client: QueryClient = pool,
