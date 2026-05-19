@@ -86,4 +86,6 @@ export const AlcoholConsumptionTypeDto = z.object({
   adjustmentYears: z.number().nullable(),
 });
 
-export type AlcoholConsumptionTypeDto = z.infer<typeof AlcoholConsumptionTypeDto>;
+export type AlcoholConsumptionTypeDto = z.infer<
+  typeof AlcoholConsumptionTypeDto
+>;

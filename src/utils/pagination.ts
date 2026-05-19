@@ -18,7 +18,9 @@ export type PaginationMeta = {
   totalPages: number;
 };
 
-export const parsePaginationParams = (query: PaginationParams): Pagination | null => {
+export const parsePaginationParams = (
+  query: PaginationParams,
+): Pagination | null => {
   const page = query.page;
   const pageSize = query.pageSize;
   const shouldPaginate = page != null || pageSize != null;

@@ -131,7 +131,11 @@ export const deleteAssetHandler = asyncHandler(
     if (!userId) throw unauthorized('No token provided');
 
     const uid = String(req.params['uid']);
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        uid,
+      )
+    ) {
       throw badRequest('Invalid uid');
     }
 
@@ -151,9 +155,16 @@ export const updateLifestyleProfileHandler = asyncHandler(
     if (!userId) throw unauthorized('No token provided');
 
     const data = UpdateLifestyleProfileDto.parse(req.body);
-    const result = await registrationService.updateLifestyleProfileService(userId, data);
+    const result = await registrationService.updateLifestyleProfileService(
+      userId,
+      data,
+    );
 
-    res.json(result);
+    res.status(201).json({
+      success: true,
+      data: result,
+      message: 'Lifestyle profile updated',
+    });
   },
 );
 

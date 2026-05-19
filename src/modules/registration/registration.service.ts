@@ -111,7 +111,8 @@ const roundEstimatedLifeExpectancy = (
     ),
   );
 
-const getCurrentAge = (birthYear: number) => new Date().getFullYear() - birthYear;
+const getCurrentAge = (birthYear: number) =>
+  new Date().getFullYear() - birthYear;
 
 const validateStageData = (
   eligibleLifeStageRangeIds: number[],
@@ -125,7 +126,9 @@ const validateStageData = (
     providedIds.length !== eligibleLifeStageRangeIds.length ||
     providedIdSet.size !== providedIds.length
   ) {
-    throw badRequest('stageData must match the life stages returned by the server');
+    throw badRequest(
+      'stageData must match the life stages returned by the server',
+    );
   }
 
   for (const id of providedIdSet) {
@@ -356,23 +359,22 @@ export const getUserInfo = async (userId: number) => {
     stageData,
     assetData,
     lifestyleProfile,
-  ] =
-    await Promise.all([
-      getFinancialProfileDetails(profile.profileId),
-      listPortfolioAllocationDetails(profile.profileId),
-      listStageDataDetails(profile.profileId),
-      listAssetDataDetails(profile.profileId),
-      getHabitsProfileDetails(profile.profileId),
-    ]);
+  ] = await Promise.all([
+    getFinancialProfileDetails(profile.profileId),
+    listPortfolioAllocationDetails(profile.profileId),
+    listStageDataDetails(profile.profileId),
+    listAssetDataDetails(profile.profileId),
+    getHabitsProfileDetails(profile.profileId),
+  ]);
 
   if (
-     !financialProfile ||
-     !lifestyleProfile ||
-     !lifestyleProfile.smokingCode ||
-     !lifestyleProfile.alcoholConsumptionCode ||
-     !lifestyleProfile.dietQualityCode ||
-     !lifestyleProfile.physicalActivityCode
-  ){
+    !financialProfile ||
+    !lifestyleProfile ||
+    !lifestyleProfile.smokingCode ||
+    !lifestyleProfile.alcoholConsumptionCode ||
+    !lifestyleProfile.dietQualityCode ||
+    !lifestyleProfile.physicalActivityCode
+  ) {
     throw notFound('User info not found');
   }
 
@@ -422,10 +424,7 @@ export const getUserInfo = async (userId: number) => {
         };
       }),
       assetData: assetData.map((asset) => {
-        if (
-          asset.initialAnnualIncome === null ||
-          asset.growthRate === null
-        ) {
+        if (asset.initialAnnualIncome === null || asset.growthRate === null) {
           throw notFound('User info not found');
         }
 
@@ -500,18 +499,28 @@ export const updateLifestyleProfileService = async (
     findLifeExpectancyByCountryAndSex(profile.countryId, profile.sexTypeId),
   ]);
 
-  if (smokingTypeId == null || smokingAdjustment == null) throw badRequest('Invalid smokingCode');
-  if (physicalActivityTypeId == null || physicalActivityAdjustment == null) throw badRequest('Invalid physicalActivityCode');
-  if (dietQualityTypeId == null || dietQualityAdjustment == null) throw badRequest('Invalid dietQualityCode');
-  if (alcoholConsumptionTypeId == null || alcoholConsumptionAdjustment == null) throw badRequest('Invalid alcoholConsumptionCode');
-  if (baseLifeExpectancy == null) throw badRequest('Life expectancy data is unavailable for your country and sex');
+  if (smokingTypeId == null || smokingAdjustment == null)
+    throw badRequest('Invalid smokingCode');
+  if (physicalActivityTypeId == null || physicalActivityAdjustment == null)
+    throw badRequest('Invalid physicalActivityCode');
+  if (dietQualityTypeId == null || dietQualityAdjustment == null)
+    throw badRequest('Invalid dietQualityCode');
+  if (alcoholConsumptionTypeId == null || alcoholConsumptionAdjustment == null)
+    throw badRequest('Invalid alcoholConsumptionCode');
+  if (baseLifeExpectancy == null)
+    throw badRequest(
+      'Life expectancy data is unavailable for your country and sex',
+    );
 
-  const estimatedLifeExpectancy = roundEstimatedLifeExpectancy(baseLifeExpectancy, [
-    smokingAdjustment,
-    physicalActivityAdjustment,
-    dietQualityAdjustment,
-    alcoholConsumptionAdjustment,
-  ]);
+  const estimatedLifeExpectancy = roundEstimatedLifeExpectancy(
+    baseLifeExpectancy,
+    [
+      smokingAdjustment,
+      physicalActivityAdjustment,
+      dietQualityAdjustment,
+      alcoholConsumptionAdjustment,
+    ],
+  );
 
   await withTransaction(async (client) => {
     await updateHabitsProfile(
@@ -522,7 +531,11 @@ export const updateLifestyleProfileService = async (
       alcoholConsumptionTypeId,
       client,
     );
-    await updateEstimatedLifeExpectancy(profile.profileId, estimatedLifeExpectancy, client);
+    await updateEstimatedLifeExpectancy(
+      profile.profileId,
+      estimatedLifeExpectancy,
+      client,
+    );
   });
 
   return {
@@ -555,8 +568,12 @@ export const updateFinancialProfileBasicService = async (
   }
 
   await updateFinancialProfileBasic(profile.profileId, {
-    ...(data.currentSavings !== undefined && { currentSavings: data.currentSavings }),
-    ...(data.desiredLifeExpectancy !== undefined && { desiredLifeExpectancy: data.desiredLifeExpectancy }),
+    ...(data.currentSavings !== undefined && {
+      currentSavings: data.currentSavings,
+    }),
+    ...(data.desiredLifeExpectancy !== undefined && {
+      desiredLifeExpectancy: data.desiredLifeExpectancy,
+    }),
     ...(preferredCurrencyId !== undefined && { preferredCurrencyId }),
   });
 };
@@ -597,7 +614,9 @@ export const updateStageDataService = async (
     throw badRequest('Stage data does not exist yet');
   }
 
-  const existingIds = await findExistingLifeStageRangeIdsForProfile(profile.profileId);
+  const existingIds = await findExistingLifeStageRangeIdsForProfile(
+    profile.profileId,
+  );
   const existingIdSet = new Set(existingIds);
 
   for (const stage of data) {
@@ -614,8 +633,12 @@ export const updateStageDataService = async (
         profile.profileId,
         stage.lifeStageRangeId,
         {
-          ...(stage.initialAnnualSavings !== undefined && { initialAnnualSavings: stage.initialAnnualSavings }),
-          ...(stage.growthRate !== undefined && { growthRate: stage.growthRate }),
+          ...(stage.initialAnnualSavings !== undefined && {
+            initialAnnualSavings: stage.initialAnnualSavings,
+          }),
+          ...(stage.growthRate !== undefined && {
+            growthRate: stage.growthRate,
+          }),
         },
         client,
       );
@@ -647,8 +670,12 @@ export const updateAssetDataService = async (
         profile.profileId,
         asset.uid,
         {
-          ...(asset.initialAnnualIncome !== undefined && { initialAnnualIncome: asset.initialAnnualIncome }),
-          ...(asset.growthRate !== undefined && { growthRate: asset.growthRate }),
+          ...(asset.initialAnnualIncome !== undefined && {
+            initialAnnualIncome: asset.initialAnnualIncome,
+          }),
+          ...(asset.growthRate !== undefined && {
+            growthRate: asset.growthRate,
+          }),
         },
         client,
       );
@@ -656,10 +683,7 @@ export const updateAssetDataService = async (
   });
 };
 
-export const deleteAssetService = async (
-  userId: number,
-  uid: string,
-) => {
+export const deleteAssetService = async (userId: number, uid: string) => {
   const profile = await findProfileContextByUserId(userId);
   if (!profile) throw notFound('Profile not found');
 
@@ -683,12 +707,18 @@ export const createAssetsService = async (
   }
 
   const requestedAssetTypeIds = data.assetData.map((a) => a.assetTypeId);
-  const existingAssetTypeIds = await findExistingAssetTypeIds(requestedAssetTypeIds);
+  const existingAssetTypeIds = await findExistingAssetTypeIds(
+    requestedAssetTypeIds,
+  );
   if (existingAssetTypeIds.length !== requestedAssetTypeIds.length) {
     throw badRequest('One or more assetTypeId values are invalid');
   }
 
-  const inserted: { uid: string; initialAnnualIncome: number; growthRate: number }[] = [];
+  const inserted: {
+    uid: string;
+    initialAnnualIncome: number;
+    growthRate: number;
+  }[] = [];
 
   await withTransaction(async (client) => {
     for (const asset of data.assetData) {

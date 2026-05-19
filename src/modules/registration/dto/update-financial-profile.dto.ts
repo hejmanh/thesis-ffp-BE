@@ -2,28 +2,29 @@ import { z } from 'zod';
 
 export const CreateAssetItemDto = z.object({
   assetTypeId: z.number().int().positive(),
-  initialAnnualIncome: z.number().min(0, 'initialAnnualIncome must be at least 0'),
+  initialAnnualIncome: z
+    .number()
+    .min(0, 'initialAnnualIncome must be at least 0'),
   growthRate: z.number(),
 });
 
-export const CreateAssetDataDto = z
-  .object({
-    assetData: z
-      .array(CreateAssetItemDto)
-      .min(1, 'At least one asset must be provided')
-      .superRefine((assets, ctx) => {
-        const seen = new Set<number>();
-        for (const asset of assets) {
-          if (seen.has(asset.assetTypeId)) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `Duplicate assetTypeId: ${asset.assetTypeId}`,
-            });
-          }
-          seen.add(asset.assetTypeId);
+export const CreateAssetDataDto = z.object({
+  assetData: z
+    .array(CreateAssetItemDto)
+    .min(1, 'At least one asset must be provided')
+    .superRefine((assets, ctx) => {
+      const seen = new Set<number>();
+      for (const asset of assets) {
+        if (seen.has(asset.assetTypeId)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Duplicate assetTypeId: ${asset.assetTypeId}`,
+          });
         }
-      }),
-  });
+        seen.add(asset.assetTypeId);
+      }
+    }),
+});
 
 export type CreateAssetDataDto = z.infer<typeof CreateAssetDataDto>;
 
@@ -34,7 +35,10 @@ export const PortfolioAllocationItemDto = z.object({
   rf: z.number().min(0, 'rf must be at least 0'),
 });
 
-export const portfolioAllocationsRefine = (allocations: { allocationType: 'PRE_FFP' | 'POST_FFP' }[], ctx: z.RefinementCtx) => {
+export const portfolioAllocationsRefine = (
+  allocations: { allocationType: 'PRE_FFP' | 'POST_FFP' }[],
+  ctx: z.RefinementCtx,
+) => {
   const allocationTypes = new Set(allocations.map((a) => a.allocationType));
 
   if (!allocationTypes.has('PRE_FFP')) {
@@ -54,7 +58,8 @@ export const portfolioAllocationsRefine = (allocations: { allocationType: 'PRE_F
   if (allocationTypes.size !== allocations.length) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'portfolioAllocations must not contain duplicate allocationType values',
+      message:
+        'portfolioAllocations must not contain duplicate allocationType values',
     });
   }
 };

@@ -26,6 +26,10 @@ router.get('/smoking-types', getSmokingTypes);
 router.get('/physical-activity-types', getPhysicalActivityTypes);
 router.get('/diet-quality-types', getDietQualityTypes);
 router.get('/alcohol-consumption-types', getAlcoholConsumptionTypes);
-router.get('/estimate-life-expectancy', authMiddleware, getEstimateLifeExpectancy);
+router.get(
+  '/estimate-life-expectancy',
+  authMiddleware,
+  getEstimateLifeExpectancy,
+);
 
 export default router;

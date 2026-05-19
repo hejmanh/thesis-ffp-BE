@@ -39,7 +39,7 @@ type CreatedAssetItem = {
 export type CreateAssetsResponseDto = ApiResponse<CreatedAssetItem[]>;
 
 export type ListAssetsResponseDto = ApiResponse<AssetDataResponseItem[]>;
-export type UpdateLifestyleProfileResponseDto = {
+type LifestyleProfileData = {
   lifestyleProfile: {
     smokingCode: string;
     physicalActivityCode: string;
@@ -48,3 +48,6 @@ export type UpdateLifestyleProfileResponseDto = {
   };
   estimatedLifeExpectancy: number;
 };
+
+export type UpdateLifestyleProfileResponseDto =
+  ApiResponse<LifestyleProfileData>;

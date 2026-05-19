@@ -55,38 +55,52 @@ describe('Registration Service', () => {
   });
 
   it('creates user info and computes estimated life expectancy', async () => {
-    asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue({
-      profileId: 11,
-      profileUid: 'profile-uuid',
-      birthYear: 2000,
-      countryId: 22,
-      sexTypeId: 33,
-      hasFinancialProfile: false,
-      hasHabitsProfile: false,
-      hasPortfolioProfile: false,
-      hasLifeStageProfile: false,
-      hasPostFfpAsset: false,
-    });
+    asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(
+      {
+        profileId: 11,
+        profileUid: 'profile-uuid',
+        birthYear: 2000,
+        countryId: 22,
+        sexTypeId: 33,
+        hasFinancialProfile: false,
+        hasHabitsProfile: false,
+        hasPortfolioProfile: false,
+        hasLifeStageProfile: false,
+        hasPostFfpAsset: false,
+      },
+    );
     asMock(registrationRepository.findCurrencyIdByCode).mockResolvedValue(44);
     asMock(
       registrationRepository.findLifeExpectancyByCountryAndSex,
     ).mockResolvedValue(80.4);
-    asMock(registrationRepository.findSmokingAdjustmentByCode).mockResolvedValue(0);
-    asMock(registrationRepository.findPhysicalActivityAdjustmentByCode).mockResolvedValue(2.5);
-    asMock(registrationRepository.findDietQualityAdjustmentByCode).mockResolvedValue(0);
+    asMock(
+      registrationRepository.findSmokingAdjustmentByCode,
+    ).mockResolvedValue(0);
+    asMock(
+      registrationRepository.findPhysicalActivityAdjustmentByCode,
+    ).mockResolvedValue(2.5);
+    asMock(
+      registrationRepository.findDietQualityAdjustmentByCode,
+    ).mockResolvedValue(0);
     asMock(
       registrationRepository.findAlcoholConsumptionAdjustmentByCode,
     ).mockResolvedValue(0);
     asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(1);
-    asMock(registrationRepository.findPhysicalActivityTypeIdByCode).mockResolvedValue(2);
-    asMock(registrationRepository.findDietQualityTypeIdByCode).mockResolvedValue(3);
+    asMock(
+      registrationRepository.findPhysicalActivityTypeIdByCode,
+    ).mockResolvedValue(2);
+    asMock(
+      registrationRepository.findDietQualityTypeIdByCode,
+    ).mockResolvedValue(3);
     asMock(
       registrationRepository.findAlcoholConsumptionTypeIdByCode,
     ).mockResolvedValue(4);
-    asMock(registrationRepository.listEligibleLifeStageRangeIds).mockResolvedValue([
-      101, 102,
+    asMock(
+      registrationRepository.listEligibleLifeStageRangeIds,
+    ).mockResolvedValue([101, 102]);
+    asMock(registrationRepository.findExistingAssetTypeIds).mockResolvedValue([
+      7, 8,
     ]);
-    asMock(registrationRepository.findExistingAssetTypeIds).mockResolvedValue([7, 8]);
 
     const result = await registrationService.createUserInfo(99, {
       userInfo: {
@@ -195,15 +209,12 @@ describe('Registration Service', () => {
         ],
       },
     });
-    expect(registrationRepository.updateProfileFinancialProfile).toHaveBeenCalledWith(
-      11,
-      50000,
-      90,
-      83,
-      44,
-      expect.anything(),
+    expect(
+      registrationRepository.updateProfileFinancialProfile,
+    ).toHaveBeenCalledWith(11, 50000, 90, 83, 44, expect.anything());
+    expect(registrationRepository.insertPortfolioProfile).toHaveBeenCalledTimes(
+      2,
     );
-    expect(registrationRepository.insertPortfolioProfile).toHaveBeenCalledTimes(2);
     expect(registrationRepository.insertHabitsProfile).toHaveBeenCalledWith(
       11,
       1,
@@ -212,23 +223,27 @@ describe('Registration Service', () => {
       4,
       expect.anything(),
     );
-    expect(registrationRepository.insertLifeStageProfile).toHaveBeenCalledTimes(2);
+    expect(registrationRepository.insertLifeStageProfile).toHaveBeenCalledTimes(
+      2,
+    );
     expect(registrationRepository.insertPostFfpAsset).toHaveBeenCalledTimes(2);
   });
 
   it('rejects when user info already exists', async () => {
-    asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue({
-      profileId: 11,
-      profileUid: 'profile-uuid',
-      birthYear: 2000,
-      countryId: 22,
-      sexTypeId: 33,
-      hasFinancialProfile: true,
-      hasHabitsProfile: false,
-      hasPortfolioProfile: false,
-      hasLifeStageProfile: false,
-      hasPostFfpAsset: false,
-    });
+    asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(
+      {
+        profileId: 11,
+        profileUid: 'profile-uuid',
+        birthYear: 2000,
+        countryId: 22,
+        sexTypeId: 33,
+        hasFinancialProfile: true,
+        hasHabitsProfile: false,
+        hasPortfolioProfile: false,
+        hasLifeStageProfile: false,
+        hasPostFfpAsset: false,
+      },
+    );
 
     await expect(
       registrationService.createUserInfo(99, {
@@ -270,42 +285,58 @@ describe('Registration Service', () => {
       }),
     ).rejects.toBeTruthy();
 
-    expect(registrationRepository.updateProfileFinancialProfile).not.toHaveBeenCalled();
+    expect(
+      registrationRepository.updateProfileFinancialProfile,
+    ).not.toHaveBeenCalled();
   });
 
   it('rejects when life expectancy data is unavailable', async () => {
-    asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue({
-      profileId: 11,
-      profileUid: 'profile-uuid',
-      birthYear: 2000,
-      countryId: 22,
-      sexTypeId: 33,
-      hasFinancialProfile: false,
-      hasHabitsProfile: false,
-      hasPortfolioProfile: false,
-      hasLifeStageProfile: false,
-      hasPostFfpAsset: false,
-    });
+    asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(
+      {
+        profileId: 11,
+        profileUid: 'profile-uuid',
+        birthYear: 2000,
+        countryId: 22,
+        sexTypeId: 33,
+        hasFinancialProfile: false,
+        hasHabitsProfile: false,
+        hasPortfolioProfile: false,
+        hasLifeStageProfile: false,
+        hasPostFfpAsset: false,
+      },
+    );
     asMock(registrationRepository.findCurrencyIdByCode).mockResolvedValue(44);
     asMock(
       registrationRepository.findLifeExpectancyByCountryAndSex,
     ).mockResolvedValue(null);
-    asMock(registrationRepository.findSmokingAdjustmentByCode).mockResolvedValue(0);
-    asMock(registrationRepository.findPhysicalActivityAdjustmentByCode).mockResolvedValue(2.5);
-    asMock(registrationRepository.findDietQualityAdjustmentByCode).mockResolvedValue(0);
+    asMock(
+      registrationRepository.findSmokingAdjustmentByCode,
+    ).mockResolvedValue(0);
+    asMock(
+      registrationRepository.findPhysicalActivityAdjustmentByCode,
+    ).mockResolvedValue(2.5);
+    asMock(
+      registrationRepository.findDietQualityAdjustmentByCode,
+    ).mockResolvedValue(0);
     asMock(
       registrationRepository.findAlcoholConsumptionAdjustmentByCode,
     ).mockResolvedValue(0);
     asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(1);
-    asMock(registrationRepository.findPhysicalActivityTypeIdByCode).mockResolvedValue(2);
-    asMock(registrationRepository.findDietQualityTypeIdByCode).mockResolvedValue(3);
+    asMock(
+      registrationRepository.findPhysicalActivityTypeIdByCode,
+    ).mockResolvedValue(2);
+    asMock(
+      registrationRepository.findDietQualityTypeIdByCode,
+    ).mockResolvedValue(3);
     asMock(
       registrationRepository.findAlcoholConsumptionTypeIdByCode,
     ).mockResolvedValue(4);
-    asMock(registrationRepository.listEligibleLifeStageRangeIds).mockResolvedValue([
-      101, 102,
-    ]);
-    asMock(registrationRepository.findExistingAssetTypeIds).mockResolvedValue([]);
+    asMock(
+      registrationRepository.listEligibleLifeStageRangeIds,
+    ).mockResolvedValue([101, 102]);
+    asMock(registrationRepository.findExistingAssetTypeIds).mockResolvedValue(
+      [],
+    );
 
     await expect(
       registrationService.createUserInfo(99, {
@@ -354,38 +385,52 @@ describe('Registration Service', () => {
   });
 
   it('rejects when stageData does not match the server-provided life stages', async () => {
-    asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue({
-      profileId: 11,
-      profileUid: 'profile-uuid',
-      birthYear: 2000,
-      countryId: 22,
-      sexTypeId: 33,
-      hasFinancialProfile: false,
-      hasHabitsProfile: false,
-      hasPortfolioProfile: false,
-      hasLifeStageProfile: false,
-      hasPostFfpAsset: false,
-    });
+    asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(
+      {
+        profileId: 11,
+        profileUid: 'profile-uuid',
+        birthYear: 2000,
+        countryId: 22,
+        sexTypeId: 33,
+        hasFinancialProfile: false,
+        hasHabitsProfile: false,
+        hasPortfolioProfile: false,
+        hasLifeStageProfile: false,
+        hasPostFfpAsset: false,
+      },
+    );
     asMock(registrationRepository.findCurrencyIdByCode).mockResolvedValue(44);
     asMock(
       registrationRepository.findLifeExpectancyByCountryAndSex,
     ).mockResolvedValue(80.4);
-    asMock(registrationRepository.findSmokingAdjustmentByCode).mockResolvedValue(0);
-    asMock(registrationRepository.findPhysicalActivityAdjustmentByCode).mockResolvedValue(2.5);
-    asMock(registrationRepository.findDietQualityAdjustmentByCode).mockResolvedValue(0);
+    asMock(
+      registrationRepository.findSmokingAdjustmentByCode,
+    ).mockResolvedValue(0);
+    asMock(
+      registrationRepository.findPhysicalActivityAdjustmentByCode,
+    ).mockResolvedValue(2.5);
+    asMock(
+      registrationRepository.findDietQualityAdjustmentByCode,
+    ).mockResolvedValue(0);
     asMock(
       registrationRepository.findAlcoholConsumptionAdjustmentByCode,
     ).mockResolvedValue(0);
     asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(1);
-    asMock(registrationRepository.findPhysicalActivityTypeIdByCode).mockResolvedValue(2);
-    asMock(registrationRepository.findDietQualityTypeIdByCode).mockResolvedValue(3);
+    asMock(
+      registrationRepository.findPhysicalActivityTypeIdByCode,
+    ).mockResolvedValue(2);
+    asMock(
+      registrationRepository.findDietQualityTypeIdByCode,
+    ).mockResolvedValue(3);
     asMock(
       registrationRepository.findAlcoholConsumptionTypeIdByCode,
     ).mockResolvedValue(4);
-    asMock(registrationRepository.listEligibleLifeStageRangeIds).mockResolvedValue([
-      101, 102,
-    ]);
-    asMock(registrationRepository.findExistingAssetTypeIds).mockResolvedValue([]);
+    asMock(
+      registrationRepository.listEligibleLifeStageRangeIds,
+    ).mockResolvedValue([101, 102]);
+    asMock(registrationRepository.findExistingAssetTypeIds).mockResolvedValue(
+      [],
+    );
 
     await expect(
       registrationService.createUserInfo(99, {
@@ -429,25 +474,31 @@ describe('Registration Service', () => {
   });
 
   it('returns the created user info data', async () => {
-    asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue({
-      profileId: 11,
-      profileUid: 'profile-uuid',
-      birthYear: 2000,
-      countryId: 22,
-      sexTypeId: 33,
-      hasFinancialProfile: true,
-      hasHabitsProfile: true,
-      hasPortfolioProfile: true,
-      hasLifeStageProfile: true,
-      hasPostFfpAsset: true,
-    });
-    asMock(registrationRepository.getFinancialProfileDetails).mockResolvedValue({
-      currentSavings: 50000,
-      desiredLifeExpectancy: 90,
-      estimatedLifeExpectancy: 83,
-      currencyCode: 'USD',
-    });
-    asMock(registrationRepository.listPortfolioAllocationDetails).mockResolvedValue([
+    asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(
+      {
+        profileId: 11,
+        profileUid: 'profile-uuid',
+        birthYear: 2000,
+        countryId: 22,
+        sexTypeId: 33,
+        hasFinancialProfile: true,
+        hasHabitsProfile: true,
+        hasPortfolioProfile: true,
+        hasLifeStageProfile: true,
+        hasPostFfpAsset: true,
+      },
+    );
+    asMock(registrationRepository.getFinancialProfileDetails).mockResolvedValue(
+      {
+        currentSavings: 50000,
+        desiredLifeExpectancy: 90,
+        estimatedLifeExpectancy: 83,
+        currencyCode: 'USD',
+      },
+    );
+    asMock(
+      registrationRepository.listPortfolioAllocationDetails,
+    ).mockResolvedValue([
       {
         allocationType: 'PRE_FFP',
         u: 0.7,
@@ -541,18 +592,20 @@ describe('Registration Service', () => {
   });
 
   it('rejects when user info has not been created yet', async () => {
-    asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue({
-      profileId: 11,
-      profileUid: 'profile-uuid',
-      birthYear: 2000,
-      countryId: 22,
-      sexTypeId: 33,
-      hasFinancialProfile: false,
-      hasHabitsProfile: false,
-      hasPortfolioProfile: false,
-      hasLifeStageProfile: false,
-      hasPostFfpAsset: false,
-    });
+    asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(
+      {
+        profileId: 11,
+        profileUid: 'profile-uuid',
+        birthYear: 2000,
+        countryId: 22,
+        sexTypeId: 33,
+        hasFinancialProfile: false,
+        hasHabitsProfile: false,
+        hasPortfolioProfile: false,
+        hasLifeStageProfile: false,
+        hasPostFfpAsset: false,
+      },
+    );
 
     await expect(registrationService.getUserInfo(99)).rejects.toBeTruthy();
   });
@@ -562,19 +615,21 @@ describe('Registration Service', () => {
   // ---------------------------------------------------------------------------
 
   const mockFullProfile = (overrides: Record<string, unknown> = {}) =>
-    asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue({
-      profileId: 11,
-      profileUid: 'profile-uuid',
-      birthYear: 2000,
-      countryId: 22,
-      sexTypeId: 33,
-      hasFinancialProfile: true,
-      hasHabitsProfile: true,
-      hasPortfolioProfile: true,
-      hasLifeStageProfile: true,
-      hasPostFfpAsset: true,
-      ...overrides,
-    });
+    asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(
+      {
+        profileId: 11,
+        profileUid: 'profile-uuid',
+        birthYear: 2000,
+        countryId: 22,
+        sexTypeId: 33,
+        hasFinancialProfile: true,
+        hasHabitsProfile: true,
+        hasPortfolioProfile: true,
+        hasLifeStageProfile: true,
+        hasPostFfpAsset: true,
+        ...overrides,
+      },
+    );
 
   // ---------------------------------------------------------------------------
   // updateFinancialProfileBasicService
@@ -590,8 +645,12 @@ describe('Registration Service', () => {
         currencyCode: 'EUR',
       });
 
-      expect(registrationRepository.findCurrencyIdByCode).toHaveBeenCalledWith('EUR');
-      expect(registrationRepository.updateFinancialProfileBasic).toHaveBeenCalledWith(11, {
+      expect(registrationRepository.findCurrencyIdByCode).toHaveBeenCalledWith(
+        'EUR',
+      );
+      expect(
+        registrationRepository.updateFinancialProfileBasic,
+      ).toHaveBeenCalledWith(11, {
         currentSavings: 60000,
         preferredCurrencyId: 44,
       });
@@ -604,17 +663,25 @@ describe('Registration Service', () => {
         desiredLifeExpectancy: 95,
       });
 
-      expect(registrationRepository.findCurrencyIdByCode).not.toHaveBeenCalled();
-      expect(registrationRepository.updateFinancialProfileBasic).toHaveBeenCalledWith(11, {
+      expect(
+        registrationRepository.findCurrencyIdByCode,
+      ).not.toHaveBeenCalled();
+      expect(
+        registrationRepository.updateFinancialProfileBasic,
+      ).toHaveBeenCalledWith(11, {
         desiredLifeExpectancy: 95,
       });
     });
 
     it('throws when profile is not found', async () => {
-      asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(null);
+      asMock(
+        registrationRepository.findProfileContextByUserId,
+      ).mockResolvedValue(null);
 
       await expect(
-        registrationService.updateFinancialProfileBasicService(99, { currentSavings: 1000 }),
+        registrationService.updateFinancialProfileBasicService(99, {
+          currentSavings: 1000,
+        }),
       ).rejects.toBeTruthy();
     });
 
@@ -622,19 +689,29 @@ describe('Registration Service', () => {
       mockFullProfile({ hasFinancialProfile: false });
 
       await expect(
-        registrationService.updateFinancialProfileBasicService(99, { currentSavings: 1000 }),
+        registrationService.updateFinancialProfileBasicService(99, {
+          currentSavings: 1000,
+        }),
       ).rejects.toBeTruthy();
-      expect(registrationRepository.updateFinancialProfileBasic).not.toHaveBeenCalled();
+      expect(
+        registrationRepository.updateFinancialProfileBasic,
+      ).not.toHaveBeenCalled();
     });
 
     it('throws when currencyCode is invalid', async () => {
       mockFullProfile();
-      asMock(registrationRepository.findCurrencyIdByCode).mockResolvedValue(null);
+      asMock(registrationRepository.findCurrencyIdByCode).mockResolvedValue(
+        null,
+      );
 
       await expect(
-        registrationService.updateFinancialProfileBasicService(99, { currencyCode: 'XYZ' }),
+        registrationService.updateFinancialProfileBasicService(99, {
+          currencyCode: 'XYZ',
+        }),
       ).rejects.toBeTruthy();
-      expect(registrationRepository.updateFinancialProfileBasic).not.toHaveBeenCalled();
+      expect(
+        registrationRepository.updateFinancialProfileBasic,
+      ).not.toHaveBeenCalled();
     });
   });
 
@@ -651,17 +728,28 @@ describe('Registration Service', () => {
         { allocationType: 'POST_FFP', u: 0.4, mu: 0.08, rf: 0.02 },
       ]);
 
-      expect(registrationRepository.updatePortfolioAllocation).toHaveBeenCalledTimes(2);
-      expect(registrationRepository.updatePortfolioAllocation).toHaveBeenCalledWith(
-        11, 'PRE_FFP', 0.6, 0.1, 0.02, expect.anything(),
-      );
-      expect(registrationRepository.updatePortfolioAllocation).toHaveBeenCalledWith(
-        11, 'POST_FFP', 0.4, 0.08, 0.02, expect.anything(),
+      expect(
+        registrationRepository.updatePortfolioAllocation,
+      ).toHaveBeenCalledTimes(2);
+      expect(
+        registrationRepository.updatePortfolioAllocation,
+      ).toHaveBeenCalledWith(11, 'PRE_FFP', 0.6, 0.1, 0.02, expect.anything());
+      expect(
+        registrationRepository.updatePortfolioAllocation,
+      ).toHaveBeenCalledWith(
+        11,
+        'POST_FFP',
+        0.4,
+        0.08,
+        0.02,
+        expect.anything(),
       );
     });
 
     it('throws when profile is not found', async () => {
-      asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(null);
+      asMock(
+        registrationRepository.findProfileContextByUserId,
+      ).mockResolvedValue(null);
 
       await expect(
         registrationService.updatePortfolioAllocationsService(99, [
@@ -680,7 +768,9 @@ describe('Registration Service', () => {
           { allocationType: 'POST_FFP', u: 0.4, mu: 0.08, rf: 0.02 },
         ]),
       ).rejects.toBeTruthy();
-      expect(registrationRepository.updatePortfolioAllocation).not.toHaveBeenCalled();
+      expect(
+        registrationRepository.updatePortfolioAllocation,
+      ).not.toHaveBeenCalled();
     });
   });
 
@@ -691,22 +781,28 @@ describe('Registration Service', () => {
   describe('updateStageDataService', () => {
     it('updates stage items that exist in the profile', async () => {
       mockFullProfile();
-      asMock(registrationRepository.findExistingLifeStageRangeIdsForProfile).mockResolvedValue([101, 102]);
+      asMock(
+        registrationRepository.findExistingLifeStageRangeIdsForProfile,
+      ).mockResolvedValue([101, 102]);
 
       await registrationService.updateStageDataService(99, [
         { lifeStageRangeId: 101, growthRate: 0.06 },
       ]);
 
-      expect(registrationRepository.updateLifeStageProfile).toHaveBeenCalledWith(
-        11, 101, { growthRate: 0.06 }, expect.anything(),
-      );
+      expect(
+        registrationRepository.updateLifeStageProfile,
+      ).toHaveBeenCalledWith(11, 101, { growthRate: 0.06 }, expect.anything());
     });
 
     it('throws when profile is not found', async () => {
-      asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(null);
+      asMock(
+        registrationRepository.findProfileContextByUserId,
+      ).mockResolvedValue(null);
 
       await expect(
-        registrationService.updateStageDataService(99, [{ lifeStageRangeId: 101, growthRate: 0.06 }]),
+        registrationService.updateStageDataService(99, [
+          { lifeStageRangeId: 101, growthRate: 0.06 },
+        ]),
       ).rejects.toBeTruthy();
     });
 
@@ -714,19 +810,29 @@ describe('Registration Service', () => {
       mockFullProfile({ hasLifeStageProfile: false });
 
       await expect(
-        registrationService.updateStageDataService(99, [{ lifeStageRangeId: 101, growthRate: 0.06 }]),
+        registrationService.updateStageDataService(99, [
+          { lifeStageRangeId: 101, growthRate: 0.06 },
+        ]),
       ).rejects.toBeTruthy();
-      expect(registrationRepository.updateLifeStageProfile).not.toHaveBeenCalled();
+      expect(
+        registrationRepository.updateLifeStageProfile,
+      ).not.toHaveBeenCalled();
     });
 
     it('throws when a lifeStageRangeId is not in this profile', async () => {
       mockFullProfile();
-      asMock(registrationRepository.findExistingLifeStageRangeIdsForProfile).mockResolvedValue([101, 102]);
+      asMock(
+        registrationRepository.findExistingLifeStageRangeIdsForProfile,
+      ).mockResolvedValue([101, 102]);
 
       await expect(
-        registrationService.updateStageDataService(99, [{ lifeStageRangeId: 999, growthRate: 0.06 }]),
+        registrationService.updateStageDataService(99, [
+          { lifeStageRangeId: 999, growthRate: 0.06 },
+        ]),
       ).rejects.toBeTruthy();
-      expect(registrationRepository.updateLifeStageProfile).not.toHaveBeenCalled();
+      expect(
+        registrationRepository.updateLifeStageProfile,
+      ).not.toHaveBeenCalled();
     });
   });
 
@@ -737,9 +843,9 @@ describe('Registration Service', () => {
   describe('updateAssetDataService', () => {
     it('updates assets that exist in the profile', async () => {
       mockFullProfile();
-      asMock(registrationRepository.findExistingAssetUidsForProfile).mockResolvedValue([
-        'aaaaaaaa-0000-0000-0000-000000000001',
-      ]);
+      asMock(
+        registrationRepository.findExistingAssetUidsForProfile,
+      ).mockResolvedValue(['aaaaaaaa-0000-0000-0000-000000000001']);
 
       await registrationService.updateAssetDataService(99, [
         { uid: 'aaaaaaaa-0000-0000-0000-000000000001', growthRate: 0.05 },
@@ -754,7 +860,9 @@ describe('Registration Service', () => {
     });
 
     it('throws when profile is not found', async () => {
-      asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(null);
+      asMock(
+        registrationRepository.findProfileContextByUserId,
+      ).mockResolvedValue(null);
 
       await expect(
         registrationService.updateAssetDataService(99, [
@@ -765,9 +873,9 @@ describe('Registration Service', () => {
 
     it('throws when a uid is not in this profile', async () => {
       mockFullProfile();
-      asMock(registrationRepository.findExistingAssetUidsForProfile).mockResolvedValue([
-        'aaaaaaaa-0000-0000-0000-000000000001',
-      ]);
+      asMock(
+        registrationRepository.findExistingAssetUidsForProfile,
+      ).mockResolvedValue(['aaaaaaaa-0000-0000-0000-000000000001']);
 
       await expect(
         registrationService.updateAssetDataService(99, [
@@ -785,11 +893,14 @@ describe('Registration Service', () => {
   describe('deleteAssetService', () => {
     it('deletes an asset that exists in the profile', async () => {
       mockFullProfile();
-      asMock(registrationRepository.findExistingAssetUidsForProfile).mockResolvedValue([
-        'aaaaaaaa-0000-0000-0000-000000000001',
-      ]);
+      asMock(
+        registrationRepository.findExistingAssetUidsForProfile,
+      ).mockResolvedValue(['aaaaaaaa-0000-0000-0000-000000000001']);
 
-      await registrationService.deleteAssetService(99, 'aaaaaaaa-0000-0000-0000-000000000001');
+      await registrationService.deleteAssetService(
+        99,
+        'aaaaaaaa-0000-0000-0000-000000000001',
+      );
 
       expect(registrationRepository.deletePostFfpAsset).toHaveBeenCalledWith(
         11,
@@ -798,21 +909,29 @@ describe('Registration Service', () => {
     });
 
     it('throws when profile is not found', async () => {
-      asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(null);
+      asMock(
+        registrationRepository.findProfileContextByUserId,
+      ).mockResolvedValue(null);
 
       await expect(
-        registrationService.deleteAssetService(99, 'aaaaaaaa-0000-0000-0000-000000000001'),
+        registrationService.deleteAssetService(
+          99,
+          'aaaaaaaa-0000-0000-0000-000000000001',
+        ),
       ).rejects.toBeTruthy();
     });
 
     it('throws when the uid does not exist in this profile', async () => {
       mockFullProfile();
-      asMock(registrationRepository.findExistingAssetUidsForProfile).mockResolvedValue([
-        'aaaaaaaa-0000-0000-0000-000000000001',
-      ]);
+      asMock(
+        registrationRepository.findExistingAssetUidsForProfile,
+      ).mockResolvedValue(['aaaaaaaa-0000-0000-0000-000000000001']);
 
       await expect(
-        registrationService.deleteAssetService(99, 'cccccccc-0000-0000-0000-000000000003'),
+        registrationService.deleteAssetService(
+          99,
+          'cccccccc-0000-0000-0000-000000000003',
+        ),
       ).rejects.toBeTruthy();
       expect(registrationRepository.deletePostFfpAsset).not.toHaveBeenCalled();
     });
@@ -825,22 +944,43 @@ describe('Registration Service', () => {
   describe('updateLifestyleProfileService', () => {
     it('updates lifestyle habits and returns recalculated life expectancy', async () => {
       mockFullProfile();
-      asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(1);
-      asMock(registrationRepository.findPhysicalActivityTypeIdByCode).mockResolvedValue(2);
-      asMock(registrationRepository.findDietQualityTypeIdByCode).mockResolvedValue(3);
-      asMock(registrationRepository.findAlcoholConsumptionTypeIdByCode).mockResolvedValue(4);
-      asMock(registrationRepository.findSmokingAdjustmentByCode).mockResolvedValue(-2);
-      asMock(registrationRepository.findPhysicalActivityAdjustmentByCode).mockResolvedValue(2.5);
-      asMock(registrationRepository.findDietQualityAdjustmentByCode).mockResolvedValue(0);
-      asMock(registrationRepository.findAlcoholConsumptionAdjustmentByCode).mockResolvedValue(-1);
-      asMock(registrationRepository.findLifeExpectancyByCountryAndSex).mockResolvedValue(80);
+      asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(
+        1,
+      );
+      asMock(
+        registrationRepository.findPhysicalActivityTypeIdByCode,
+      ).mockResolvedValue(2);
+      asMock(
+        registrationRepository.findDietQualityTypeIdByCode,
+      ).mockResolvedValue(3);
+      asMock(
+        registrationRepository.findAlcoholConsumptionTypeIdByCode,
+      ).mockResolvedValue(4);
+      asMock(
+        registrationRepository.findSmokingAdjustmentByCode,
+      ).mockResolvedValue(-2);
+      asMock(
+        registrationRepository.findPhysicalActivityAdjustmentByCode,
+      ).mockResolvedValue(2.5);
+      asMock(
+        registrationRepository.findDietQualityAdjustmentByCode,
+      ).mockResolvedValue(0);
+      asMock(
+        registrationRepository.findAlcoholConsumptionAdjustmentByCode,
+      ).mockResolvedValue(-1);
+      asMock(
+        registrationRepository.findLifeExpectancyByCountryAndSex,
+      ).mockResolvedValue(80);
 
-      const result = await registrationService.updateLifestyleProfileService(99, {
-        smokingCode: 'NON_SMOKER',
-        physicalActivityCode: 'HIGH',
-        dietQualityCode: 'AVERAGE',
-        alcoholConsumptionCode: 'MODERATE',
-      });
+      const result = await registrationService.updateLifestyleProfileService(
+        99,
+        {
+          smokingCode: 'NON_SMOKER',
+          physicalActivityCode: 'HIGH',
+          dietQualityCode: 'AVERAGE',
+          alcoholConsumptionCode: 'MODERATE',
+        },
+      );
 
       // 80 + (-2 + 2.5 + 0 + -1) = 79.5 → Math.round → 80
       expect(result.estimatedLifeExpectancy).toBe(80);
@@ -851,15 +991,22 @@ describe('Registration Service', () => {
         alcoholConsumptionCode: 'moderate',
       });
       expect(registrationRepository.updateHabitsProfile).toHaveBeenCalledWith(
-        11, 1, 2, 3, 4, expect.anything(),
+        11,
+        1,
+        2,
+        3,
+        4,
+        expect.anything(),
       );
-      expect(registrationRepository.updateEstimatedLifeExpectancy).toHaveBeenCalledWith(
-        11, 80, expect.anything(),
-      );
+      expect(
+        registrationRepository.updateEstimatedLifeExpectancy,
+      ).toHaveBeenCalledWith(11, 80, expect.anything());
     });
 
     it('throws when profile is not found', async () => {
-      asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(null);
+      asMock(
+        registrationRepository.findProfileContextByUserId,
+      ).mockResolvedValue(null);
 
       await expect(
         registrationService.updateLifestyleProfileService(99, {
@@ -907,10 +1054,20 @@ describe('Registration Service', () => {
   describe('createAssetsService', () => {
     it('inserts all assets and returns their uids and amounts', async () => {
       mockFullProfile();
-      asMock(registrationRepository.findExistingAssetTypeIds).mockResolvedValue([2, 3]);
+      asMock(registrationRepository.findExistingAssetTypeIds).mockResolvedValue(
+        [2, 3],
+      );
       asMock(registrationRepository.insertPostFfpAssetReturning)
-        .mockResolvedValueOnce({ uid: 'uid-asset-1', initialAnnualIncome: 30000000, growthRate: 0.1 })
-        .mockResolvedValueOnce({ uid: 'uid-asset-2', initialAnnualIncome: 12000000, growthRate: 0.03 });
+        .mockResolvedValueOnce({
+          uid: 'uid-asset-1',
+          initialAnnualIncome: 30000000,
+          growthRate: 0.1,
+        })
+        .mockResolvedValueOnce({
+          uid: 'uid-asset-2',
+          initialAnnualIncome: 12000000,
+          growthRate: 0.03,
+        });
 
       const result = await registrationService.createAssetsService(99, {
         assetData: [
@@ -923,18 +1080,24 @@ describe('Registration Service', () => {
         { uid: 'uid-asset-1', initialAnnualIncome: 30000000, growthRate: 0.1 },
         { uid: 'uid-asset-2', initialAnnualIncome: 12000000, growthRate: 0.03 },
       ]);
-      expect(registrationRepository.insertPostFfpAssetReturning).toHaveBeenCalledTimes(2);
-      expect(registrationRepository.insertPostFfpAssetReturning).toHaveBeenCalledWith(
-        11, 2, 30000000, 0.1, expect.anything(),
-      );
+      expect(
+        registrationRepository.insertPostFfpAssetReturning,
+      ).toHaveBeenCalledTimes(2);
+      expect(
+        registrationRepository.insertPostFfpAssetReturning,
+      ).toHaveBeenCalledWith(11, 2, 30000000, 0.1, expect.anything());
     });
 
     it('throws when profile is not found', async () => {
-      asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(null);
+      asMock(
+        registrationRepository.findProfileContextByUserId,
+      ).mockResolvedValue(null);
 
       await expect(
         registrationService.createAssetsService(99, {
-          assetData: [{ assetTypeId: 2, initialAnnualIncome: 1000, growthRate: 0.05 }],
+          assetData: [
+            { assetTypeId: 2, initialAnnualIncome: 1000, growthRate: 0.05 },
+          ],
         }),
       ).rejects.toBeTruthy();
     });
@@ -944,16 +1107,22 @@ describe('Registration Service', () => {
 
       await expect(
         registrationService.createAssetsService(99, {
-          assetData: [{ assetTypeId: 2, initialAnnualIncome: 1000, growthRate: 0.05 }],
+          assetData: [
+            { assetTypeId: 2, initialAnnualIncome: 1000, growthRate: 0.05 },
+          ],
         }),
       ).rejects.toBeTruthy();
-      expect(registrationRepository.insertPostFfpAssetReturning).not.toHaveBeenCalled();
+      expect(
+        registrationRepository.insertPostFfpAssetReturning,
+      ).not.toHaveBeenCalled();
     });
 
     it('throws when one or more assetTypeId values are invalid', async () => {
       mockFullProfile();
       // only 1 of 2 requested IDs found in reference table
-      asMock(registrationRepository.findExistingAssetTypeIds).mockResolvedValue([2]);
+      asMock(registrationRepository.findExistingAssetTypeIds).mockResolvedValue(
+        [2],
+      );
 
       await expect(
         registrationService.createAssetsService(99, {
@@ -963,7 +1132,9 @@ describe('Registration Service', () => {
           ],
         }),
       ).rejects.toBeTruthy();
-      expect(registrationRepository.insertPostFfpAssetReturning).not.toHaveBeenCalled();
+      expect(
+        registrationRepository.insertPostFfpAssetReturning,
+      ).not.toHaveBeenCalled();
     });
   });
 
@@ -1019,9 +1190,13 @@ describe('Registration Service', () => {
     });
 
     it('throws when profile is not found', async () => {
-      asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue(null);
+      asMock(
+        registrationRepository.findProfileContextByUserId,
+      ).mockResolvedValue(null);
 
-      await expect(registrationService.listAssetsService(99)).rejects.toBeTruthy();
+      await expect(
+        registrationService.listAssetsService(99),
+      ).rejects.toBeTruthy();
     });
   });
 });

@@ -263,7 +263,9 @@ export const getLifeStageRanges = async (
 export const getEstimateLifeExpectancy = async (userId: number) => {
   const age = await findLifeExpectancyByUserProfile(userId);
   if (age == null) {
-    throw notFound('Life expectancy data is unavailable for your country and sex. Please ensure your profile is complete.');
+    throw notFound(
+      'Life expectancy data is unavailable for your country and sex. Please ensure your profile is complete.',
+    );
   }
   return { estimatedLifeExpectancy: age };
 };

@@ -761,7 +761,13 @@ export const updateHabitsProfile = async (
         alcohol_consumption_type_id = $5
       WHERE profile_id = $1
     `,
-    [profileId, smokingTypeId, physicalActivityTypeId, dietQualityTypeId, alcoholConsumptionTypeId],
+    [
+      profileId,
+      smokingTypeId,
+      physicalActivityTypeId,
+      dietQualityTypeId,
+      alcoholConsumptionTypeId,
+    ],
   );
 };
 

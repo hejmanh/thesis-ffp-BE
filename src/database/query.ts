@@ -5,24 +5,24 @@ export type QueryClient = PoolClient | typeof pool;
 
 // query helper
 export const execQuery = async (
-    client: QueryClient,
-    text: string,
-    params?: any[]
+  client: QueryClient,
+  text: string,
+  params?: any[],
 ) => {
-    const start = Date.now();
+  const start = Date.now();
 
-    try {
-        return await client.query(text, params);
-    } catch (err) {
-        console.error('Database query failed', {
-            durationMs: Date.now() - start,
-            text,
-        });
+  try {
+    return await client.query(text, params);
+  } catch (err) {
+    console.error('Database query failed', {
+      durationMs: Date.now() - start,
+      text,
+    });
 
-        throw err;
-    }
+    throw err;
+  }
 };
 
 export const query = async (text: string, params?: any[]) => {
-    return execQuery(pool, text, params);
+  return execQuery(pool, text, params);
 };
