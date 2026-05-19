@@ -1,3 +1,4 @@
+import type { Request, Response } from 'express';
 import type {
   AlcoholConsumptionTypeDto,
   AssetTypeDto,
@@ -10,11 +11,10 @@ import type {
   SexTypeDto,
   SmokingTypeDto,
 } from './dto/reference.dto.js';
-import {
-  LifeStageQueryDto,
-  PaginationQueryDto,
-} from './dto/query.dto.js';
+import { LifeStageQueryDto, PaginationQueryDto } from './dto/query.dto.js';
 import { listHandler } from './utils/listHandler.js';
+import { asyncHandler } from '@/utils/asyncHandler.js';
+import { unauthorized } from '@/utils/error.js';
 import * as referenceService from './reference.service.js';
 
 export const getCurrencies = listHandler(
@@ -27,9 +27,8 @@ export const getCountries = listHandler(
   (pagination, sort) => referenceService.getCountries(pagination, sort),
 );
 
-export const getSexTypes = listHandler(
-  PaginationQueryDto,
-  (pagination, sort) => referenceService.getSexTypes(pagination, sort),
+export const getSexTypes = listHandler(PaginationQueryDto, (pagination, sort) =>
+  referenceService.getSexTypes(pagination, sort),
 );
 
 export const getAssetTypes = listHandler(
@@ -55,7 +54,8 @@ export const getSmokingTypes = listHandler(
 
 export const getPhysicalActivityTypes = listHandler(
   PaginationQueryDto,
-  (pagination, sort) => referenceService.getPhysicalActivityTypes(pagination, sort),
+  (pagination, sort) =>
+    referenceService.getPhysicalActivityTypes(pagination, sort),
 );
 
 export const getDietQualityTypes = listHandler(
@@ -65,5 +65,18 @@ export const getDietQualityTypes = listHandler(
 
 export const getAlcoholConsumptionTypes = listHandler(
   PaginationQueryDto,
-  (pagination, sort) => referenceService.getAlcoholConsumptionTypes(pagination, sort),
+  (pagination, sort) =>
+    referenceService.getAlcoholConsumptionTypes(pagination, sort),
+);
+
+export const getEstimateLifeExpectancy = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.userId;
+    if (!userId) throw unauthorized('No token provided');
+    const result = await referenceService.getEstimateLifeExpectancy(userId);
+    res.json({
+      success: true,
+      data: result,
+    });
+  },
 );

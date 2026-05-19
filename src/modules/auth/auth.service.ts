@@ -3,6 +3,7 @@ import {
   createProfile,
   createUser,
   findUserByEmail,
+  updateEstimatedLifeExpectancy,
 } from './auth.repository.js';
 import { hashPassword, comparePassword } from '@/utils/auth/hash.js';
 import {
@@ -48,6 +49,8 @@ export const register = async (data: RegisterDto) => {
       client,
     );
 
+    await updateEstimatedLifeExpectancy(userId, client);
+
     // verification token
     const { raw: rawToken, hashed: hashedToken } = generateOneTimeToken();
 
@@ -65,19 +68,19 @@ export const register = async (data: RegisterDto) => {
     console.log('Email verification token (dev):', rawToken);
   }
 
-  try {
-    await sendVerificationEmail(normalizedEmail, rawToken);
-  } catch (err) {
-    await execQuery(
-      pool,
-      `UPDATE email_verification_token
-            SET used_at = NOW()
-            WHERE token_hash = $1`,
-      [hashedToken],
-    );
+  // try {
+  //   await sendVerificationEmail(normalizedEmail, rawToken);
+  // } catch (err) {
+  //   await execQuery(
+  //     pool,
+  //     `UPDATE email_verification_token
+  //           SET used_at = NOW()
+  //           WHERE token_hash = $1`,
+  //     [hashedToken],
+  //   );
 
-    throw internal('Failed to send verification email');
-  }
+  //   throw internal('Failed to send verification email');
+  // }
 };
 
 export const login = async (
@@ -89,7 +92,7 @@ export const login = async (
   const match = await comparePassword(data.password, user.hashed_password);
   if (!match) throw unauthorized('Invalid credentials');
 
-  if (!user.is_email_verified) throw forbidden('Email not verified');
+  // if (!user.is_email_verified) throw forbidden('Email not verified');
 
   const accessToken = generateAccessToken({ userId: user.id });
   const { raw: refreshTokenRaw, hashed: refreshTokenHashed } =

@@ -48,7 +48,12 @@ export const listCurrencies = async (
   );
 
   const baseSql = 'SELECT id, code FROM currency';
-  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const { sql, params } = applyPagination(
+    baseSql,
+    [],
+    pagination,
+    `id ${sort}`,
+  );
   const rowsRes = await execQuery(pool, sql, params);
 
   return {
@@ -77,7 +82,12 @@ export const listCountries = async (
     LEFT JOIN currency cur ON cur.id = c.currency_id
   `;
 
-  const { sql, params } = applyPagination(baseSql, [], pagination, `c.id ${sort}`);
+  const { sql, params } = applyPagination(
+    baseSql,
+    [],
+    pagination,
+    `c.id ${sort}`,
+  );
   const rowsRes = await execQuery(pool, sql, params);
 
   return {
@@ -96,7 +106,12 @@ export const listSexTypes = async (
   );
 
   const baseSql = 'SELECT id, code, title FROM sex_type';
-  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const { sql, params } = applyPagination(
+    baseSql,
+    [],
+    pagination,
+    `id ${sort}`,
+  );
   const rowsRes = await execQuery(pool, sql, params);
 
   return {
@@ -115,7 +130,12 @@ export const listAssetTypes = async (
   );
 
   const baseSql = 'SELECT id, code, title FROM asset_type';
-  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const { sql, params } = applyPagination(
+    baseSql,
+    [],
+    pagination,
+    `id ${sort}`,
+  );
   const rowsRes = await execQuery(pool, sql, params);
 
   return {
@@ -134,7 +154,12 @@ export const listScenarioTypes = async (
   );
 
   const baseSql = 'SELECT id, no, title, description FROM scenario_type';
-  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const { sql, params } = applyPagination(
+    baseSql,
+    [],
+    pagination,
+    `id ${sort}`,
+  );
   const rowsRes = await execQuery(pool, sql, params);
 
   return {
@@ -146,14 +171,14 @@ export const listScenarioTypes = async (
 export const listLifeStageRanges = async (
   pagination: PaginationOptions,
   sort: SortDirection,
-  minBeginningAge?: number,
+  currentAge?: number,
 ) => {
   const whereParams: unknown[] = [];
   let whereClause = '';
 
-  if (minBeginningAge != null) {
-    whereParams.push(minBeginningAge);
-    whereClause = `WHERE beginning_age >= $1`;
+  if (currentAge != null) {
+    whereParams.push(currentAge);
+    whereClause = `WHERE ending_age IS NULL OR ending_age >= $1`;
   }
 
   const countRes = await execQuery(
@@ -205,7 +230,12 @@ export const listSmokingTypes = async (
     FROM smoking_type
   `;
 
-  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const { sql, params } = applyPagination(
+    baseSql,
+    [],
+    pagination,
+    `id ${sort}`,
+  );
   const rowsRes = await execQuery(pool, sql, params);
 
   return {
@@ -232,7 +262,12 @@ export const listPhysicalActivityTypes = async (
     FROM physical_activity_type
   `;
 
-  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const { sql, params } = applyPagination(
+    baseSql,
+    [],
+    pagination,
+    `id ${sort}`,
+  );
   const rowsRes = await execQuery(pool, sql, params);
 
   return {
@@ -259,13 +294,29 @@ export const listDietQualityTypes = async (
     FROM diet_quality_type
   `;
 
-  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const { sql, params } = applyPagination(
+    baseSql,
+    [],
+    pagination,
+    `id ${sort}`,
+  );
   const rowsRes = await execQuery(pool, sql, params);
 
   return {
     rows: rowsRes.rows as DietQualityTypeDto[],
     totalCount: Number(countRes.rows[0].count),
   };
+};
+
+export const findLifeExpectancyByUserProfile = async (userId: number) => {
+  const res = await execQuery(
+    pool,
+    `SELECT estimated_life_expectancy FROM profile WHERE user_account_id = $1`,
+    [userId],
+  );
+
+  const age = res.rows[0]?.estimated_life_expectancy;
+  return age == null ? null : Number(age);
 };
 
 export const listAlcoholConsumptionTypes = async (
@@ -286,7 +337,12 @@ export const listAlcoholConsumptionTypes = async (
     FROM alcohol_consumption_type
   `;
 
-  const { sql, params } = applyPagination(baseSql, [], pagination, `id ${sort}`);
+  const { sql, params } = applyPagination(
+    baseSql,
+    [],
+    pagination,
+    `id ${sort}`,
+  );
   const rowsRes = await execQuery(pool, sql, params);
 
   return {

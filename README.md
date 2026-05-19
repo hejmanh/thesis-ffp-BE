@@ -6,18 +6,19 @@ This project is a web-based Financial Freedom Point (FFP) system designed to hel
 
 The system combines:
 
-* life expectancy estimation
-* savings and wealth accumulation modeling
-* portfolio growth simulation
-* passive income modeling
-* scenario-based financial analysis
+- life expectancy estimation
+- savings and wealth accumulation modeling
+- portfolio growth simulation
+- passive income modeling
+- scenario-based financial analysis
 
 The application supports users in answering key financial planning questions such as:
 
-* Can I reach my Financial Freedom goal?
-* When will I reach Financial Freedom?
-* How much can I spend after reaching Financial Freedom?
-* How much should I save to achieve my target?
+- Can I reach my Financial Freedom goal?
+- When will I reach Financial Freedom?
+- How much can I spend after reaching Financial Freedom?
+- How much should I save to achieve my target?
+
 ---
 
 # Core Concepts
@@ -28,9 +29,9 @@ The system models a user’s financial lifecycle in two phases.
 
 During this phase:
 
-* users accumulate wealth through savings
-* wealth may grow through investment returns
-* savings behavior may vary across life stages
+- users accumulate wealth through savings
+- wealth may grow through investment returns
+- savings behavior may vary across life stages
 
 ---
 
@@ -38,9 +39,9 @@ During this phase:
 
 After reaching Financial Freedom:
 
-* active saving is assumed to stop
-* wealth is used to support spending
-* passive income sources may contribute additional income
+- active saving is assumed to stop
+- wealth is used to support spending
+- passive income sources may contribute additional income
 
 ---
 
@@ -48,10 +49,10 @@ After reaching Financial Freedom:
 
 The system supports multiple financial planning scenarios, including:
 
-* Financial Freedom feasibility analysis
-* Financial Freedom age estimation
-* Sustainable spending estimation
-* Required savings estimation
+- Financial Freedom feasibility analysis
+- Financial Freedom age estimation
+- Sustainable spending estimation
+- Required savings estimation
 
 ---
 
@@ -61,8 +62,8 @@ The system supports multiple financial planning scenarios, including:
 
 Life expectancy estimation is based on:
 
-* demographic information
-* lifestyle-related adjustments
+- demographic information
+- lifestyle-related adjustments
 
 ---
 
@@ -72,8 +73,8 @@ Savings are modeled dynamically across different life stages.
 
 Each stage may define:
 
-* initial savings
-* savings growth behavior
+- initial savings
+- savings growth behavior
 
 ---
 
@@ -81,9 +82,9 @@ Each stage may define:
 
 Portfolio allocation is used to estimate investment growth based on:
 
-* risky asset allocation
-* expected return assumptions
-* risk-free return assumptions
+- risky asset allocation
+- expected return assumptions
+- risk-free return assumptions
 
 ---
 
@@ -91,9 +92,9 @@ Portfolio allocation is used to estimate investment growth based on:
 
 The system supports passive income sources such as:
 
-* pension income
-* rental income
-* other recurring income streams
+- pension income
+- rental income
+- other recurring income streams
 
 ---
 
@@ -101,17 +102,17 @@ The system supports passive income sources such as:
 
 ## Backend
 
-* Node.js
-* Express.js
-* TypeScript
+- Node.js
+- Express.js
+- TypeScript
 
 ## Database
 
-* PostgreSQL
+- PostgreSQL
 
 ## Authentication
 
-* JWT-based authentication
+- JWT-based authentication
 
 ---
 
@@ -150,8 +151,8 @@ EMAIL_PASS=
 
 ## Prerequisites
 
-* [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-* npm
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- npm
 
 ---
 
@@ -174,6 +175,7 @@ npm run start-service
 ```
 
 This single command will:
+
 - Build the backend Docker image
 - Start PostgreSQL, Redis, and the backend in containers
 - Run all pending database migrations automatically

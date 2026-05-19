@@ -1,7 +1,7 @@
 import type { Pagination } from '@/utils/pagination.js';
 import { buildPaginationMeta } from '@/utils/pagination.js';
 import { adjustFirstBeginningAge } from '@/utils/lifeStage.js';
-import { badRequest } from '@/utils/error.js';
+import { badRequest, notFound } from '@/utils/error.js';
 import { withCache } from '@/utils/cache/cache.js';
 import { CACHE_TTL } from '@/types/cache.js';
 import type {
@@ -9,6 +9,7 @@ import type {
   SortDirection,
 } from './reference.repository.js';
 import {
+  findLifeExpectancyByUserProfile,
   listAlcoholConsumptionTypes,
   listAssetTypes,
   listCountries,
@@ -226,7 +227,6 @@ export const getLifeStageRanges = async (
     cacheKey('lifeStageRanges', pagination, sort, { birthYear }),
     CACHE_TTL.DYNAMIC,
     async () => {
-      let minBeginningAge: number | undefined = undefined;
       let currentAge: number | undefined = undefined;
 
       if (birthYear != null) {
@@ -238,13 +238,12 @@ export const getLifeStageRanges = async (
           throw badRequest('birthYear cannot be in the future');
 
         currentAge = derivedAge;
-        if (sort === 'asc') minBeginningAge = derivedAge;
       }
 
       const result = await listLifeStageRanges(
         toPaginationOptions(pagination),
         sort,
-        minBeginningAge,
+        currentAge,
       );
 
       const shouldAdjust =
@@ -260,3 +259,13 @@ export const getLifeStageRanges = async (
       return { data, meta: buildPaginationMeta(result.totalCount, pagination) };
     },
   );
+
+export const getEstimateLifeExpectancy = async (userId: number) => {
+  const age = await findLifeExpectancyByUserProfile(userId);
+  if (age == null) {
+    throw notFound(
+      'Life expectancy data is unavailable for your country and sex. Please ensure your profile is complete.',
+    );
+  }
+  return { estimatedLifeExpectancy: age };
+};
