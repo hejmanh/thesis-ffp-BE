@@ -29,7 +29,7 @@ const csrfCookieOptions = {
   httpOnly: false,
   secure: config.nodeEnv === 'production',
   sameSite: 'strict' as const,
-  path: '/api/v1',
+  path: '/',
 };
 
 export const registerHandler = asyncHandler(
