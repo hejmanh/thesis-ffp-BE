@@ -180,11 +180,10 @@ export function runScenario3({
 
 /**
  * Low-level binary search for terminal stage annual saving amount.
- * CRITICAL: Only affects terminal stage (marked by initialAnnualSaving=0).
+ * CRITICAL: Only affects terminal stage defined by terminalStageIndex.
  * Existing stages are preserved with their original savings.
  *
  * The stages array MUST include the terminal stage already added by caller.
- * Terminal stage is identified by: initialAnnualSaving=0 AND growthRate=0
  */
 export function calculateRequiredSaving({
   targetWealth,
@@ -193,6 +192,7 @@ export function calculateRequiredSaving({
   ffpAge,
   portfolioReturn,
   stages,
+  terminalStageIndex,
 }: {
   targetWealth: number;
   currentSavings: number;
@@ -200,11 +200,15 @@ export function calculateRequiredSaving({
   ffpAge: number;
   portfolioReturn: number;
   stages: LifeStage[];
+  terminalStageIndex: number;
 }): number {
+  const precision = 0.01;
+  const maxIterations = 200;
   let left = 0;
   let right = 1_000_000_000;
 
-  while (right - left > 1) {
+  for (let iteration = 0; iteration < maxIterations; iteration++) {
+    if (right - left <= precision) break;
     const mid = (left + right) / 2;
 
     let wealth = currentSavings;
@@ -213,11 +217,10 @@ export function calculateRequiredSaving({
       let savingAtAge = 0;
 
       // Find which stage this age belongs to
-      for (const stage of stages) {
+      for (let stageIndex = 0; stageIndex < stages.length; stageIndex++) {
+        const stage = stages[stageIndex]!;
         if (age >= stage.startAge && age < stage.endAge) {
-          // If this is the terminal stage (marker: initialAnnualSaving=0),
-          // use binary search value; otherwise use stage formula
-          if (stage.initialAnnualSaving === 0 && stage.growthRate === 0) {
+          if (stageIndex === terminalStageIndex) {
             savingAtAge = mid;
           } else {
             // Regular stage: apply growth formula
@@ -318,7 +321,7 @@ export function runScenario4({
       {
         startAge: currentAge,
         endAge: ffpAge,
-        initialAnnualSaving: 0, // Terminal stage marker: solved by binary search
+        initialAnnualSaving: 0, // Terminal stage placeholder solved by binary search
         growthRate: 0,
       },
     ];
@@ -331,7 +334,7 @@ export function runScenario4({
       workingStages.push({
         startAge: lastStage.endAge,
         endAge: ffpAge,
-        initialAnnualSaving: 0, // Terminal stage marker: solved by binary search
+        initialAnnualSaving: 0, // Terminal stage placeholder solved by binary search
         growthRate: 0,
       });
       isTerminalStageAdded = true;
@@ -353,6 +356,7 @@ export function runScenario4({
     ffpAge,
     portfolioReturn: portfolioReturnPre,
     stages: workingStages,
+    terminalStageIndex: workingStages.length - 1,
   });
 
   return {

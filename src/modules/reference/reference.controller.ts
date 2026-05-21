@@ -1,16 +1,4 @@
 import type { Request, Response } from 'express';
-import type {
-  AlcoholConsumptionTypeDto,
-  AssetTypeDto,
-  CountryDto,
-  CurrencyDto,
-  DietQualityTypeDto,
-  LifeStageRangeDto,
-  PhysicalActivityTypeDto,
-  ScenarioTypeDto,
-  SexTypeDto,
-  SmokingTypeDto,
-} from './dto/reference.dto.js';
 import { LifeStageQueryDto, PaginationQueryDto } from './dto/query.dto.js';
 import { listHandler } from '../../utils/listHandler.js';
 import { asyncHandler } from '@/utils/asyncHandler.js';

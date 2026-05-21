@@ -1,5 +1,6 @@
 import { pool } from '@/database/index.js';
 import { execQuery } from '@/database/query.js';
+import type { SortDirection } from '@/utils/pagination.js';
 import type {
   AlcoholConsumptionTypeDto,
   AssetTypeDto,
@@ -12,8 +13,6 @@ import type {
   SexTypeDto,
   SmokingTypeDto,
 } from './dto/reference.dto.js';
-
-export type SortDirection = 'asc' | 'desc';
 
 export type PaginationOptions = {
   limit: number;

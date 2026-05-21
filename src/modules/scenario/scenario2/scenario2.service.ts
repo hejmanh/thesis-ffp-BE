@@ -11,11 +11,11 @@ import { estimateFFPAge } from '@/utils/ffp-model/scenario.js';
 import type { LifeStage } from '@/types/ffp-model/financial.js';
 import type { Scenario2InputDto } from './dto/input.dto.js';
 import {
-  findScenarioTypeIdByNo,
   getScenario2Input,
   getScenario2Output,
   upsertScenario2,
 } from './scenario2.repository.js';
+import { findScenarioTypeIdByNo } from '../scenario.repository.js';
 
 const SCENARIO_NO = 2;
 
@@ -23,7 +23,7 @@ const toLifeStages = (
   stageDetails: Awaited<ReturnType<typeof listStageDataDetails>>,
   fallbackEndAge: number,
 ): LifeStage[] => {
-  return stageDetails.map((stage) => {
+  const normalized = stageDetails.map((stage) => {
     if (stage.beginningAge == null) {
       throw badRequest('Stage beginningAge is required');
     }
@@ -34,9 +34,34 @@ const toLifeStages = (
       throw badRequest('Stage growthRate is required');
     }
 
-    const endAge = stage.endingAge ?? fallbackEndAge;
+    return {
+      beginningAge: stage.beginningAge,
+      endingAge: stage.endingAge,
+      initialAnnualSavings: stage.initialAnnualSavings,
+      growthRate: stage.growthRate,
+    };
+  });
+
+  const sorted = [...normalized].sort(
+    (a, b) => a.beginningAge - b.beginningAge,
+  );
+
+  return sorted.map((stage, index) => {
+    const isLast = index === sorted.length - 1;
+    const endAge = stage.endingAge ?? (isLast ? fallbackEndAge : null);
+
     if (endAge == null) {
-      throw badRequest('Stage endingAge is required');
+      throw badRequest('Only the last stage can have a null endingAge');
+    }
+    if (endAge <= stage.beginningAge) {
+      throw badRequest('Stage endingAge must be greater than beginningAge');
+    }
+
+    if (index > 0) {
+      const prevEndAge = sorted[index - 1]!.endingAge ?? fallbackEndAge;
+      if (prevEndAge !== stage.beginningAge) {
+        throw badRequest('Stages must be contiguous and non-overlapping');
+      }
     }
 
     return {
