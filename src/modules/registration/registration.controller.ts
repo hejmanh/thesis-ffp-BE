@@ -7,11 +7,15 @@ import {
   UpdateFinancialProfileBasicDto,
   UpdateLifestyleProfileDto,
   UpdatePortfolioAllocationsDto,
+  CreateStageDataDto,
   UpdateStageDataDto,
   CreateAssetDataDto,
 } from './dto/update-financial-profile.dto.js';
 import type {
   UpdateAssetDataResponseDto,
+  CreateLifestyleProfileResponseDto,
+  CreatePortfolioAllocationsResponseDto,
+  CreateStageDataResponseDto,
   DeleteAssetResponseDto,
   CreateUserInfoResponseDto,
   GetUserInfoResponseDto,
@@ -93,6 +97,25 @@ export const updatePortfolioAllocationsHandler = asyncHandler(
   },
 );
 
+export const createPortfolioAllocationsHandler = asyncHandler(
+  async (
+    req: Request,
+    res: Response<CreatePortfolioAllocationsResponseDto>,
+  ) => {
+    const userId = req.userId;
+    if (!userId) throw unauthorized('No token provided');
+
+    const data = UpdatePortfolioAllocationsDto.parse(req.body);
+    await registrationService.createPortfolioAllocationsService(userId, data);
+
+    res.status(201).json({
+      success: true,
+      data: null,
+      message: 'Portfolio allocations created',
+    });
+  },
+);
+
 export const updateStageDataHandler = asyncHandler(
   async (req: Request, res: Response<UpdateStageDataResponseDto>) => {
     const userId = req.userId;
@@ -105,6 +128,22 @@ export const updateStageDataHandler = asyncHandler(
       success: true,
       data: null,
       message: 'Stage data updated',
+    });
+  },
+);
+
+export const createStageDataHandler = asyncHandler(
+  async (req: Request, res: Response<CreateStageDataResponseDto>) => {
+    const userId = req.userId;
+    if (!userId) throw unauthorized('No token provided');
+
+    const data = CreateStageDataDto.parse(req.body);
+    await registrationService.createStageDataService(userId, data);
+
+    res.status(201).json({
+      success: true,
+      data: null,
+      message: 'Stage data created',
     });
   },
 );
@@ -145,6 +184,25 @@ export const deleteAssetHandler = asyncHandler(
       success: true,
       data: null,
       message: 'Asset deleted',
+    });
+  },
+);
+
+export const createLifestyleProfileHandler = asyncHandler(
+  async (req: Request, res: Response<CreateLifestyleProfileResponseDto>) => {
+    const userId = req.userId;
+    if (!userId) throw unauthorized('No token provided');
+
+    const data = UpdateLifestyleProfileDto.parse(req.body);
+    const result = await registrationService.createLifestyleProfileService(
+      userId,
+      data,
+    );
+
+    res.status(201).json({
+      success: true,
+      data: result,
+      message: 'Lifestyle profile created',
     });
   },
 );

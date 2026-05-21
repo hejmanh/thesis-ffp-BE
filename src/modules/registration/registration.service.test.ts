@@ -775,6 +775,42 @@ describe('Registration Service', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // createPortfolioAllocationsService
+  // ---------------------------------------------------------------------------
+
+  describe('createPortfolioAllocationsService', () => {
+    it('creates portfolio allocations when none exist yet', async () => {
+      mockFullProfile({ hasPortfolioProfile: false });
+
+      await registrationService.createPortfolioAllocationsService(99, [
+        { allocationType: 'PRE_FFP', u: 0.6, mu: 0.1, rf: 0.02 },
+        { allocationType: 'POST_FFP', u: 0.4, mu: 0.08, rf: 0.02 },
+      ]);
+
+      expect(
+        registrationRepository.insertPortfolioProfile,
+      ).toHaveBeenCalledTimes(2);
+      expect(
+        registrationRepository.insertPortfolioProfile,
+      ).toHaveBeenCalledWith(11, 'PRE_FFP', 0.6, 0.1, 0.02, expect.anything());
+    });
+
+    it('throws when portfolio allocations already exist', async () => {
+      mockFullProfile();
+
+      await expect(
+        registrationService.createPortfolioAllocationsService(99, [
+          { allocationType: 'PRE_FFP', u: 0.6, mu: 0.1, rf: 0.02 },
+          { allocationType: 'POST_FFP', u: 0.4, mu: 0.08, rf: 0.02 },
+        ]),
+      ).rejects.toBeTruthy();
+      expect(
+        registrationRepository.insertPortfolioProfile,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // updateStageDataService
   // ---------------------------------------------------------------------------
 
@@ -832,6 +868,105 @@ describe('Registration Service', () => {
       ).rejects.toBeTruthy();
       expect(
         registrationRepository.updateLifeStageProfile,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // createStageDataService
+  // ---------------------------------------------------------------------------
+
+  describe('createStageDataService', () => {
+    it('creates stage rows when requested ids are eligible', async () => {
+      mockFullProfile({ birthYear: 2000, hasLifeStageProfile: false });
+      asMock(
+        registrationRepository.listEligibleLifeStageRangeIds,
+      ).mockResolvedValue([101, 102, 103]);
+      asMock(
+        registrationRepository.findExistingLifeStageRangeIdsForProfile,
+      ).mockResolvedValue([101]);
+
+      await registrationService.createStageDataService(99, [
+        {
+          lifeStageRangeId: 102,
+          initialAnnualSavings: 12000,
+          growthRate: 0.05,
+        },
+        {
+          lifeStageRangeId: 103,
+          initialAnnualSavings: 18000,
+          growthRate: 0.04,
+        },
+      ]);
+
+      expect(
+        registrationRepository.insertLifeStageProfile,
+      ).toHaveBeenCalledTimes(2);
+      expect(
+        registrationRepository.insertLifeStageProfile,
+      ).toHaveBeenCalledWith(11, 102, 12000, 0.05, expect.anything());
+    });
+
+    it('throws when birth year is missing', async () => {
+      mockFullProfile({ birthYear: null, hasLifeStageProfile: false });
+
+      await expect(
+        registrationService.createStageDataService(99, [
+          {
+            lifeStageRangeId: 102,
+            initialAnnualSavings: 12000,
+            growthRate: 0.05,
+          },
+        ]),
+      ).rejects.toBeTruthy();
+      expect(
+        registrationRepository.insertLifeStageProfile,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('throws when a requested lifeStageRangeId is not eligible', async () => {
+      mockFullProfile({ birthYear: 2000, hasLifeStageProfile: false });
+      asMock(
+        registrationRepository.listEligibleLifeStageRangeIds,
+      ).mockResolvedValue([101, 102]);
+      asMock(
+        registrationRepository.findExistingLifeStageRangeIdsForProfile,
+      ).mockResolvedValue([]);
+
+      await expect(
+        registrationService.createStageDataService(99, [
+          {
+            lifeStageRangeId: 999,
+            initialAnnualSavings: 12000,
+            growthRate: 0.05,
+          },
+        ]),
+      ).rejects.toBeTruthy();
+      expect(
+        registrationRepository.insertLifeStageProfile,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('throws when a requested lifeStageRangeId already exists in the profile', async () => {
+      mockFullProfile({ birthYear: 2000 });
+      asMock(
+        registrationRepository.listEligibleLifeStageRangeIds,
+      ).mockResolvedValue([101, 102]);
+      asMock(
+        registrationRepository.findExistingLifeStageRangeIdsForProfile,
+      ).mockResolvedValue([101]);
+
+      await expect(
+        registrationService.createStageDataService(99, [
+          {
+            lifeStageRangeId: 101,
+            initialAnnualSavings: 12000,
+            growthRate: 0.05,
+          },
+        ]),
+      ).rejects.toBeTruthy();
+      expect(
+        registrationRepository.insertLifeStageProfile,
       ).not.toHaveBeenCalled();
     });
   });
@@ -1044,6 +1179,88 @@ describe('Registration Service', () => {
         }),
       ).rejects.toBeTruthy();
       expect(registrationRepository.updateHabitsProfile).not.toHaveBeenCalled();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // createLifestyleProfileService
+  // ---------------------------------------------------------------------------
+
+  describe('createLifestyleProfileService', () => {
+    it('creates lifestyle profile and returns recalculated life expectancy', async () => {
+      mockFullProfile({ hasHabitsProfile: false });
+      asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(
+        1,
+      );
+      asMock(
+        registrationRepository.findPhysicalActivityTypeIdByCode,
+      ).mockResolvedValue(2);
+      asMock(
+        registrationRepository.findDietQualityTypeIdByCode,
+      ).mockResolvedValue(3);
+      asMock(
+        registrationRepository.findAlcoholConsumptionTypeIdByCode,
+      ).mockResolvedValue(4);
+      asMock(
+        registrationRepository.findSmokingAdjustmentByCode,
+      ).mockResolvedValue(0);
+      asMock(
+        registrationRepository.findPhysicalActivityAdjustmentByCode,
+      ).mockResolvedValue(2.5);
+      asMock(
+        registrationRepository.findDietQualityAdjustmentByCode,
+      ).mockResolvedValue(0);
+      asMock(
+        registrationRepository.findAlcoholConsumptionAdjustmentByCode,
+      ).mockResolvedValue(0);
+      asMock(
+        registrationRepository.findLifeExpectancyByCountryAndSex,
+      ).mockResolvedValue(80.4);
+
+      const result = await registrationService.createLifestyleProfileService(
+        99,
+        {
+          smokingCode: 'NON_SMOKER',
+          physicalActivityCode: 'HIGH',
+          dietQualityCode: 'MEDIUM',
+          alcoholConsumptionCode: 'LOW',
+        },
+      );
+
+      expect(registrationRepository.insertHabitsProfile).toHaveBeenCalledWith(
+        11,
+        1,
+        2,
+        3,
+        4,
+        expect.anything(),
+      );
+      expect(
+        registrationRepository.updateEstimatedLifeExpectancy,
+      ).toHaveBeenCalledWith(11, 83, expect.anything());
+      expect(result).toEqual({
+        lifestyleProfile: {
+          smokingCode: 'non_smoker',
+          physicalActivityCode: 'active',
+          dietQualityCode: 'average',
+          alcoholConsumptionCode: 'moderate',
+        },
+        estimatedLifeExpectancy: 83,
+      });
+    });
+
+    it('throws when lifestyle profile already exists', async () => {
+      mockFullProfile();
+
+      await expect(
+        registrationService.createLifestyleProfileService(99, {
+          smokingCode: 'NON_SMOKER',
+          physicalActivityCode: 'HIGH',
+          dietQualityCode: 'MEDIUM',
+          alcoholConsumptionCode: 'LOW',
+        }),
+      ).rejects.toBeTruthy();
+      expect(registrationRepository.insertHabitsProfile).not.toHaveBeenCalled();
     });
   });
 

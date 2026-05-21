@@ -2,6 +2,7 @@ import { withTransaction } from '@/database/transaction.js';
 import { badRequest, notFound } from '@/utils/error.js';
 import type { CreateUserInfoDto } from './dto/create-main-registration.dto.js';
 import type {
+  CreateStageDataDto,
   UpdateFinancialProfileBasicDto,
   UpdatePortfolioAllocationsDto,
   UpdateStageDataDto,
@@ -114,13 +115,25 @@ const roundEstimatedLifeExpectancy = (
 const getCurrentAge = (birthYear: number) =>
   new Date().getFullYear() - birthYear;
 
+const validateEligibleStageIds = (
+  eligibleLifeStageRangeIds: number[],
+  requestedLifeStageRangeIds: number[],
+) => {
+  const eligibleIdSet = new Set(eligibleLifeStageRangeIds);
+
+  for (const id of requestedLifeStageRangeIds) {
+    if (!eligibleIdSet.has(id)) {
+      throw badRequest(`lifeStageRangeId ${id} is not available for this user`);
+    }
+  }
+};
+
 const validateStageData = (
   eligibleLifeStageRangeIds: number[],
   stageData: CreateUserInfoDto['userInfo']['stageData'],
 ) => {
   const providedIds = stageData.map((stage) => stage.lifeStageRangeId);
   const providedIdSet = new Set(providedIds);
-  const eligibleIdSet = new Set(eligibleLifeStageRangeIds);
 
   if (
     providedIds.length !== eligibleLifeStageRangeIds.length ||
@@ -131,13 +144,7 @@ const validateStageData = (
     );
   }
 
-  for (const id of providedIdSet) {
-    if (!eligibleIdSet.has(id)) {
-      throw badRequest(
-        'stageData contains a lifeStageRangeId not available for this user',
-      );
-    }
-  }
+  validateEligibleStageIds(eligibleLifeStageRangeIds, [...providedIdSet]);
 };
 
 export const createUserInfo = async (
@@ -549,16 +556,194 @@ export const updateLifestyleProfileService = async (
   };
 };
 
+export const createPortfolioAllocationsService = async (
+  userId: number,
+  data: UpdatePortfolioAllocationsDto,
+) => {
+  const profile = await findProfileContextByUserId(userId);
+  if (!profile) throw notFound('Profile not found');
+
+  if (profile.hasPortfolioProfile) {
+    throw badRequest('Portfolio allocations already exist');
+  }
+
+  await withTransaction(async (client) => {
+    for (const allocation of data) {
+      await insertPortfolioProfile(
+        profile.profileId,
+        allocation.allocationType,
+        allocation.u,
+        allocation.mu,
+        allocation.rf,
+        client,
+      );
+    }
+  });
+};
+
+export const createStageDataService = async (
+  userId: number,
+  data: CreateStageDataDto,
+) => {
+  const profile = await findProfileContextByUserId(userId);
+  if (!profile) throw notFound('Profile not found');
+
+  if (profile.birthYear == null) {
+    throw badRequest('Birth year must be set on your profile');
+  }
+
+  const [eligibleLifeStageRangeIds, existingLifeStageRangeIds] =
+    await Promise.all([
+      listEligibleLifeStageRangeIds(getCurrentAge(profile.birthYear)),
+      findExistingLifeStageRangeIdsForProfile(profile.profileId),
+    ]);
+
+  if (eligibleLifeStageRangeIds.length === 0) {
+    throw badRequest('No life stages are available for this user');
+  }
+
+  const requestedLifeStageRangeIds = data.map(
+    (stage) => stage.lifeStageRangeId,
+  );
+  validateEligibleStageIds(
+    eligibleLifeStageRangeIds,
+    requestedLifeStageRangeIds,
+  );
+
+  const existingIdSet = new Set(existingLifeStageRangeIds);
+  for (const id of requestedLifeStageRangeIds) {
+    if (existingIdSet.has(id)) {
+      throw badRequest(`lifeStageRangeId ${id} already exists in this profile`);
+    }
+  }
+
+  await withTransaction(async (client) => {
+    for (const stage of data) {
+      await insertLifeStageProfile(
+        profile.profileId,
+        stage.lifeStageRangeId,
+        stage.initialAnnualSavings,
+        stage.growthRate,
+        client,
+      );
+    }
+  });
+};
+
+export const createLifestyleProfileService = async (
+  userId: number,
+  data: UpdateLifestyleProfileDto,
+) => {
+  const profile = await findProfileContextByUserId(userId);
+  if (!profile) throw notFound('Profile not found');
+
+  if (profile.hasHabitsProfile) {
+    throw badRequest('Lifestyle profile already exists');
+  }
+
+  if (profile.countryId == null || profile.sexTypeId == null) {
+    throw badRequest('Country and sex must be set on your profile');
+  }
+
+  const smokingCode = resolveReferenceCode(
+    data.smokingCode,
+    smokingCodeAliases,
+    'smokingCode',
+  );
+  const physicalActivityCode = resolveReferenceCode(
+    data.physicalActivityCode,
+    physicalActivityCodeAliases,
+    'physicalActivityCode',
+  );
+  const dietQualityCode = resolveReferenceCode(
+    data.dietQualityCode,
+    dietQualityCodeAliases,
+    'dietQualityCode',
+  );
+  const alcoholConsumptionCode = resolveReferenceCode(
+    data.alcoholConsumptionCode,
+    alcoholConsumptionCodeAliases,
+    'alcoholConsumptionCode',
+  );
+
+  const [
+    smokingTypeId,
+    physicalActivityTypeId,
+    dietQualityTypeId,
+    alcoholConsumptionTypeId,
+    smokingAdjustment,
+    physicalActivityAdjustment,
+    dietQualityAdjustment,
+    alcoholConsumptionAdjustment,
+    baseLifeExpectancy,
+  ] = await Promise.all([
+    findSmokingTypeIdByCode(smokingCode),
+    findPhysicalActivityTypeIdByCode(physicalActivityCode),
+    findDietQualityTypeIdByCode(dietQualityCode),
+    findAlcoholConsumptionTypeIdByCode(alcoholConsumptionCode),
+    findSmokingAdjustmentByCode(smokingCode),
+    findPhysicalActivityAdjustmentByCode(physicalActivityCode),
+    findDietQualityAdjustmentByCode(dietQualityCode),
+    findAlcoholConsumptionAdjustmentByCode(alcoholConsumptionCode),
+    findLifeExpectancyByCountryAndSex(profile.countryId, profile.sexTypeId),
+  ]);
+
+  if (smokingTypeId == null || smokingAdjustment == null)
+    throw badRequest('Invalid smokingCode');
+  if (physicalActivityTypeId == null || physicalActivityAdjustment == null)
+    throw badRequest('Invalid physicalActivityCode');
+  if (dietQualityTypeId == null || dietQualityAdjustment == null)
+    throw badRequest('Invalid dietQualityCode');
+  if (alcoholConsumptionTypeId == null || alcoholConsumptionAdjustment == null)
+    throw badRequest('Invalid alcoholConsumptionCode');
+  if (baseLifeExpectancy == null)
+    throw badRequest(
+      'Life expectancy data is unavailable for your country and sex',
+    );
+
+  const estimatedLifeExpectancy = roundEstimatedLifeExpectancy(
+    baseLifeExpectancy,
+    [
+      smokingAdjustment,
+      physicalActivityAdjustment,
+      dietQualityAdjustment,
+      alcoholConsumptionAdjustment,
+    ],
+  );
+
+  await withTransaction(async (client) => {
+    await insertHabitsProfile(
+      profile.profileId,
+      smokingTypeId,
+      physicalActivityTypeId,
+      dietQualityTypeId,
+      alcoholConsumptionTypeId,
+      client,
+    );
+    await updateEstimatedLifeExpectancy(
+      profile.profileId,
+      estimatedLifeExpectancy,
+      client,
+    );
+  });
+
+  return {
+    lifestyleProfile: {
+      smokingCode,
+      physicalActivityCode,
+      dietQualityCode,
+      alcoholConsumptionCode,
+    },
+    estimatedLifeExpectancy,
+  };
+};
+
 export const updateFinancialProfileBasicService = async (
   userId: number,
   data: UpdateFinancialProfileBasicDto,
 ) => {
   const profile = await findProfileContextByUserId(userId);
   if (!profile) throw notFound('Profile not found');
-
-  if (!profile.hasFinancialProfile) {
-    throw badRequest('Financial profile does not exist yet');
-  }
 
   let preferredCurrencyId: number | undefined;
   if (data.currencyCode !== undefined) {

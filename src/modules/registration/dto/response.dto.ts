@@ -25,7 +25,9 @@ export type CreateUserInfoResponseDto = ApiResponse<UserInfoDataDto>;
 export type GetUserInfoResponseDto = ApiResponse<GetUserInfoData>;
 
 export type UpdateFinancialProfileBasicResponseDto = ApiEmptyResponse;
+export type CreatePortfolioAllocationsResponseDto = ApiEmptyResponse;
 export type UpdatePortfolioAllocationsResponseDto = ApiEmptyResponse;
+export type CreateStageDataResponseDto = ApiEmptyResponse;
 export type UpdateStageDataResponseDto = ApiEmptyResponse;
 export type UpdateAssetDataResponseDto = ApiEmptyResponse;
 export type DeleteAssetResponseDto = ApiEmptyResponse;
@@ -50,4 +52,7 @@ type LifestyleProfileData = {
 };
 
 export type UpdateLifestyleProfileResponseDto =
+  ApiResponse<LifestyleProfileData>;
+
+export type CreateLifestyleProfileResponseDto =
   ApiResponse<LifestyleProfileData>;
