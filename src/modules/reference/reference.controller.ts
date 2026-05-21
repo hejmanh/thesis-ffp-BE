@@ -12,7 +12,7 @@ import type {
   SmokingTypeDto,
 } from './dto/reference.dto.js';
 import { LifeStageQueryDto, PaginationQueryDto } from './dto/query.dto.js';
-import { listHandler } from './utils/listHandler.js';
+import { listHandler } from '../../utils/listHandler.js';
 import { asyncHandler } from '@/utils/asyncHandler.js';
 import { unauthorized } from '@/utils/error.js';
 import * as referenceService from './reference.service.js';

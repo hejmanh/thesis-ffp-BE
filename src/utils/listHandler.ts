@@ -3,8 +3,8 @@ import { asyncHandler } from '@/utils/asyncHandler.js';
 import type { Pagination } from '@/utils/pagination.js';
 import type { PaginationParams } from '@/utils/pagination.js';
 import { parsePaginationParams, parseSortParam } from '@/utils/pagination.js';
-import type { SortDirection } from '../reference.repository.js';
-import type { ReferenceListResponseDto } from '../dto/response.dto.js';
+import type { SortDirection } from '../modules/reference/reference.repository.js';
+import type { ReferenceListResponseDto } from '../modules/reference/dto/response.dto.js';
 import { z, type ZodTypeAny } from 'zod';
 
 type ReferenceListMeta = ReferenceListResponseDto<unknown>['meta'];

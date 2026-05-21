@@ -44,6 +44,7 @@ import {
   deletePostFfpAsset,
   updateProfileFinancialProfile,
 } from './registration.repository.js';
+import { calculateCurrentAge } from '@/utils/ffp-model/lifeExpectancy.js';
 
 const normalizeReferenceCode = (value: string) =>
   value
@@ -110,9 +111,6 @@ const roundEstimatedLifeExpectancy = (
       baseLifeExpectancy + adjustments.reduce((sum, value) => sum + value, 0),
     ),
   );
-
-const getCurrentAge = (birthYear: number) =>
-  new Date().getFullYear() - birthYear;
 
 const validateStageData = (
   eligibleLifeStageRangeIds: number[],
@@ -216,7 +214,7 @@ export const createUserInfo = async (
     findPhysicalActivityTypeIdByCode(physicalActivityCode),
     findDietQualityTypeIdByCode(dietQualityCode),
     findAlcoholConsumptionTypeIdByCode(alcoholConsumptionCode),
-    listEligibleLifeStageRangeIds(getCurrentAge(profile.birthYear)),
+    listEligibleLifeStageRangeIds(calculateCurrentAge(profile.birthYear)),
     findExistingAssetTypeIds(uniqueAssetTypeIds),
   ]);
 
