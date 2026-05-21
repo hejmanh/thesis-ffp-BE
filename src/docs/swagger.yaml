@@ -173,11 +173,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/EmptyResponse'
 
-  /user-info:
+  /user-info/financial:
     get:
       tags: [User Info]
-      summary: Get user info
-      description: "Returns the current user's saved user info for the account page."
+      summary: Get financial section
+      description: "Returns the current user's financial section, including financial profile, portfolio allocations, and lifestyle profile."
       security:
         - BearerAuth: []
       responses:
@@ -186,11 +186,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetUserInfoResponse'
+                $ref: '#/components/schemas/GetFinancialInfoResponse'
     post:
       tags: [User Info]
-      summary: Submit user info
-      description: 'Submits the final user info payload.'
+      summary: Create financial section
+      description: 'Creates the combined financial section in one request, including financial profile, both portfolio allocations, and lifestyle profile.'
       security:
         - BearerAuth: []
       requestBody:
@@ -198,14 +198,33 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserInfoEnvelope'
+              $ref: '#/components/schemas/FinancialInfoEnvelope'
       responses:
         201:
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateUserInfoResponse'
+                $ref: '#/components/schemas/CreateFinancialInfoResponse'
+    patch:
+      tags: [User Info]
+      summary: Update financial section
+      description: 'Updates the existing financial section through one endpoint. You can update financialProfile, portfolioAllocations, lifestyleProfile, or any combination of them.'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFinancialInfoRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateFinancialInfoResponse'
 
   /user-info/assets:
     get:
@@ -281,74 +300,7 @@ paths:
           schema:
             type: string
             format: uuid
-          description: UUID of the asset to delete (returned by GET /user-info)
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmptyResponse'
-
-  /user-info/basic:
-    patch:
-      tags: [User Info]
-      summary: Update financial profile basic fields
-      description: 'Partially updates currentSavings, desiredLifeExpectancy, and/or currencyCode. At least one field must be provided. estimatedLifeExpectancy is read-only and cannot be changed here.'
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateFinancialProfileBasicRequest'
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmptyResponse'
-
-  /user-info/portfolio:
-    post:
-      tags: [User Info]
-      summary: Create portfolio allocations
-      description: 'Creates both PRE_FFP and POST_FFP portfolio allocations. Both allocations must be sent together. Rejects the request if portfolio allocations already exist for the profile.'
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePortfolioAllocationsRequest'
-      responses:
-        201:
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmptyResponse'
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
-        404:
-          description: Profile not found
-    patch:
-      tags: [User Info]
-      summary: Update portfolio allocations
-      description: 'Updates both PRE_FFP and POST_FFP portfolio allocations. Both allocations must always be sent together.'
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePortfolioAllocationsRequest'
+          description: UUID of the asset to delete (returned by GET /user-info/assets)
       responses:
         200:
           description: OK
@@ -358,6 +310,19 @@ paths:
                 $ref: '#/components/schemas/EmptyResponse'
 
   /user-info/stages:
+    get:
+      tags: [User Info]
+      summary: Get stage data
+      description: 'Returns the saved stage data for the authenticated user.'
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetStageDataResponse'
     post:
       tags: [User Info]
       summary: Create stage data
@@ -402,54 +367,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EmptyResponse'
-
-  /user-info/lifestyle:
-    post:
-      tags: [User Info]
-      summary: Create lifestyle profile
-      description: 'Creates all four lifestyle habits at once. Returns the normalized lifestyle codes and recalculated estimated life expectancy. Rejects the request if a lifestyle profile already exists.'
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LifestyleProfileRequest'
-      responses:
-        201:
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpdateLifestyleProfileResponse'
-        401:
-          description: Unauthorized
-        404:
-          description: Profile not found
-    patch:
-      tags: [User Info]
-      summary: Update lifestyle profile
-      description: 'Updates all four lifestyle habits at once (smoking, physical activity, diet quality, alcohol consumption). All four fields are required. Returns the updated lifestyle and recalculated estimated life expectancy.'
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LifestyleProfileRequest'
-      responses:
-        201:
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpdateLifestyleProfileResponse'
-        401:
-          description: Unauthorized
-        404:
-          description: Profile not found
   /reference/currencies:
     get:
       tags: [Reference]
@@ -968,7 +885,7 @@ components:
         uid:
           type: string
           format: uuid
-          description: UUID of the asset to update (returned by GET /user-info).
+          description: UUID of the asset to update (returned by GET /user-info/assets).
         initialAnnualIncome:
           type: number
           minimum: 0
@@ -1067,16 +984,9 @@ components:
         alcoholConsumptionCode:
           type: string
           nullable: true
-    UserInfo:
+    FinancialInfo:
       type: object
-      required:
-        [
-          financialProfile,
-          portfolioAllocations,
-          lifestyleProfile,
-          stageData,
-          assetData,
-        ]
+      required: [financialProfile, portfolioAllocations, lifestyleProfile]
       properties:
         financialProfile:
           $ref: '#/components/schemas/FinancialProfileRequest'
@@ -1088,29 +998,24 @@ components:
             $ref: '#/components/schemas/PortfolioAllocationRequest'
         lifestyleProfile:
           $ref: '#/components/schemas/LifestyleProfileRequest'
-        stageData:
-          type: array
-          items:
-            $ref: '#/components/schemas/StageDataRequest'
-        assetData:
-          type: array
-          items:
-            $ref: '#/components/schemas/AssetDataRequest'
-    UserInfoEnvelope:
+    FinancialInfoEnvelope:
       type: object
       properties:
-        userInfo:
-          $ref: '#/components/schemas/UserInfo'
-    GetUserInfo:
+        financial:
+          $ref: '#/components/schemas/FinancialInfo'
+    UpdateFinancialInfoRequest:
       type: object
-      required:
-        [
-          financialProfile,
-          portfolioAllocations,
-          lifestyleProfile,
-          stageData,
-          assetData,
-        ]
+      description: At least one of financialProfile, portfolioAllocations, or lifestyleProfile must be provided.
+      properties:
+        financialProfile:
+          $ref: '#/components/schemas/UpdateFinancialProfileBasicRequest'
+        portfolioAllocations:
+          $ref: '#/components/schemas/UpdatePortfolioAllocationsRequest'
+        lifestyleProfile:
+          $ref: '#/components/schemas/LifestyleProfileRequest'
+    GetFinancialInfo:
+      type: object
+      required: [financialProfile, portfolioAllocations, lifestyleProfile]
       properties:
         financialProfile:
           $ref: '#/components/schemas/FinancialProfileData'
@@ -1122,33 +1027,41 @@ components:
             $ref: '#/components/schemas/PortfolioAllocationData'
         lifestyleProfile:
           $ref: '#/components/schemas/LifestyleProfileResponse'
-        stageData:
-          type: array
-          items:
-            $ref: '#/components/schemas/StageDataRequest'
-        assetData:
-          type: array
-          items:
-            $ref: '#/components/schemas/AssetDataResponse'
-    GetUserInfoEnvelope:
+    GetFinancialInfoEnvelope:
       type: object
       properties:
-        userInfo:
-          $ref: '#/components/schemas/GetUserInfo'
-    GetUserInfoResponse:
+        financial:
+          $ref: '#/components/schemas/GetFinancialInfo'
+    GetFinancialInfoResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponseBase'
         - type: object
           properties:
             data:
-              $ref: '#/components/schemas/GetUserInfoEnvelope'
-    CreateUserInfoResponse:
+              $ref: '#/components/schemas/GetFinancialInfoEnvelope'
+    CreateFinancialInfoResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponseBase'
         - type: object
           properties:
             data:
-              $ref: '#/components/schemas/UserInfoEnvelope'
+              $ref: '#/components/schemas/GetFinancialInfoEnvelope'
+    UpdateFinancialInfoResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/GetFinancialInfoEnvelope'
+    GetStageDataResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/StageDataRequest'
     PaginationMeta:
       type: object
       properties:

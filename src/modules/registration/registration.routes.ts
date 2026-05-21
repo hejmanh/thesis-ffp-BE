@@ -1,16 +1,13 @@
 import { Router } from 'express';
 import { authMiddleware } from '@/middlewares/auth.js';
 import {
-  createLifestyleProfileHandler,
-  createPortfolioAllocationsHandler,
+  createFinancialInfoHandler,
   createStageDataHandler,
   deleteAssetHandler,
-  createUserInfoHandler,
-  getUserInfoHandler,
+  getFinancialInfoHandler,
+  getStageDataHandler,
   updateAssetDataHandler,
-  updateFinancialProfileBasicHandler,
-  updateLifestyleProfileHandler,
-  updatePortfolioAllocationsHandler,
+  updateFinancialInfoHandler,
   updateStageDataHandler,
   createAssetsHandler,
   listAssetsHandler,
@@ -18,18 +15,15 @@ import {
 
 const router = Router();
 
-router.get('/', authMiddleware, getUserInfoHandler);
-router.post('/', authMiddleware, createUserInfoHandler);
-router.patch('/basic', authMiddleware, updateFinancialProfileBasicHandler);
-router.post('/portfolio', authMiddleware, createPortfolioAllocationsHandler);
-router.patch('/portfolio', authMiddleware, updatePortfolioAllocationsHandler);
+router.get('/financial', authMiddleware, getFinancialInfoHandler);
+router.post('/financial', authMiddleware, createFinancialInfoHandler);
+router.patch('/financial', authMiddleware, updateFinancialInfoHandler);
+router.get('/stages', authMiddleware, getStageDataHandler);
 router.post('/stages', authMiddleware, createStageDataHandler);
 router.patch('/stages', authMiddleware, updateStageDataHandler);
 router.get('/assets', authMiddleware, listAssetsHandler);
 router.post('/assets', authMiddleware, createAssetsHandler);
 router.patch('/assets', authMiddleware, updateAssetDataHandler);
-router.post('/lifestyle', authMiddleware, createLifestyleProfileHandler);
-router.patch('/lifestyle', authMiddleware, updateLifestyleProfileHandler);
 router.delete('/assets/:uid', authMiddleware, deleteAssetHandler);
 
 export default router;

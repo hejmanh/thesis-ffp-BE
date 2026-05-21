@@ -24,6 +24,53 @@ export type CreateUserInfoResponseDto = ApiResponse<UserInfoDataDto>;
 
 export type GetUserInfoResponseDto = ApiResponse<GetUserInfoData>;
 
+type FinancialProfileResponseData = {
+  currentSavings: number;
+  desiredLifeExpectancy: number;
+  estimatedLifeExpectancy: number;
+  currencyCode: string;
+};
+
+type PortfolioAllocationResponseItem = {
+  allocationType: 'PRE_FFP' | 'POST_FFP';
+  u: number;
+  mu: number;
+  rf: number;
+};
+
+type LifestyleProfileResponseData = {
+  smokingCode: string;
+  physicalActivityCode: string;
+  dietQualityCode: string;
+  alcoholConsumptionCode: string;
+};
+
+type FinancialSectionData = {
+  financialProfile: FinancialProfileResponseData;
+  portfolioAllocations: PortfolioAllocationResponseItem[];
+  lifestyleProfile: LifestyleProfileResponseData;
+};
+
+export type CreateFinancialInfoResponseDto = ApiResponse<{
+  financial: FinancialSectionData;
+}>;
+
+export type GetFinancialInfoResponseDto = ApiResponse<{
+  financial: FinancialSectionData;
+}>;
+
+export type UpdateFinancialInfoResponseDto = ApiResponse<{
+  financial: FinancialSectionData;
+}>;
+
+type StageDataResponseItem = {
+  lifeStageRangeId: number;
+  initialAnnualSavings: number;
+  growthRate: number;
+};
+
+export type GetStageDataResponseDto = ApiResponse<StageDataResponseItem[]>;
+
 export type UpdateFinancialProfileBasicResponseDto = ApiEmptyResponse;
 export type CreatePortfolioAllocationsResponseDto = ApiEmptyResponse;
 export type UpdatePortfolioAllocationsResponseDto = ApiEmptyResponse;
