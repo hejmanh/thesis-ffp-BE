@@ -26,8 +26,10 @@ export function runScenario1({
   retirementDuration,
   u_pre,
   u_post,
-  mu,
-  r_f,
+  mu_pre,
+  r_f_pre,
+  mu_post,
+  r_f_post,
 }: {
   currentSavings: number;
   currentAge: number;
@@ -37,11 +39,13 @@ export function runScenario1({
   retirementDuration: number;
   u_pre: number;
   u_post: number;
-  mu: number;
-  r_f: number;
+  mu_pre: number;
+  r_f_pre: number;
+  mu_post: number;
+  r_f_post: number;
 }) {
   // Pre-FFP: wealth accumulation with higher risk tolerance
-  const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu, r_f);
+  const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu_pre, r_f_pre);
 
   const wealthAtFFP = calculateWealthBeforeFFP(
     currentSavings,
@@ -52,7 +56,11 @@ export function runScenario1({
   );
 
   // Post-FFP: required wealth with more conservative allocation
-  const portfolioReturnPost = calculatePortfolioReturn(u_post, mu, r_f);
+  const portfolioReturnPost = calculatePortfolioReturn(
+    u_post,
+    mu_post,
+    r_f_post,
+  );
 
   const requiredWealth = calculateRequiredWealth(
     annualSpending,
@@ -75,8 +83,10 @@ export function estimateFFPAge({
   annualSpending,
   u_pre,
   u_post,
-  mu,
-  r_f,
+  mu_pre,
+  r_f_pre,
+  mu_post,
+  r_f_post,
 }: {
   currentSavings: number;
   currentAge: number;
@@ -85,14 +95,20 @@ export function estimateFFPAge({
   annualSpending: number;
   u_pre: number;
   u_post: number;
-  mu: number;
-  r_f: number;
+  mu_pre: number;
+  r_f_pre: number;
+  mu_post: number;
+  r_f_post: number;
 }): number | null {
   // Pre-FFP portfolio return (growth-oriented)
-  const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu, r_f);
+  const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu_pre, r_f_pre);
 
   // Post-FFP portfolio return (conservative)
-  const portfolioReturnPost = calculatePortfolioReturn(u_post, mu, r_f);
+  const portfolioReturnPost = calculatePortfolioReturn(
+    u_post,
+    mu_post,
+    r_f_post,
+  );
 
   // Iterate through possible FFP ages
   for (let age = currentAge; age <= lifeExpectancy; age++) {

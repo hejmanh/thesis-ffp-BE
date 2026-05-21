@@ -10,6 +10,7 @@ tags:
   - name: Health
   - name: Auth
   - name: User Info
+  - name: Scenario
   - name: Reference
 
 paths:
@@ -377,6 +378,170 @@ paths:
           description: Unauthorized
         404:
           description: Profile not found
+
+  /scenario-1/input:
+    get:
+      tags: [Scenario]
+      summary: Get scenario 1 input
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario1InputResponse'
+        401:
+          description: Unauthorized
+        404:
+          description: Scenario 1 input not found
+    post:
+      tags: [Scenario]
+      summary: Create scenario 1 input
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Scenario1InputRequest'
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario1InputResponse'
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+    patch:
+      tags: [Scenario]
+      summary: Update scenario 1 input
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Scenario1InputRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario1InputResponse'
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Scenario 1 input not found
+
+  /scenario-1/output:
+    get:
+      tags: [Scenario]
+      summary: Get scenario 1 output
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario1OutputResponse'
+        401:
+          description: Unauthorized
+        404:
+          description: Scenario 1 output not found
+
+  /scenario-2/input:
+    get:
+      tags: [Scenario]
+      summary: Get scenario 2 input
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario2InputResponse'
+        401:
+          description: Unauthorized
+        404:
+          description: Scenario 2 input not found
+    post:
+      tags: [Scenario]
+      summary: Create scenario 2 input
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Scenario2InputRequest'
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario2InputResponse'
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+    patch:
+      tags: [Scenario]
+      summary: Update scenario 2 input
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Scenario2InputRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario2InputResponse'
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Scenario 2 input not found
+
+  /scenario-2/output:
+    get:
+      tags: [Scenario]
+      summary: Get scenario 2 output
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario2OutputResponse'
+        401:
+          description: Unauthorized
+        404:
+          description: Scenario 2 output not found
   /reference/currencies:
     get:
       tags: [Reference]
@@ -1235,6 +1400,71 @@ components:
                 estimatedLifeExpectancy:
                   type: number
                   example: 82.9
+    Scenario1InputRequest:
+      type: object
+      required: [lifeExpectancy, inputFfpAge, inputFfpAnnualSpending]
+      properties:
+        lifeExpectancy:
+          type: integer
+        inputFfpAge:
+          type: integer
+        inputFfpAnnualSpending:
+          type: number
+    Scenario1InputResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                lifeExpectancy:
+                  type: integer
+                inputFfpAge:
+                  type: integer
+                inputFfpAnnualSpending:
+                  type: number
+    Scenario1OutputResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                outputIsAchievable:
+                  type: boolean
+    Scenario2InputRequest:
+      type: object
+      required: [lifeExpectancy, inputFfpAnnualSpending]
+      properties:
+        lifeExpectancy:
+          type: integer
+        inputFfpAnnualSpending:
+          type: number
+    Scenario2InputResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                lifeExpectancy:
+                  type: integer
+                inputFfpAnnualSpending:
+                  type: number
+    Scenario2OutputResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                outputFfpAge:
+                  type: integer
+                  nullable: true
     CurrencyListResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponseBase'
