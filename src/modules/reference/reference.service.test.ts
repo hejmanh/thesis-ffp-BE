@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as referenceService from './reference.service.js';
 import * as referenceRepository from './reference.repository.js';
 import { AppError } from '@/utils/AppError.js';
-import type { SortDirection } from './reference.repository.js';
+import type { SortDirection } from '@/utils/pagination.js';
 
 vi.mock('./reference.repository.js', () => ({
   listCurrencies: vi.fn(),
@@ -112,8 +112,9 @@ describe('Reference Service', () => {
       'asc',
       26,
     );
-    expect(result.data[0].beginningAge).toBe(26);
-    expect(result.data[1].beginningAge).toBe(41);
+    expect(result.data).toHaveLength(2);
+    expect(result.data[0]!.beginningAge).toBe(26);
+    expect(result.data[1]!.beginningAge).toBe(41);
   });
 
   it('throws when birthYear is in the future', async () => {

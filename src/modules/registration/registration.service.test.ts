@@ -1185,8 +1185,9 @@ describe('Registration Service', () => {
 
       const result = await registrationService.listAssetsService(99);
 
-      expect(result[0].initialAnnualIncome).toBe(0);
-      expect(result[0].growthRate).toBe(0);
+      expect(result).toHaveLength(1);
+      expect(result[0]!.initialAnnualIncome).toBe(0);
+      expect(result[0]!.growthRate).toBe(0);
     });
 
     it('throws when profile is not found', async () => {
