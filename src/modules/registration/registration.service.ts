@@ -734,100 +734,32 @@ export const updateLifestyleProfileService = async (
     throw badRequest('Lifestyle profile does not exist yet');
   }
 
-  if (profile.countryId == null || profile.sexTypeId == null) {
-    throw badRequest('Country and sex must be set on your profile');
-  }
-
-  const smokingCode = resolveReferenceCode(
-    data.smokingCode,
-    smokingCodeAliases,
-    'smokingCode',
-  );
-  const physicalActivityCode = resolveReferenceCode(
-    data.physicalActivityCode,
-    physicalActivityCodeAliases,
-    'physicalActivityCode',
-  );
-  const dietQualityCode = resolveReferenceCode(
-    data.dietQualityCode,
-    dietQualityCodeAliases,
-    'dietQualityCode',
-  );
-  const alcoholConsumptionCode = resolveReferenceCode(
-    data.alcoholConsumptionCode,
-    alcoholConsumptionCodeAliases,
-    'alcoholConsumptionCode',
-  );
-
-  const [
-    smokingTypeId,
-    physicalActivityTypeId,
-    dietQualityTypeId,
-    alcoholConsumptionTypeId,
-    smokingAdjustment,
-    physicalActivityAdjustment,
-    dietQualityAdjustment,
-    alcoholConsumptionAdjustment,
-    baseLifeExpectancy,
-  ] = await Promise.all([
-    findSmokingTypeIdByCode(smokingCode),
-    findPhysicalActivityTypeIdByCode(physicalActivityCode),
-    findDietQualityTypeIdByCode(dietQualityCode),
-    findAlcoholConsumptionTypeIdByCode(alcoholConsumptionCode),
-    findSmokingAdjustmentByCode(smokingCode),
-    findPhysicalActivityAdjustmentByCode(physicalActivityCode),
-    findDietQualityAdjustmentByCode(dietQualityCode),
-    findAlcoholConsumptionAdjustmentByCode(alcoholConsumptionCode),
-    findLifeExpectancyByCountryAndSex(profile.countryId, profile.sexTypeId),
-  ]);
-
-  if (smokingTypeId == null || smokingAdjustment == null)
-    throw badRequest('Invalid smokingCode');
-  if (physicalActivityTypeId == null || physicalActivityAdjustment == null)
-    throw badRequest('Invalid physicalActivityCode');
-  if (dietQualityTypeId == null || dietQualityAdjustment == null)
-    throw badRequest('Invalid dietQualityCode');
-  if (alcoholConsumptionTypeId == null || alcoholConsumptionAdjustment == null)
-    throw badRequest('Invalid alcoholConsumptionCode');
-  if (baseLifeExpectancy == null)
-    throw badRequest(
-      'Life expectancy data is unavailable for your country and sex',
-    );
-
-  const estimatedLifeExpectancy = roundEstimatedLifeExpectancy(
-    baseLifeExpectancy,
-    [
-      smokingAdjustment,
-      physicalActivityAdjustment,
-      dietQualityAdjustment,
-      alcoholConsumptionAdjustment,
-    ],
-  );
+  const resolvedLifestyle = await resolveLifestyleProfile(profile, data);
 
   await withTransaction(async (client) => {
     await updateHabitsProfile(
       profile.profileId,
-      smokingTypeId,
-      physicalActivityTypeId,
-      dietQualityTypeId,
-      alcoholConsumptionTypeId,
+      resolvedLifestyle.smokingTypeId,
+      resolvedLifestyle.physicalActivityTypeId,
+      resolvedLifestyle.dietQualityTypeId,
+      resolvedLifestyle.alcoholConsumptionTypeId,
       client,
     );
     await updateEstimatedLifeExpectancy(
       profile.profileId,
-      estimatedLifeExpectancy,
+      resolvedLifestyle.estimatedLifeExpectancy,
       client,
     );
   });
 
   return {
     lifestyleProfile: {
-      smokingCode,
-      physicalActivityCode,
-      dietQualityCode,
-      alcoholConsumptionCode,
+      smokingCode: resolvedLifestyle.smokingCode,
+      physicalActivityCode: resolvedLifestyle.physicalActivityCode,
+      dietQualityCode: resolvedLifestyle.dietQualityCode,
+      alcoholConsumptionCode: resolvedLifestyle.alcoholConsumptionCode,
     },
-    estimatedLifeExpectancy,
+    estimatedLifeExpectancy: resolvedLifestyle.estimatedLifeExpectancy,
   };
 };
 
@@ -916,100 +848,32 @@ export const createLifestyleProfileService = async (
     throw badRequest('Lifestyle profile already exists');
   }
 
-  if (profile.countryId == null || profile.sexTypeId == null) {
-    throw badRequest('Country and sex must be set on your profile');
-  }
-
-  const smokingCode = resolveReferenceCode(
-    data.smokingCode,
-    smokingCodeAliases,
-    'smokingCode',
-  );
-  const physicalActivityCode = resolveReferenceCode(
-    data.physicalActivityCode,
-    physicalActivityCodeAliases,
-    'physicalActivityCode',
-  );
-  const dietQualityCode = resolveReferenceCode(
-    data.dietQualityCode,
-    dietQualityCodeAliases,
-    'dietQualityCode',
-  );
-  const alcoholConsumptionCode = resolveReferenceCode(
-    data.alcoholConsumptionCode,
-    alcoholConsumptionCodeAliases,
-    'alcoholConsumptionCode',
-  );
-
-  const [
-    smokingTypeId,
-    physicalActivityTypeId,
-    dietQualityTypeId,
-    alcoholConsumptionTypeId,
-    smokingAdjustment,
-    physicalActivityAdjustment,
-    dietQualityAdjustment,
-    alcoholConsumptionAdjustment,
-    baseLifeExpectancy,
-  ] = await Promise.all([
-    findSmokingTypeIdByCode(smokingCode),
-    findPhysicalActivityTypeIdByCode(physicalActivityCode),
-    findDietQualityTypeIdByCode(dietQualityCode),
-    findAlcoholConsumptionTypeIdByCode(alcoholConsumptionCode),
-    findSmokingAdjustmentByCode(smokingCode),
-    findPhysicalActivityAdjustmentByCode(physicalActivityCode),
-    findDietQualityAdjustmentByCode(dietQualityCode),
-    findAlcoholConsumptionAdjustmentByCode(alcoholConsumptionCode),
-    findLifeExpectancyByCountryAndSex(profile.countryId, profile.sexTypeId),
-  ]);
-
-  if (smokingTypeId == null || smokingAdjustment == null)
-    throw badRequest('Invalid smokingCode');
-  if (physicalActivityTypeId == null || physicalActivityAdjustment == null)
-    throw badRequest('Invalid physicalActivityCode');
-  if (dietQualityTypeId == null || dietQualityAdjustment == null)
-    throw badRequest('Invalid dietQualityCode');
-  if (alcoholConsumptionTypeId == null || alcoholConsumptionAdjustment == null)
-    throw badRequest('Invalid alcoholConsumptionCode');
-  if (baseLifeExpectancy == null)
-    throw badRequest(
-      'Life expectancy data is unavailable for your country and sex',
-    );
-
-  const estimatedLifeExpectancy = roundEstimatedLifeExpectancy(
-    baseLifeExpectancy,
-    [
-      smokingAdjustment,
-      physicalActivityAdjustment,
-      dietQualityAdjustment,
-      alcoholConsumptionAdjustment,
-    ],
-  );
+  const resolvedLifestyle = await resolveLifestyleProfile(profile, data);
 
   await withTransaction(async (client) => {
     await insertHabitsProfile(
       profile.profileId,
-      smokingTypeId,
-      physicalActivityTypeId,
-      dietQualityTypeId,
-      alcoholConsumptionTypeId,
+      resolvedLifestyle.smokingTypeId,
+      resolvedLifestyle.physicalActivityTypeId,
+      resolvedLifestyle.dietQualityTypeId,
+      resolvedLifestyle.alcoholConsumptionTypeId,
       client,
     );
     await updateEstimatedLifeExpectancy(
       profile.profileId,
-      estimatedLifeExpectancy,
+      resolvedLifestyle.estimatedLifeExpectancy,
       client,
     );
   });
 
   return {
     lifestyleProfile: {
-      smokingCode,
-      physicalActivityCode,
-      dietQualityCode,
-      alcoholConsumptionCode,
+      smokingCode: resolvedLifestyle.smokingCode,
+      physicalActivityCode: resolvedLifestyle.physicalActivityCode,
+      dietQualityCode: resolvedLifestyle.dietQualityCode,
+      alcoholConsumptionCode: resolvedLifestyle.alcoholConsumptionCode,
     },
-    estimatedLifeExpectancy,
+    estimatedLifeExpectancy: resolvedLifestyle.estimatedLifeExpectancy,
   };
 };
 

@@ -898,34 +898,29 @@ components:
         $ref: '#/components/schemas/UpdateAssetItemRequest'
     FinancialProfileData:
       type: object
+      required: [currentSavings, desiredLifeExpectancy, estimatedLifeExpectancy, currencyCode]
       properties:
         currentSavings:
           type: number
-          nullable: true
         desiredLifeExpectancy:
           type: integer
-          nullable: true
         estimatedLifeExpectancy:
           type: integer
-          nullable: true
         currencyCode:
           type: string
-          nullable: true
     PortfolioAllocationData:
       type: object
+      required: [allocationType, u, mu, rf]
       properties:
         allocationType:
           type: string
           enum: [PRE_FFP, POST_FFP]
         u:
           type: number
-          nullable: true
         mu:
           type: number
-          nullable: true
         rf:
           type: number
-          nullable: true
     StageDataResponse:
       type: object
       properties:
@@ -971,19 +966,16 @@ components:
           nullable: true
     LifestyleProfileResponse:
       type: object
+      required: [smokingCode, physicalActivityCode, dietQualityCode, alcoholConsumptionCode]
       properties:
         smokingCode:
           type: string
-          nullable: true
         physicalActivityCode:
           type: string
-          nullable: true
         dietQualityCode:
           type: string
-          nullable: true
         alcoholConsumptionCode:
           type: string
-          nullable: true
     FinancialInfo:
       type: object
       required: [financialProfile, portfolioAllocations, lifestyleProfile]
