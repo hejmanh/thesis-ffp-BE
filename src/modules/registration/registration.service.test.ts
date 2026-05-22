@@ -46,6 +46,67 @@ vi.mock('./registration.repository.js', () => ({
 
 const asMock = <T>(fn: T) => fn as unknown as ReturnType<typeof vi.fn>;
 
+const financialSectionPayload = {
+  financial: {
+    financialProfile: {
+      desiredLifeExpectancy: 90,
+      currentSavings: 50000,
+      currencyCode: 'USD',
+    },
+    portfolioAllocations: [
+      {
+        allocationType: 'PRE_FFP' as const,
+        u: 0.7,
+        mu: 0.12,
+        rf: 0.03,
+      },
+      {
+        allocationType: 'POST_FFP' as const,
+        u: 0.4,
+        mu: 0.08,
+        rf: 0.03,
+      },
+    ],
+    lifestyleProfile: {
+      smokingCode: 'NON_SMOKER',
+      physicalActivityCode: 'HIGH',
+      dietQualityCode: 'MEDIUM',
+      alcoholConsumptionCode: 'LOW',
+    },
+  },
+};
+
+const financialSectionResponse = {
+  financial: {
+    financialProfile: {
+      currentSavings: 50000,
+      desiredLifeExpectancy: 90,
+      estimatedLifeExpectancy: 83,
+      currencyCode: 'USD',
+    },
+    portfolioAllocations: [
+      {
+        allocationType: 'PRE_FFP' as const,
+        u: 0.7,
+        mu: 0.12,
+        rf: 0.03,
+      },
+      {
+        allocationType: 'POST_FFP' as const,
+        u: 0.4,
+        mu: 0.08,
+        rf: 0.03,
+      },
+    ],
+    lifestyleProfile: {
+      smokingCode: 'non_smoker',
+      physicalActivityCode: 'active',
+      dietQualityCode: 'average',
+      alcoholConsumptionCode: 'moderate',
+    },
+  },
+};
+
 describe('Registration Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -610,6 +671,306 @@ describe('Registration Service', () => {
     await expect(registrationService.getUserInfo(99)).rejects.toBeTruthy();
   });
 
+  describe('createFinancialInfo', () => {
+    it('creates the combined financial section and computes estimated life expectancy', async () => {
+      asMock(
+        registrationRepository.findProfileContextByUserId,
+      ).mockResolvedValue({
+        profileId: 11,
+        profileUid: 'profile-uuid',
+        birthYear: 2000,
+        countryId: 22,
+        sexTypeId: 33,
+        hasFinancialProfile: false,
+        hasHabitsProfile: false,
+        hasPortfolioProfile: false,
+        hasLifeStageProfile: false,
+        hasPostFfpAsset: false,
+      });
+      asMock(registrationRepository.findCurrencyIdByCode).mockResolvedValue(44);
+      asMock(
+        registrationRepository.findLifeExpectancyByCountryAndSex,
+      ).mockResolvedValue(80.4);
+      asMock(
+        registrationRepository.findSmokingAdjustmentByCode,
+      ).mockResolvedValue(0);
+      asMock(
+        registrationRepository.findPhysicalActivityAdjustmentByCode,
+      ).mockResolvedValue(2.5);
+      asMock(
+        registrationRepository.findDietQualityAdjustmentByCode,
+      ).mockResolvedValue(0);
+      asMock(
+        registrationRepository.findAlcoholConsumptionAdjustmentByCode,
+      ).mockResolvedValue(0);
+      asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(
+        1,
+      );
+      asMock(
+        registrationRepository.findPhysicalActivityTypeIdByCode,
+      ).mockResolvedValue(2);
+      asMock(
+        registrationRepository.findDietQualityTypeIdByCode,
+      ).mockResolvedValue(3);
+      asMock(
+        registrationRepository.findAlcoholConsumptionTypeIdByCode,
+      ).mockResolvedValue(4);
+
+      const result = await registrationService.createFinancialInfo(
+        99,
+        financialSectionPayload,
+      );
+
+      expect(result).toEqual(financialSectionResponse);
+      expect(
+        registrationRepository.updateProfileFinancialProfile,
+      ).toHaveBeenCalledWith(11, 50000, 90, 83, 44, expect.anything());
+      expect(
+        registrationRepository.insertPortfolioProfile,
+      ).toHaveBeenCalledTimes(2);
+      expect(registrationRepository.insertHabitsProfile).toHaveBeenCalledWith(
+        11,
+        1,
+        2,
+        3,
+        4,
+        expect.anything(),
+      );
+    });
+
+    it('rejects when any financial section records already exist', async () => {
+      asMock(
+        registrationRepository.findProfileContextByUserId,
+      ).mockResolvedValue({
+        profileId: 11,
+        profileUid: 'profile-uuid',
+        birthYear: 2000,
+        countryId: 22,
+        sexTypeId: 33,
+        hasFinancialProfile: true,
+        hasHabitsProfile: false,
+        hasPortfolioProfile: false,
+        hasLifeStageProfile: false,
+        hasPostFfpAsset: false,
+      });
+
+      await expect(
+        registrationService.createFinancialInfo(99, financialSectionPayload),
+      ).rejects.toBeTruthy();
+      expect(
+        registrationRepository.updateProfileFinancialProfile,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getFinancialInfo', () => {
+    it('returns the combined financial section', async () => {
+      mockFullProfile();
+      asMock(
+        registrationRepository.getFinancialProfileDetails,
+      ).mockResolvedValue({
+        currentSavings: 50000,
+        desiredLifeExpectancy: 90,
+        estimatedLifeExpectancy: 83,
+        currencyCode: 'USD',
+      });
+      asMock(
+        registrationRepository.listPortfolioAllocationDetails,
+      ).mockResolvedValue(
+        financialSectionResponse.financial.portfolioAllocations,
+      );
+      asMock(registrationRepository.getHabitsProfileDetails).mockResolvedValue({
+        smokingCode: 'non_smoker',
+        physicalActivityCode: 'active',
+        dietQualityCode: 'average',
+        alcoholConsumptionCode: 'moderate',
+      });
+
+      await expect(registrationService.getFinancialInfo(99)).resolves.toEqual(
+        financialSectionResponse,
+      );
+    });
+
+    it('rejects when the financial section has not been created yet', async () => {
+      mockFullProfile({
+        hasFinancialProfile: false,
+        hasHabitsProfile: false,
+        hasPortfolioProfile: false,
+      });
+
+      await expect(
+        registrationService.getFinancialInfo(99),
+      ).rejects.toBeTruthy();
+    });
+  });
+
+  describe('updateFinancialInfo', () => {
+    it('updates profile, portfolio, and lifestyle data through one endpoint flow', async () => {
+      mockFullProfile();
+      asMock(registrationRepository.findCurrencyIdByCode).mockResolvedValue(66);
+      asMock(
+        registrationRepository.findLifeExpectancyByCountryAndSex,
+      ).mockResolvedValue(80.4);
+      asMock(
+        registrationRepository.findSmokingAdjustmentByCode,
+      ).mockResolvedValue(0);
+      asMock(
+        registrationRepository.findPhysicalActivityAdjustmentByCode,
+      ).mockResolvedValue(2.5);
+      asMock(
+        registrationRepository.findDietQualityAdjustmentByCode,
+      ).mockResolvedValue(0);
+      asMock(
+        registrationRepository.findAlcoholConsumptionAdjustmentByCode,
+      ).mockResolvedValue(0);
+      asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(
+        1,
+      );
+      asMock(
+        registrationRepository.findPhysicalActivityTypeIdByCode,
+      ).mockResolvedValue(2);
+      asMock(
+        registrationRepository.findDietQualityTypeIdByCode,
+      ).mockResolvedValue(3);
+      asMock(
+        registrationRepository.findAlcoholConsumptionTypeIdByCode,
+      ).mockResolvedValue(4);
+      asMock(
+        registrationRepository.getFinancialProfileDetails,
+      ).mockResolvedValue({
+        currentSavings: 62000,
+        desiredLifeExpectancy: 95,
+        estimatedLifeExpectancy: 83,
+        currencyCode: 'EUR',
+      });
+      asMock(
+        registrationRepository.listPortfolioAllocationDetails,
+      ).mockResolvedValue([
+        { allocationType: 'PRE_FFP', u: 0.6, mu: 0.11, rf: 0.02 },
+        { allocationType: 'POST_FFP', u: 0.35, mu: 0.07, rf: 0.02 },
+      ]);
+      asMock(registrationRepository.getHabitsProfileDetails).mockResolvedValue({
+        smokingCode: 'non_smoker',
+        physicalActivityCode: 'active',
+        dietQualityCode: 'average',
+        alcoholConsumptionCode: 'moderate',
+      });
+
+      const result = await registrationService.updateFinancialInfo(99, {
+        financialProfile: {
+          currentSavings: 62000,
+          desiredLifeExpectancy: 95,
+          currencyCode: 'EUR',
+        },
+        portfolioAllocations: [
+          { allocationType: 'PRE_FFP', u: 0.6, mu: 0.11, rf: 0.02 },
+          { allocationType: 'POST_FFP', u: 0.35, mu: 0.07, rf: 0.02 },
+        ],
+        lifestyleProfile: {
+          smokingCode: 'NON_SMOKER',
+          physicalActivityCode: 'HIGH',
+          dietQualityCode: 'MEDIUM',
+          alcoholConsumptionCode: 'LOW',
+        },
+      });
+
+      expect(
+        registrationRepository.updateFinancialProfileBasic,
+      ).toHaveBeenCalledWith(
+        11,
+        {
+          currentSavings: 62000,
+          desiredLifeExpectancy: 95,
+          preferredCurrencyId: 66,
+        },
+        expect.anything(),
+      );
+      expect(
+        registrationRepository.updatePortfolioAllocation,
+      ).toHaveBeenCalledTimes(2);
+      expect(registrationRepository.updateHabitsProfile).toHaveBeenCalledWith(
+        11,
+        1,
+        2,
+        3,
+        4,
+        expect.anything(),
+      );
+      expect(
+        registrationRepository.updateEstimatedLifeExpectancy,
+      ).toHaveBeenCalledWith(11, 83, expect.anything());
+      expect(result).toEqual({
+        financial: {
+          financialProfile: {
+            currentSavings: 62000,
+            desiredLifeExpectancy: 95,
+            estimatedLifeExpectancy: 83,
+            currencyCode: 'EUR',
+          },
+          portfolioAllocations: [
+            { allocationType: 'PRE_FFP', u: 0.6, mu: 0.11, rf: 0.02 },
+            { allocationType: 'POST_FFP', u: 0.35, mu: 0.07, rf: 0.02 },
+          ],
+          lifestyleProfile: {
+            smokingCode: 'non_smoker',
+            physicalActivityCode: 'active',
+            dietQualityCode: 'average',
+            alcoholConsumptionCode: 'moderate',
+          },
+        },
+      });
+    });
+
+    it('rejects when the financial section does not exist yet', async () => {
+      mockFullProfile({
+        hasFinancialProfile: false,
+        hasHabitsProfile: false,
+        hasPortfolioProfile: false,
+      });
+
+      await expect(
+        registrationService.updateFinancialInfo(99, {
+          financialProfile: { currentSavings: 62000 },
+        }),
+      ).rejects.toBeTruthy();
+    });
+  });
+
+  describe('getStageDataService', () => {
+    it('returns stage data for the stages endpoint', async () => {
+      mockFullProfile();
+      asMock(registrationRepository.listStageDataDetails).mockResolvedValue([
+        {
+          lifeStageRangeId: 101,
+          stageNo: 4,
+          title: 'Early Adulthood',
+          beginningAge: 26,
+          endingAge: 45,
+          initialAnnualSavings: 12000,
+          growthRate: 0.05,
+        },
+      ]);
+
+      await expect(
+        registrationService.getStageDataService(99),
+      ).resolves.toEqual([
+        {
+          lifeStageRangeId: 101,
+          initialAnnualSavings: 12000,
+          growthRate: 0.05,
+        },
+      ]);
+    });
+
+    it('rejects when stage data does not exist yet', async () => {
+      mockFullProfile({ hasLifeStageProfile: false });
+
+      await expect(
+        registrationService.getStageDataService(99),
+      ).rejects.toBeTruthy();
+    });
+  });
+
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
@@ -775,6 +1136,42 @@ describe('Registration Service', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // createPortfolioAllocationsService
+  // ---------------------------------------------------------------------------
+
+  describe('createPortfolioAllocationsService', () => {
+    it('creates portfolio allocations when none exist yet', async () => {
+      mockFullProfile({ hasPortfolioProfile: false });
+
+      await registrationService.createPortfolioAllocationsService(99, [
+        { allocationType: 'PRE_FFP', u: 0.6, mu: 0.1, rf: 0.02 },
+        { allocationType: 'POST_FFP', u: 0.4, mu: 0.08, rf: 0.02 },
+      ]);
+
+      expect(
+        registrationRepository.insertPortfolioProfile,
+      ).toHaveBeenCalledTimes(2);
+      expect(
+        registrationRepository.insertPortfolioProfile,
+      ).toHaveBeenCalledWith(11, 'PRE_FFP', 0.6, 0.1, 0.02, expect.anything());
+    });
+
+    it('throws when portfolio allocations already exist', async () => {
+      mockFullProfile();
+
+      await expect(
+        registrationService.createPortfolioAllocationsService(99, [
+          { allocationType: 'PRE_FFP', u: 0.6, mu: 0.1, rf: 0.02 },
+          { allocationType: 'POST_FFP', u: 0.4, mu: 0.08, rf: 0.02 },
+        ]),
+      ).rejects.toBeTruthy();
+      expect(
+        registrationRepository.insertPortfolioProfile,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // updateStageDataService
   // ---------------------------------------------------------------------------
 
@@ -832,6 +1229,105 @@ describe('Registration Service', () => {
       ).rejects.toBeTruthy();
       expect(
         registrationRepository.updateLifeStageProfile,
+      ).not.toHaveBeenCalled();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // createStageDataService
+  // ---------------------------------------------------------------------------
+
+  describe('createStageDataService', () => {
+    it('creates stage rows when requested ids are eligible', async () => {
+      mockFullProfile({ birthYear: 2000, hasLifeStageProfile: false });
+      asMock(
+        registrationRepository.listEligibleLifeStageRangeIds,
+      ).mockResolvedValue([101, 102, 103]);
+      asMock(
+        registrationRepository.findExistingLifeStageRangeIdsForProfile,
+      ).mockResolvedValue([101]);
+
+      await registrationService.createStageDataService(99, [
+        {
+          lifeStageRangeId: 102,
+          initialAnnualSavings: 12000,
+          growthRate: 0.05,
+        },
+        {
+          lifeStageRangeId: 103,
+          initialAnnualSavings: 18000,
+          growthRate: 0.04,
+        },
+      ]);
+
+      expect(
+        registrationRepository.insertLifeStageProfile,
+      ).toHaveBeenCalledTimes(2);
+      expect(
+        registrationRepository.insertLifeStageProfile,
+      ).toHaveBeenCalledWith(11, 102, 12000, 0.05, expect.anything());
+    });
+
+    it('throws when birth year is missing', async () => {
+      mockFullProfile({ birthYear: null, hasLifeStageProfile: false });
+
+      await expect(
+        registrationService.createStageDataService(99, [
+          {
+            lifeStageRangeId: 102,
+            initialAnnualSavings: 12000,
+            growthRate: 0.05,
+          },
+        ]),
+      ).rejects.toBeTruthy();
+      expect(
+        registrationRepository.insertLifeStageProfile,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('throws when a requested lifeStageRangeId is not eligible', async () => {
+      mockFullProfile({ birthYear: 2000, hasLifeStageProfile: false });
+      asMock(
+        registrationRepository.listEligibleLifeStageRangeIds,
+      ).mockResolvedValue([101, 102]);
+      asMock(
+        registrationRepository.findExistingLifeStageRangeIdsForProfile,
+      ).mockResolvedValue([]);
+
+      await expect(
+        registrationService.createStageDataService(99, [
+          {
+            lifeStageRangeId: 999,
+            initialAnnualSavings: 12000,
+            growthRate: 0.05,
+          },
+        ]),
+      ).rejects.toBeTruthy();
+      expect(
+        registrationRepository.insertLifeStageProfile,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('throws when a requested lifeStageRangeId already exists in the profile', async () => {
+      mockFullProfile({ birthYear: 2000 });
+      asMock(
+        registrationRepository.listEligibleLifeStageRangeIds,
+      ).mockResolvedValue([101, 102]);
+      asMock(
+        registrationRepository.findExistingLifeStageRangeIdsForProfile,
+      ).mockResolvedValue([101]);
+
+      await expect(
+        registrationService.createStageDataService(99, [
+          {
+            lifeStageRangeId: 101,
+            initialAnnualSavings: 12000,
+            growthRate: 0.05,
+          },
+        ]),
+      ).rejects.toBeTruthy();
+      expect(
+        registrationRepository.insertLifeStageProfile,
       ).not.toHaveBeenCalled();
     });
   });
@@ -1044,6 +1540,88 @@ describe('Registration Service', () => {
         }),
       ).rejects.toBeTruthy();
       expect(registrationRepository.updateHabitsProfile).not.toHaveBeenCalled();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // createLifestyleProfileService
+  // ---------------------------------------------------------------------------
+
+  describe('createLifestyleProfileService', () => {
+    it('creates lifestyle profile and returns recalculated life expectancy', async () => {
+      mockFullProfile({ hasHabitsProfile: false });
+      asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(
+        1,
+      );
+      asMock(
+        registrationRepository.findPhysicalActivityTypeIdByCode,
+      ).mockResolvedValue(2);
+      asMock(
+        registrationRepository.findDietQualityTypeIdByCode,
+      ).mockResolvedValue(3);
+      asMock(
+        registrationRepository.findAlcoholConsumptionTypeIdByCode,
+      ).mockResolvedValue(4);
+      asMock(
+        registrationRepository.findSmokingAdjustmentByCode,
+      ).mockResolvedValue(0);
+      asMock(
+        registrationRepository.findPhysicalActivityAdjustmentByCode,
+      ).mockResolvedValue(2.5);
+      asMock(
+        registrationRepository.findDietQualityAdjustmentByCode,
+      ).mockResolvedValue(0);
+      asMock(
+        registrationRepository.findAlcoholConsumptionAdjustmentByCode,
+      ).mockResolvedValue(0);
+      asMock(
+        registrationRepository.findLifeExpectancyByCountryAndSex,
+      ).mockResolvedValue(80.4);
+
+      const result = await registrationService.createLifestyleProfileService(
+        99,
+        {
+          smokingCode: 'NON_SMOKER',
+          physicalActivityCode: 'HIGH',
+          dietQualityCode: 'MEDIUM',
+          alcoholConsumptionCode: 'LOW',
+        },
+      );
+
+      expect(registrationRepository.insertHabitsProfile).toHaveBeenCalledWith(
+        11,
+        1,
+        2,
+        3,
+        4,
+        expect.anything(),
+      );
+      expect(
+        registrationRepository.updateEstimatedLifeExpectancy,
+      ).toHaveBeenCalledWith(11, 83, expect.anything());
+      expect(result).toEqual({
+        lifestyleProfile: {
+          smokingCode: 'non_smoker',
+          physicalActivityCode: 'active',
+          dietQualityCode: 'average',
+          alcoholConsumptionCode: 'moderate',
+        },
+        estimatedLifeExpectancy: 83,
+      });
+    });
+
+    it('throws when lifestyle profile already exists', async () => {
+      mockFullProfile();
+
+      await expect(
+        registrationService.createLifestyleProfileService(99, {
+          smokingCode: 'NON_SMOKER',
+          physicalActivityCode: 'HIGH',
+          dietQualityCode: 'MEDIUM',
+          alcoholConsumptionCode: 'LOW',
+        }),
+      ).rejects.toBeTruthy();
+      expect(registrationRepository.insertHabitsProfile).not.toHaveBeenCalled();
     });
   });
 

@@ -1,94 +1,73 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler.js';
 import { badRequest, unauthorized } from '@/utils/error.js';
-import { CreateUserInfoDto } from './dto/create-main-registration.dto.js';
+import {
+  CreateFinancialInfoDto,
+  UpdateFinancialInfoDto,
+} from './dto/financial-info.dto.js';
 import {
   UpdateAssetDataDto,
-  UpdateFinancialProfileBasicDto,
-  UpdateLifestyleProfileDto,
-  UpdatePortfolioAllocationsDto,
+  CreateStageDataDto,
   UpdateStageDataDto,
   CreateAssetDataDto,
 } from './dto/update-financial-profile.dto.js';
 import type {
   UpdateAssetDataResponseDto,
+  CreateStageDataResponseDto,
   DeleteAssetResponseDto,
-  CreateUserInfoResponseDto,
-  GetUserInfoResponseDto,
-  UpdateFinancialProfileBasicResponseDto,
-  UpdateLifestyleProfileResponseDto,
-  UpdatePortfolioAllocationsResponseDto,
   UpdateStageDataResponseDto,
   CreateAssetsResponseDto,
   ListAssetsResponseDto,
+  CreateFinancialInfoResponseDto,
+  GetFinancialInfoResponseDto,
+  UpdateFinancialInfoResponseDto,
+  GetStageDataResponseDto,
 } from './dto/response.dto.js';
 import * as registrationService from './registration.service.js';
 
-export const createUserInfoHandler = asyncHandler(
-  async (req: Request, res: Response<CreateUserInfoResponseDto>) => {
+export const createFinancialInfoHandler = asyncHandler(
+  async (req: Request, res: Response<CreateFinancialInfoResponseDto>) => {
     const userId = req.userId;
     if (!userId) throw unauthorized('No token provided');
 
-    const data = CreateUserInfoDto.parse(req.body);
-    const result = await registrationService.createUserInfo(userId, data);
+    const data = CreateFinancialInfoDto.parse(req.body);
+    const result = await registrationService.createFinancialInfo(userId, data);
 
     res.status(201).json({
       success: true,
       data: result,
-      message: 'User info created',
+      message: 'Financial info created',
     });
   },
 );
 
-export const getUserInfoHandler = asyncHandler(
-  async (req: Request, res: Response<GetUserInfoResponseDto>) => {
+export const getFinancialInfoHandler = asyncHandler(
+  async (req: Request, res: Response<GetFinancialInfoResponseDto>) => {
     const userId = req.userId;
     if (!userId) throw unauthorized('No token provided');
 
-    const result = await registrationService.getUserInfo(userId);
+    const result = await registrationService.getFinancialInfo(userId);
 
     res.json({
       success: true,
       data: result,
-      message: 'User info retrieved',
+      message: 'Financial info retrieved',
     });
   },
 );
 
-export const updateFinancialProfileBasicHandler = asyncHandler(
-  async (
-    req: Request,
-    res: Response<UpdateFinancialProfileBasicResponseDto>,
-  ) => {
+export const updateFinancialInfoHandler = asyncHandler(
+  async (req: Request, res: Response<UpdateFinancialInfoResponseDto>) => {
     const userId = req.userId;
     if (!userId) throw unauthorized('No token provided');
 
-    const data = UpdateFinancialProfileBasicDto.parse(req.body);
-    await registrationService.updateFinancialProfileBasicService(userId, data);
+    const data = UpdateFinancialInfoDto.parse(req.body);
+    const result = await registrationService.updateFinancialInfo(userId, data);
 
     res.json({
       success: true,
-      data: null,
-      message: 'Financial profile updated',
-    });
-  },
-);
-
-export const updatePortfolioAllocationsHandler = asyncHandler(
-  async (
-    req: Request,
-    res: Response<UpdatePortfolioAllocationsResponseDto>,
-  ) => {
-    const userId = req.userId;
-    if (!userId) throw unauthorized('No token provided');
-
-    const data = UpdatePortfolioAllocationsDto.parse(req.body);
-    await registrationService.updatePortfolioAllocationsService(userId, data);
-
-    res.json({
-      success: true,
-      data: null,
-      message: 'Portfolio allocations updated',
+      data: result,
+      message: 'Financial info updated',
     });
   },
 );
@@ -105,6 +84,37 @@ export const updateStageDataHandler = asyncHandler(
       success: true,
       data: null,
       message: 'Stage data updated',
+    });
+  },
+);
+
+export const createStageDataHandler = asyncHandler(
+  async (req: Request, res: Response<CreateStageDataResponseDto>) => {
+    const userId = req.userId;
+    if (!userId) throw unauthorized('No token provided');
+
+    const data = CreateStageDataDto.parse(req.body);
+    await registrationService.createStageDataService(userId, data);
+
+    res.status(201).json({
+      success: true,
+      data: null,
+      message: 'Stage data created',
+    });
+  },
+);
+
+export const getStageDataHandler = asyncHandler(
+  async (req: Request, res: Response<GetStageDataResponseDto>) => {
+    const userId = req.userId;
+    if (!userId) throw unauthorized('No token provided');
+
+    const result = await registrationService.getStageDataService(userId);
+
+    res.json({
+      success: true,
+      data: result,
+      message: 'Stage data retrieved',
     });
   },
 );
@@ -145,25 +155,6 @@ export const deleteAssetHandler = asyncHandler(
       success: true,
       data: null,
       message: 'Asset deleted',
-    });
-  },
-);
-
-export const updateLifestyleProfileHandler = asyncHandler(
-  async (req: Request, res: Response<UpdateLifestyleProfileResponseDto>) => {
-    const userId = req.userId;
-    if (!userId) throw unauthorized('No token provided');
-
-    const data = UpdateLifestyleProfileDto.parse(req.body);
-    const result = await registrationService.updateLifestyleProfileService(
-      userId,
-      data,
-    );
-
-    res.status(201).json({
-      success: true,
-      data: result,
-      message: 'Lifestyle profile updated',
     });
   },
 );

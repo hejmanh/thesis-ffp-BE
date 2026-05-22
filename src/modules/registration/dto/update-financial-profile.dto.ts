@@ -106,6 +106,30 @@ export type UpdatePortfolioAllocationsDto = z.infer<
   typeof UpdatePortfolioAllocationsDto
 >;
 
+const CreateStageItemDto = z.object({
+  lifeStageRangeId: z.number().int().positive(),
+  initialAnnualSavings: z.number(),
+  growthRate: z.number(),
+});
+
+export const CreateStageDataDto = z
+  .array(CreateStageItemDto)
+  .min(1, 'At least one stage must be provided')
+  .superRefine((stages, ctx) => {
+    const seen = new Set<number>();
+    for (const stage of stages) {
+      if (seen.has(stage.lifeStageRangeId)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Duplicate lifeStageRangeId: ${stage.lifeStageRangeId}`,
+        });
+      }
+      seen.add(stage.lifeStageRangeId);
+    }
+  });
+
+export type CreateStageDataDto = z.infer<typeof CreateStageDataDto>;
+
 const UpdateStageItemDto = z
   .object({
     lifeStageRangeId: z.number().int().positive(),
