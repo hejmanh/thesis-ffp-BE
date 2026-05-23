@@ -117,9 +117,6 @@ const roundEstimatedLifeExpectancy = (
     ),
   );
 
-const getCurrentAge = (birthYear: number) =>
-  new Date().getFullYear() - birthYear;
-
 const validateEligibleStageIds = (
   eligibleLifeStageRangeIds: number[],
   requestedLifeStageRangeIds: number[],
@@ -802,7 +799,7 @@ export const createStageDataService = async (
 
   const [eligibleLifeStageRangeIds, existingLifeStageRangeIds] =
     await Promise.all([
-      listEligibleLifeStageRangeIds(getCurrentAge(profile.birthYear)),
+      listEligibleLifeStageRangeIds(calculateCurrentAge(profile.birthYear)),
       findExistingLifeStageRangeIdsForProfile(profile.profileId),
     ]);
 

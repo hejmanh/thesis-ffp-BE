@@ -13,5 +13,5 @@ export function calculateRetirementDuration(
 }
 
 export function validateLifeExpectancy(value: number): boolean {
-  return value >= 50 && value <= 100;
+  return value >= 1 && value <= 150;
 }
