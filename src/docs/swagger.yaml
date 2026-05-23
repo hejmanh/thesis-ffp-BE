@@ -997,14 +997,18 @@ components:
           $ref: '#/components/schemas/FinancialInfo'
     UpdateFinancialInfoRequest:
       type: object
-      description: At least one of financialProfile, portfolioAllocations, or lifestyleProfile must be provided.
+      required: [financial]
       properties:
-        financialProfile:
-          $ref: '#/components/schemas/UpdateFinancialProfileBasicRequest'
-        portfolioAllocations:
-          $ref: '#/components/schemas/UpdatePortfolioAllocationsRequest'
-        lifestyleProfile:
-          $ref: '#/components/schemas/LifestyleProfileRequest'
+        financial:
+          type: object
+          description: At least one of financialProfile, portfolioAllocations, or lifestyleProfile must be provided.
+          properties:
+            financialProfile:
+              $ref: '#/components/schemas/UpdateFinancialProfileBasicRequest'
+            portfolioAllocations:
+              $ref: '#/components/schemas/UpdatePortfolioAllocationsRequest'
+            lifestyleProfile:
+              $ref: '#/components/schemas/LifestyleProfileRequest'
     GetFinancialInfo:
       type: object
       required: [financialProfile, portfolioAllocations, lifestyleProfile]
