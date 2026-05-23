@@ -62,7 +62,10 @@ export const updateFinancialInfoHandler = asyncHandler(
     if (!userId) throw unauthorized('No token provided');
 
     const data = UpdateFinancialInfoDto.parse(req.body);
-    const result = await registrationService.updateFinancialInfo(userId, data);
+    const result = await registrationService.updateFinancialInfo(
+      userId,
+      data.financial,
+    );
 
     res.json({
       success: true,
