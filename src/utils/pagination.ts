@@ -4,6 +4,8 @@ export type PaginationParams = {
   sort?: 'asc' | 'desc';
 };
 
+export type SortDirection = 'asc' | 'desc';
+
 export type Pagination = {
   page: number;
   pageSize: number;
@@ -38,7 +40,9 @@ export const parsePaginationParams = (
   };
 };
 
-export const parseSortParam = (query: Pick<PaginationParams, 'sort'>) => {
+export const parseSortParam = (
+  query: Pick<PaginationParams, 'sort'>,
+): SortDirection => {
   return query.sort ?? 'asc';
 };
 
