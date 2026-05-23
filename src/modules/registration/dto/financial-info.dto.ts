@@ -4,8 +4,6 @@ import {
   portfolioAllocationsRefine,
   UpdateFinancialProfileBasicDto,
   UpdateLifestyleProfileDto,
-  type UpdateFinancialProfileBasicDto as UpdateFinancialProfileBasicDtoType,
-  type UpdateLifestyleProfileDto as UpdateLifestyleProfileDtoType,
 } from './update-financial-profile.dto.js';
 
 export const FinancialProfileDto = z.object({
@@ -35,7 +33,7 @@ export const CreateFinancialInfoDto = z.object({
   financial: FinancialInfoDto,
 });
 
-export const UpdateFinancialInfoDto = z
+export const UpdateFinancialSectionDto = z
   .object({
     financialProfile: UpdateFinancialProfileBasicDto.optional(),
     portfolioAllocations: z
@@ -53,12 +51,12 @@ export const UpdateFinancialInfoDto = z
     { message: 'At least one section must be provided' },
   );
 
+export const UpdateFinancialInfoDto = z.object({
+  financial: UpdateFinancialSectionDto,
+});
+
 export type FinancialProfileDto = z.infer<typeof FinancialProfileDto>;
 export type FinancialInfoDto = z.infer<typeof FinancialInfoDto>;
 export type CreateFinancialInfoDto = z.infer<typeof CreateFinancialInfoDto>;
 export type UpdateFinancialInfoDto = z.infer<typeof UpdateFinancialInfoDto>;
-export type UpdateFinancialSectionDto = {
-  financialProfile?: UpdateFinancialProfileBasicDtoType;
-  portfolioAllocations?: FinancialInfoDto['portfolioAllocations'];
-  lifestyleProfile?: UpdateLifestyleProfileDtoType;
-};
+export type UpdateFinancialSectionDto = z.infer<typeof UpdateFinancialSectionDto>;

@@ -3,7 +3,7 @@ import { badRequest, notFound } from '@/utils/error.js';
 import type { CreateUserInfoDto } from './dto/create-main-registration.dto.js';
 import type {
   CreateFinancialInfoDto,
-  UpdateFinancialInfoDto,
+  UpdateFinancialSectionDto,
 } from './dto/financial-info.dto.js';
 import type {
   CreateStageDataDto,
@@ -880,7 +880,7 @@ export const createLifestyleProfileService = async (
 
 export const updateFinancialInfo = async (
   userId: number,
-  data: UpdateFinancialInfoDto,
+  data: UpdateFinancialSectionDto,
 ) => {
   const profile = await findProfileContextByUserId(userId);
   if (!profile) throw notFound('Profile not found');
