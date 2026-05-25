@@ -5,7 +5,10 @@ export const CreateAssetItemDto = z.object({
   initialAnnualIncome: z
     .number()
     .min(0, 'initialAnnualIncome must be at least 0'),
-  growthRate: z.number(),
+  growthRate: z
+    .number()
+    .min(0, 'growthRate must be at least 0')
+    .max(1, 'growthRate must be at most 1'),
 });
 
 export const CreateAssetDataDto = z.object({
@@ -108,7 +111,10 @@ export type UpdatePortfolioAllocationsDto = z.infer<
 const CreateStageItemDto = z.object({
   lifeStageRangeId: z.number().int().positive(),
   initialAnnualSavings: z.number(),
-  growthRate: z.number(),
+  growthRate: z
+    .number()
+    .min(0, 'growthRate must be at least 0')
+    .max(1, 'growthRate must be at most 1'),
 });
 
 export const CreateStageDataDto = z
@@ -133,7 +139,11 @@ const UpdateStageItemDto = z
   .object({
     lifeStageRangeId: z.number().int().positive(),
     initialAnnualSavings: z.number().optional(),
-    growthRate: z.number().optional(),
+    growthRate: z
+      .number()
+      .min(0, 'growthRate must be at least 0')
+      .max(1, 'growthRate must be at most 1')
+      .optional(),
   })
   .refine(
     (data) =>
@@ -157,7 +167,11 @@ const UpdateAssetItemDto = z
       .number()
       .min(0, 'initialAnnualIncome must be at least 0')
       .optional(),
-    growthRate: z.number().optional(),
+    growthRate: z
+      .number()
+      .min(0, 'growthRate must be at least 0')
+      .max(1, 'growthRate must be at most 1')
+      .optional(),
   })
   .refine(
     (data) =>

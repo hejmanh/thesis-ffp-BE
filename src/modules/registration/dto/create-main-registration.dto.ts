@@ -7,7 +7,10 @@ import {
 const StageDataDto = z.object({
   lifeStageRangeId: z.number().int().positive(),
   initialAnnualSavings: z.number(),
-  growthRate: z.number(),
+  growthRate: z
+    .number()
+    .min(0, 'growthRate must be at least 0')
+    .max(1, 'growthRate must be at most 1'),
 });
 
 const AssetDataDto = z.object({
@@ -15,7 +18,10 @@ const AssetDataDto = z.object({
   initialAnnualIncome: z
     .number()
     .min(0, 'initialAnnualIncome must be at least 0'),
-  growthRate: z.number(),
+  growthRate: z
+    .number()
+    .min(0, 'growthRate must be at least 0')
+    .max(1, 'growthRate must be at most 1'),
 });
 
 export const UserInfoDto = z.object({

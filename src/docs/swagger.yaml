@@ -314,7 +314,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/EmptyResponse'
 
-  /user-info/stages:
+  /user-info/life-stages:
     get:
       tags: [User Info - Stages]
       summary: Get stage data
