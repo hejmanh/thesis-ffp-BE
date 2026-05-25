@@ -9,8 +9,12 @@ servers:
 tags:
   - name: Health
   - name: Auth
-  - name: User Info
-  - name: Scenario
+  - name: User Info - Financial
+  - name: User Info - Stages
+  - name: User Info - Assets
+  - name: User Info - Lifestyle
+  - name: Scenario 1
+  - name: Scenario 2
   - name: Reference
 
 paths:
@@ -176,7 +180,7 @@ paths:
 
   /user-info/financial:
     get:
-      tags: [User Info]
+      tags: [User Info - Financial]
       summary: Get financial section
       description: "Returns the current user's financial section, including financial profile, portfolio allocations, and lifestyle profile."
       security:
@@ -189,7 +193,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetFinancialInfoResponse'
     post:
-      tags: [User Info]
+      tags: [User Info - Financial]
       summary: Create financial section
       description: 'Creates the combined financial section in one request, including financial profile, both portfolio allocations, and lifestyle profile.'
       security:
@@ -208,7 +212,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CreateFinancialInfoResponse'
     patch:
-      tags: [User Info]
+      tags: [User Info - Financial]
       summary: Update financial section
       description: 'Updates the existing financial section through one endpoint. You can update financialProfile, portfolioAllocations, lifestyleProfile, or any combination of them.'
       security:
@@ -229,7 +233,7 @@ paths:
 
   /user-info/assets:
     get:
-      tags: [User Info]
+      tags: [User Info - Assets]
       summary: List all assets
       description: 'Returns all post-FFP assets for the authenticated user. Each item includes a uid for use in update and delete operations.'
       security:
@@ -246,7 +250,7 @@ paths:
         404:
           description: Profile not found
     post:
-      tags: [User Info]
+      tags: [User Info - Assets]
       summary: Add assets
       description: 'Adds one or more post-FFP assets to the profile. Returns the uid and amounts for each newly created asset.'
       security:
@@ -269,7 +273,7 @@ paths:
         401:
           description: Unauthorized
     patch:
-      tags: [User Info]
+      tags: [User Info - Assets]
       summary: Partially update asset data
       description: 'Updates only the provided asset items (identified by uid). Unmentioned assets are left unchanged.'
       security:
@@ -290,7 +294,7 @@ paths:
 
   /user-info/assets/{uid}:
     delete:
-      tags: [User Info]
+      tags: [User Info - Assets]
       summary: Delete a single post-FFP asset
       security:
         - BearerAuth: []
@@ -312,7 +316,7 @@ paths:
 
   /user-info/stages:
     get:
-      tags: [User Info]
+      tags: [User Info - Stages]
       summary: Get stage data
       description: 'Returns the saved stage data for the authenticated user.'
       security:
@@ -325,7 +329,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetStageDataResponse'
     post:
-      tags: [User Info]
+      tags: [User Info - Stages]
       summary: Create stage data
       description: "Creates only the stage rows included in this request. The frontend can first fetch the eligible stages from GET /reference/life-stage-ranges?birthYear=YYYY, let the user fill values for those returned stages, then submit the selected stage items here. Every submitted lifeStageRangeId must still be eligible for the authenticated user's birth year, and existing stage rows in the profile cannot be created again."
       security:
@@ -350,7 +354,7 @@ paths:
         404:
           description: Profile not found
     patch:
-      tags: [User Info]
+      tags: [User Info - Stages]
       summary: Partially update stage data
       description: 'Updates only the provided stage items (identified by lifeStageRangeId). Unmentioned stages are left unchanged.'
       security:
@@ -371,7 +375,7 @@ paths:
 
   /user-info/lifestyle:
     patch:
-      tags: [User Info]
+      tags: [User Info - Lifestyle]
       summary: Update lifestyle profile
       description: 'Updates all four lifestyle habits at once (smoking, physical activity, diet quality, alcohol consumption). All four fields are required. Returns the updated lifestyle and recalculated estimated life expectancy.'
       security:
@@ -396,7 +400,7 @@ paths:
 
   /scenario-1/input:
     get:
-      tags: [Scenario]
+      tags: [Scenario 1]
       summary: Get scenario 1 input
       security:
         - BearerAuth: []
@@ -412,7 +416,7 @@ paths:
         404:
           description: Scenario 1 input not found
     post:
-      tags: [Scenario]
+      tags: [Scenario 1]
       summary: Create scenario 1 input
       security:
         - BearerAuth: []
@@ -434,7 +438,7 @@ paths:
         401:
           description: Unauthorized
     patch:
-      tags: [Scenario]
+      tags: [Scenario 1]
       summary: Update scenario 1 input
       security:
         - BearerAuth: []
@@ -460,7 +464,7 @@ paths:
 
   /scenario-1/output:
     get:
-      tags: [Scenario]
+      tags: [Scenario 1]
       summary: Get scenario 1 output
       security:
         - BearerAuth: []
@@ -478,7 +482,7 @@ paths:
 
   /scenario-2/input:
     get:
-      tags: [Scenario]
+      tags: [Scenario 2]
       summary: Get scenario 2 input
       security:
         - BearerAuth: []
@@ -494,7 +498,7 @@ paths:
         404:
           description: Scenario 2 input not found
     post:
-      tags: [Scenario]
+      tags: [Scenario 2]
       summary: Create scenario 2 input
       security:
         - BearerAuth: []
@@ -516,7 +520,7 @@ paths:
         401:
           description: Unauthorized
     patch:
-      tags: [Scenario]
+      tags: [Scenario 2]
       summary: Update scenario 2 input
       security:
         - BearerAuth: []
@@ -542,7 +546,7 @@ paths:
 
   /scenario-2/output:
     get:
-      tags: [Scenario]
+      tags: [Scenario 2]
       summary: Get scenario 2 output
       security:
         - BearerAuth: []
@@ -906,15 +910,15 @@ components:
           format: password
     FinancialProfileRequest:
       type: object
-      required: [desiredLifeExpectancy, currentSavings, currencyCode]
+      required: [desiredLifeExpectancy, currentSavings, currencyId]
       properties:
         desiredLifeExpectancy:
           type: integer
         currentSavings:
           type: number
-        currencyCode:
-          type: string
-          example: USD
+        currencyId:
+          type: integer
+          example: 1
     PortfolioAllocationRequest:
       type: object
       required: [allocationType, u, mu, rf]
@@ -980,27 +984,24 @@ components:
       type: object
       required:
         [
-          smokingCode,
-          physicalActivityCode,
-          dietQualityCode,
-          alcoholConsumptionCode,
+          smokingTypeId,
+          physicalActivityTypeId,
+          dietQualityTypeId,
+          alcoholConsumptionTypeId,
         ]
       properties:
-        smokingCode:
-          type: string
-          example: NON_SMOKER
-        physicalActivityCode:
-          type: string
-          description: Accepts canonical codes such as active, moderate, sedentary, and common aliases such as HIGH, MEDIUM, LOW.
-          example: HIGH
-        dietQualityCode:
-          type: string
-          description: Accepts canonical codes such as healthy, average, poor, and common aliases such as HIGH, MEDIUM, LOW.
-          example: MEDIUM
-        alcoholConsumptionCode:
-          type: string
-          description: Accepts canonical codes such as none, moderate, heavy, and common aliases such as LOW, MEDIUM, HIGH.
-          example: LOW
+        smokingTypeId:
+          type: integer
+          example: 1
+        physicalActivityTypeId:
+          type: integer
+          example: 2
+        dietQualityTypeId:
+          type: integer
+          example: 3
+        alcoholConsumptionTypeId:
+          type: integer
+          example: 4
     StageDataRequest:
       type: object
       required: [lifeStageRangeId, initialAnnualSavings, growthRate]
@@ -1033,10 +1034,10 @@ components:
           type: integer
           minimum: 1
           maximum: 150
-        currencyCode:
-          type: string
-          description: 3-letter ISO currency code
-          example: USD
+        currencyId:
+          type: integer
+          description: Currency ID from the reference list
+          example: 1
     UpdatePortfolioAllocationsRequest:
       type: array
       description: Must contain exactly two items — one PRE_FFP and one POST_FFP.
@@ -1088,7 +1089,13 @@ components:
         $ref: '#/components/schemas/UpdateAssetItemRequest'
     FinancialProfileData:
       type: object
-      required: [currentSavings, desiredLifeExpectancy, estimatedLifeExpectancy, currencyCode]
+      required:
+        [
+          currentSavings,
+          desiredLifeExpectancy,
+          estimatedLifeExpectancy,
+          currencyId,
+        ]
       properties:
         currentSavings:
           type: number
@@ -1096,8 +1103,8 @@ components:
           type: integer
         estimatedLifeExpectancy:
           type: integer
-        currencyCode:
-          type: string
+        currencyId:
+          type: integer
     PortfolioAllocationData:
       type: object
       required: [allocationType, u, mu, rf]
@@ -1156,16 +1163,22 @@ components:
           nullable: true
     LifestyleProfileResponse:
       type: object
-      required: [smokingCode, physicalActivityCode, dietQualityCode, alcoholConsumptionCode]
+      required:
+        [
+          smokingTypeId,
+          physicalActivityTypeId,
+          dietQualityTypeId,
+          alcoholConsumptionTypeId,
+        ]
       properties:
-        smokingCode:
-          type: string
-        physicalActivityCode:
-          type: string
-        dietQualityCode:
-          type: string
-        alcoholConsumptionCode:
-          type: string
+        smokingTypeId:
+          type: integer
+        physicalActivityTypeId:
+          type: integer
+        dietQualityTypeId:
+          type: integer
+        alcoholConsumptionTypeId:
+          type: integer
     FinancialInfo:
       type: object
       required: [financialProfile, portfolioAllocations, lifestyleProfile]

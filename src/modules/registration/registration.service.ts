@@ -17,20 +17,16 @@ import type {
 import {
   getFinancialProfileDetails,
   getHabitsProfileDetails,
-  findAlcoholConsumptionAdjustmentByCode,
-  findAlcoholConsumptionTypeIdByCode,
-  findCurrencyIdByCode,
-  findDietQualityAdjustmentByCode,
-  findDietQualityTypeIdByCode,
+  findAlcoholConsumptionAdjustmentById,
+  findCurrencyIdById,
+  findDietQualityAdjustmentById,
   findExistingAssetTypeIds,
   findExistingAssetUidsForProfile,
   findExistingLifeStageRangeIdsForProfile,
   findLifeExpectancyByCountryAndSex,
-  findPhysicalActivityAdjustmentByCode,
-  findPhysicalActivityTypeIdByCode,
+  findPhysicalActivityAdjustmentById,
   findProfileContextByUserId,
-  findSmokingAdjustmentByCode,
-  findSmokingTypeIdByCode,
+  findSmokingAdjustmentById,
   insertHabitsProfile,
   insertLifeStageProfile,
   insertPostFfpAsset,
@@ -51,59 +47,10 @@ import {
 } from './registration.repository.js';
 import { calculateCurrentAge } from '@/utils/ffp-model/lifeExpectancy.js';
 
-const normalizeReferenceCode = (value: string) =>
-  value
-    .trim()
-    .toLowerCase()
-    .replace(/[\s-]+/g, '_');
-
-const smokingCodeAliases = new Map<string, string>([
-  ['non_smoker', 'non_smoker'],
-  ['former_smoker', 'former_smoker'],
-  ['light_smoker', 'light_smoker'],
-  ['heavy_smoker', 'heavy_smoker'],
-]);
-
-const physicalActivityCodeAliases = new Map<string, string>([
-  ['high', 'active'],
-  ['active', 'active'],
-  ['medium', 'moderate'],
-  ['moderate', 'moderate'],
-  ['low', 'sedentary'],
-  ['sedentary', 'sedentary'],
-]);
-
-const dietQualityCodeAliases = new Map<string, string>([
-  ['high', 'healthy'],
-  ['healthy', 'healthy'],
-  ['medium', 'average'],
-  ['average', 'average'],
-  ['low', 'poor'],
-  ['poor', 'poor'],
-]);
-
-const alcoholConsumptionCodeAliases = new Map<string, string>([
-  ['none', 'none'],
-  ['low', 'moderate'],
-  ['moderate', 'moderate'],
-  ['medium', 'moderate'],
-  ['heavy', 'heavy'],
-  ['high', 'heavy'],
-]);
-
-const resolveReferenceCode = (
-  value: string,
-  aliases: Map<string, string>,
-  fieldName: string,
-) => {
-  const normalizedCode = normalizeReferenceCode(value);
-  const resolvedCode = aliases.get(normalizedCode);
-
-  if (!resolvedCode) {
-    throw badRequest(`Invalid ${fieldName}`);
+const validateReferenceId = (value: number, fieldName: string) => {
+  if (!Number.isInteger(value) || value <= 0) {
+    throw badRequest(`${fieldName} must be a positive integer`);
   }
-
-  return resolvedCode;
 };
 
 const roundEstimatedLifeExpectancy = (
@@ -152,73 +99,54 @@ const validateStageData = (
 const resolveLifestyleProfile = async (
   profile: { countryId: number | null; sexTypeId: number | null },
   lifestyleProfile: {
-    smokingCode: string;
-    physicalActivityCode: string;
-    dietQualityCode: string;
-    alcoholConsumptionCode: string;
+    smokingTypeId: number;
+    physicalActivityTypeId: number;
+    dietQualityTypeId: number;
+    alcoholConsumptionTypeId: number;
   },
 ) => {
   if (profile.countryId == null || profile.sexTypeId == null) {
     throw badRequest('Country and sex must be set on your profile');
   }
 
-  const smokingCode = resolveReferenceCode(
-    lifestyleProfile.smokingCode,
-    smokingCodeAliases,
-    'smokingCode',
+  validateReferenceId(lifestyleProfile.smokingTypeId, 'smokingTypeId');
+  validateReferenceId(
+    lifestyleProfile.physicalActivityTypeId,
+    'physicalActivityTypeId',
   );
-  const physicalActivityCode = resolveReferenceCode(
-    lifestyleProfile.physicalActivityCode,
-    physicalActivityCodeAliases,
-    'physicalActivityCode',
-  );
-  const dietQualityCode = resolveReferenceCode(
-    lifestyleProfile.dietQualityCode,
-    dietQualityCodeAliases,
-    'dietQualityCode',
-  );
-  const alcoholConsumptionCode = resolveReferenceCode(
-    lifestyleProfile.alcoholConsumptionCode,
-    alcoholConsumptionCodeAliases,
-    'alcoholConsumptionCode',
+  validateReferenceId(lifestyleProfile.dietQualityTypeId, 'dietQualityTypeId');
+  validateReferenceId(
+    lifestyleProfile.alcoholConsumptionTypeId,
+    'alcoholConsumptionTypeId',
   );
 
   const [
-    smokingTypeId,
-    physicalActivityTypeId,
-    dietQualityTypeId,
-    alcoholConsumptionTypeId,
     smokingAdjustment,
     physicalActivityAdjustment,
     dietQualityAdjustment,
     alcoholConsumptionAdjustment,
     baseLifeExpectancy,
   ] = await Promise.all([
-    findSmokingTypeIdByCode(smokingCode),
-    findPhysicalActivityTypeIdByCode(physicalActivityCode),
-    findDietQualityTypeIdByCode(dietQualityCode),
-    findAlcoholConsumptionTypeIdByCode(alcoholConsumptionCode),
-    findSmokingAdjustmentByCode(smokingCode),
-    findPhysicalActivityAdjustmentByCode(physicalActivityCode),
-    findDietQualityAdjustmentByCode(dietQualityCode),
-    findAlcoholConsumptionAdjustmentByCode(alcoholConsumptionCode),
+    findSmokingAdjustmentById(lifestyleProfile.smokingTypeId),
+    findPhysicalActivityAdjustmentById(lifestyleProfile.physicalActivityTypeId),
+    findDietQualityAdjustmentById(lifestyleProfile.dietQualityTypeId),
+    findAlcoholConsumptionAdjustmentById(
+      lifestyleProfile.alcoholConsumptionTypeId,
+    ),
     findLifeExpectancyByCountryAndSex(profile.countryId, profile.sexTypeId),
   ]);
 
-  if (smokingTypeId == null || smokingAdjustment == null) {
-    throw badRequest('Invalid smokingCode');
+  if (smokingAdjustment == null) {
+    throw badRequest('Invalid smokingTypeId');
   }
-  if (physicalActivityTypeId == null || physicalActivityAdjustment == null) {
-    throw badRequest('Invalid physicalActivityCode');
+  if (physicalActivityAdjustment == null) {
+    throw badRequest('Invalid physicalActivityTypeId');
   }
-  if (dietQualityTypeId == null || dietQualityAdjustment == null) {
-    throw badRequest('Invalid dietQualityCode');
+  if (dietQualityAdjustment == null) {
+    throw badRequest('Invalid dietQualityTypeId');
   }
-  if (
-    alcoholConsumptionTypeId == null ||
-    alcoholConsumptionAdjustment == null
-  ) {
-    throw badRequest('Invalid alcoholConsumptionCode');
+  if (alcoholConsumptionAdjustment == null) {
+    throw badRequest('Invalid alcoholConsumptionTypeId');
   }
   if (baseLifeExpectancy == null) {
     throw badRequest(
@@ -227,14 +155,10 @@ const resolveLifestyleProfile = async (
   }
 
   return {
-    smokingCode,
-    physicalActivityCode,
-    dietQualityCode,
-    alcoholConsumptionCode,
-    smokingTypeId,
-    physicalActivityTypeId,
-    dietQualityTypeId,
-    alcoholConsumptionTypeId,
+    smokingTypeId: lifestyleProfile.smokingTypeId,
+    physicalActivityTypeId: lifestyleProfile.physicalActivityTypeId,
+    dietQualityTypeId: lifestyleProfile.dietQualityTypeId,
+    alcoholConsumptionTypeId: lifestyleProfile.alcoholConsumptionTypeId,
     estimatedLifeExpectancy: roundEstimatedLifeExpectancy(baseLifeExpectancy, [
       smokingAdjustment,
       physicalActivityAdjustment,
@@ -249,7 +173,7 @@ const mapFinancialInfoSection = (
     currentSavings: number;
     desiredLifeExpectancy: number;
     estimatedLifeExpectancy: number;
-    currencyCode: string;
+    currencyId: number;
   },
   portfolioAllocations: {
     allocationType: 'PRE_FFP' | 'POST_FFP';
@@ -258,10 +182,10 @@ const mapFinancialInfoSection = (
     rf: number;
   }[],
   lifestyleProfile: {
-    smokingCode: string;
-    physicalActivityCode: string;
-    dietQualityCode: string;
-    alcoholConsumptionCode: string;
+    smokingTypeId: number;
+    physicalActivityTypeId: number;
+    dietQualityTypeId: number;
+    alcoholConsumptionTypeId: number;
   },
 ) => ({
   financial: {
@@ -299,25 +223,19 @@ export const createUserInfo = async (
     throw badRequest('User info already exists');
   }
 
-  const smokingCode = resolveReferenceCode(
-    userInfo.lifestyleProfile.smokingCode,
-    smokingCodeAliases,
-    'smokingCode',
+  validateReferenceId(userInfo.financialProfile.currencyId, 'currencyId');
+  validateReferenceId(userInfo.lifestyleProfile.smokingTypeId, 'smokingTypeId');
+  validateReferenceId(
+    userInfo.lifestyleProfile.physicalActivityTypeId,
+    'physicalActivityTypeId',
   );
-  const physicalActivityCode = resolveReferenceCode(
-    userInfo.lifestyleProfile.physicalActivityCode,
-    physicalActivityCodeAliases,
-    'physicalActivityCode',
+  validateReferenceId(
+    userInfo.lifestyleProfile.dietQualityTypeId,
+    'dietQualityTypeId',
   );
-  const dietQualityCode = resolveReferenceCode(
-    userInfo.lifestyleProfile.dietQualityCode,
-    dietQualityCodeAliases,
-    'dietQualityCode',
-  );
-  const alcoholConsumptionCode = resolveReferenceCode(
-    userInfo.lifestyleProfile.alcoholConsumptionCode,
-    alcoholConsumptionCodeAliases,
-    'alcoholConsumptionCode',
+  validateReferenceId(
+    userInfo.lifestyleProfile.alcoholConsumptionTypeId,
+    'alcoholConsumptionTypeId',
   );
   const uniqueAssetTypeIds = Array.from(
     new Set(userInfo.assetData.map((asset) => asset.assetTypeId)),
@@ -330,29 +248,25 @@ export const createUserInfo = async (
     physicalActivityAdjustment,
     dietQualityAdjustment,
     alcoholConsumptionAdjustment,
-    smokingTypeId,
-    physicalActivityTypeId,
-    dietQualityTypeId,
-    alcoholConsumptionTypeId,
     eligibleLifeStageRangeIds,
     existingAssetTypeIds,
   ] = await Promise.all([
-    findCurrencyIdByCode(userInfo.financialProfile.currencyCode),
+    findCurrencyIdById(userInfo.financialProfile.currencyId),
     findLifeExpectancyByCountryAndSex(profile.countryId, profile.sexTypeId),
-    findSmokingAdjustmentByCode(smokingCode),
-    findPhysicalActivityAdjustmentByCode(physicalActivityCode),
-    findDietQualityAdjustmentByCode(dietQualityCode),
-    findAlcoholConsumptionAdjustmentByCode(alcoholConsumptionCode),
-    findSmokingTypeIdByCode(smokingCode),
-    findPhysicalActivityTypeIdByCode(physicalActivityCode),
-    findDietQualityTypeIdByCode(dietQualityCode),
-    findAlcoholConsumptionTypeIdByCode(alcoholConsumptionCode),
+    findSmokingAdjustmentById(userInfo.lifestyleProfile.smokingTypeId),
+    findPhysicalActivityAdjustmentById(
+      userInfo.lifestyleProfile.physicalActivityTypeId,
+    ),
+    findDietQualityAdjustmentById(userInfo.lifestyleProfile.dietQualityTypeId),
+    findAlcoholConsumptionAdjustmentById(
+      userInfo.lifestyleProfile.alcoholConsumptionTypeId,
+    ),
     listEligibleLifeStageRangeIds(calculateCurrentAge(profile.birthYear)),
     findExistingAssetTypeIds(uniqueAssetTypeIds),
   ]);
 
   if (preferredCurrencyId == null) {
-    throw badRequest('Invalid currencyCode');
+    throw badRequest('Invalid currencyId');
   }
 
   if (baseLifeExpectancy == null) {
@@ -361,23 +275,20 @@ export const createUserInfo = async (
     );
   }
 
-  if (smokingAdjustment == null || smokingTypeId == null) {
-    throw badRequest('Invalid smokingCode');
+  if (smokingAdjustment == null) {
+    throw badRequest('Invalid smokingTypeId');
   }
 
-  if (physicalActivityAdjustment == null || physicalActivityTypeId == null) {
-    throw badRequest('Invalid physicalActivityCode');
+  if (physicalActivityAdjustment == null) {
+    throw badRequest('Invalid physicalActivityTypeId');
   }
 
-  if (dietQualityAdjustment == null || dietQualityTypeId == null) {
-    throw badRequest('Invalid dietQualityCode');
+  if (dietQualityAdjustment == null) {
+    throw badRequest('Invalid dietQualityTypeId');
   }
 
-  if (
-    alcoholConsumptionAdjustment == null ||
-    alcoholConsumptionTypeId == null
-  ) {
-    throw badRequest('Invalid alcoholConsumptionCode');
+  if (alcoholConsumptionAdjustment == null) {
+    throw badRequest('Invalid alcoholConsumptionTypeId');
   }
 
   if (eligibleLifeStageRangeIds.length === 0) {
@@ -423,10 +334,10 @@ export const createUserInfo = async (
 
     await insertHabitsProfile(
       profile.profileId,
-      smokingTypeId,
-      physicalActivityTypeId,
-      dietQualityTypeId,
-      alcoholConsumptionTypeId,
+      userInfo.lifestyleProfile.smokingTypeId,
+      userInfo.lifestyleProfile.physicalActivityTypeId,
+      userInfo.lifestyleProfile.dietQualityTypeId,
+      userInfo.lifestyleProfile.alcoholConsumptionTypeId,
       client,
     );
 
@@ -456,14 +367,16 @@ export const createUserInfo = async (
       financialProfile: {
         currentSavings: userInfo.financialProfile.currentSavings,
         desiredLifeExpectancy: userInfo.financialProfile.desiredLifeExpectancy,
-        currencyCode: userInfo.financialProfile.currencyCode,
+        currencyId: userInfo.financialProfile.currencyId,
       },
       portfolioAllocations: userInfo.portfolioAllocations,
       lifestyleProfile: {
-        smokingCode,
-        physicalActivityCode,
-        dietQualityCode,
-        alcoholConsumptionCode,
+        smokingTypeId: userInfo.lifestyleProfile.smokingTypeId,
+        physicalActivityTypeId:
+          userInfo.lifestyleProfile.physicalActivityTypeId,
+        dietQualityTypeId: userInfo.lifestyleProfile.dietQualityTypeId,
+        alcoholConsumptionTypeId:
+          userInfo.lifestyleProfile.alcoholConsumptionTypeId,
       },
       stageData: userInfo.stageData,
       assetData: userInfo.assetData,
@@ -498,12 +411,12 @@ export const createFinancialInfo = async (
   }
 
   const [preferredCurrencyId, resolvedLifestyle] = await Promise.all([
-    findCurrencyIdByCode(financial.financialProfile.currencyCode),
+    findCurrencyIdById(financial.financialProfile.currencyId),
     resolveLifestyleProfile(profile, financial.lifestyleProfile),
   ]);
 
   if (preferredCurrencyId == null) {
-    throw badRequest('Invalid currencyCode');
+    throw badRequest('Invalid currencyId');
   }
 
   await withTransaction(async (client) => {
@@ -542,14 +455,14 @@ export const createFinancialInfo = async (
       currentSavings: financial.financialProfile.currentSavings,
       desiredLifeExpectancy: financial.financialProfile.desiredLifeExpectancy,
       estimatedLifeExpectancy: resolvedLifestyle.estimatedLifeExpectancy,
-      currencyCode: financial.financialProfile.currencyCode,
+      currencyId: financial.financialProfile.currencyId,
     },
     financial.portfolioAllocations,
     {
-      smokingCode: resolvedLifestyle.smokingCode,
-      physicalActivityCode: resolvedLifestyle.physicalActivityCode,
-      dietQualityCode: resolvedLifestyle.dietQualityCode,
-      alcoholConsumptionCode: resolvedLifestyle.alcoholConsumptionCode,
+      smokingTypeId: resolvedLifestyle.smokingTypeId,
+      physicalActivityTypeId: resolvedLifestyle.physicalActivityTypeId,
+      dietQualityTypeId: resolvedLifestyle.dietQualityTypeId,
+      alcoholConsumptionTypeId: resolvedLifestyle.alcoholConsumptionTypeId,
     },
   );
 };
@@ -576,14 +489,14 @@ export const getFinancialInfo = async (userId: number) => {
   if (
     !financialProfile ||
     !lifestyleProfile ||
-    !lifestyleProfile.smokingCode ||
-    !lifestyleProfile.physicalActivityCode ||
-    !lifestyleProfile.dietQualityCode ||
-    !lifestyleProfile.alcoholConsumptionCode ||
+    lifestyleProfile.smokingTypeId == null ||
+    lifestyleProfile.physicalActivityTypeId == null ||
+    lifestyleProfile.dietQualityTypeId == null ||
+    lifestyleProfile.alcoholConsumptionTypeId == null ||
     financialProfile.currentSavings === null ||
     financialProfile.desiredLifeExpectancy === null ||
     financialProfile.estimatedLifeExpectancy === null ||
-    !financialProfile.currencyCode
+    financialProfile.currencyId == null
   ) {
     throw notFound('Financial info not found');
   }
@@ -593,7 +506,7 @@ export const getFinancialInfo = async (userId: number) => {
       currentSavings: financialProfile.currentSavings,
       desiredLifeExpectancy: financialProfile.desiredLifeExpectancy,
       estimatedLifeExpectancy: financialProfile.estimatedLifeExpectancy,
-      currencyCode: financialProfile.currencyCode,
+      currencyId: financialProfile.currencyId,
     },
     portfolioAllocations.map((allocation) => {
       if (
@@ -612,10 +525,10 @@ export const getFinancialInfo = async (userId: number) => {
       };
     }),
     {
-      smokingCode: lifestyleProfile.smokingCode,
-      physicalActivityCode: lifestyleProfile.physicalActivityCode,
-      dietQualityCode: lifestyleProfile.dietQualityCode,
-      alcoholConsumptionCode: lifestyleProfile.alcoholConsumptionCode,
+      smokingTypeId: lifestyleProfile.smokingTypeId,
+      physicalActivityTypeId: lifestyleProfile.physicalActivityTypeId,
+      dietQualityTypeId: lifestyleProfile.dietQualityTypeId,
+      alcoholConsumptionTypeId: lifestyleProfile.alcoholConsumptionTypeId,
     },
   );
 };
@@ -650,10 +563,10 @@ export const getUserInfo = async (userId: number) => {
   if (
     !financialProfile ||
     !lifestyleProfile ||
-    !lifestyleProfile.smokingCode ||
-    !lifestyleProfile.alcoholConsumptionCode ||
-    !lifestyleProfile.dietQualityCode ||
-    !lifestyleProfile.physicalActivityCode
+    lifestyleProfile.smokingTypeId == null ||
+    lifestyleProfile.alcoholConsumptionTypeId == null ||
+    lifestyleProfile.dietQualityTypeId == null ||
+    lifestyleProfile.physicalActivityTypeId == null
   ) {
     throw notFound('User info not found');
   }
@@ -662,7 +575,7 @@ export const getUserInfo = async (userId: number) => {
     financialProfile.currentSavings === null ||
     financialProfile.desiredLifeExpectancy === null ||
     financialProfile.estimatedLifeExpectancy === null ||
-    !financialProfile.currencyCode
+    financialProfile.currencyId == null
   ) {
     throw notFound('User info not found');
   }
@@ -673,7 +586,7 @@ export const getUserInfo = async (userId: number) => {
         currentSavings: financialProfile.currentSavings,
         desiredLifeExpectancy: financialProfile.desiredLifeExpectancy,
         estimatedLifeExpectancy: financialProfile.estimatedLifeExpectancy,
-        currencyCode: financialProfile.currencyCode,
+        currencyId: financialProfile.currencyId,
       },
       portfolioAllocations: portfolioAllocations.map((allocation) => {
         if (
@@ -752,10 +665,10 @@ export const updateLifestyleProfileService = async (
 
   return {
     lifestyleProfile: {
-      smokingCode: resolvedLifestyle.smokingCode,
-      physicalActivityCode: resolvedLifestyle.physicalActivityCode,
-      dietQualityCode: resolvedLifestyle.dietQualityCode,
-      alcoholConsumptionCode: resolvedLifestyle.alcoholConsumptionCode,
+      smokingTypeId: resolvedLifestyle.smokingTypeId,
+      physicalActivityTypeId: resolvedLifestyle.physicalActivityTypeId,
+      dietQualityTypeId: resolvedLifestyle.dietQualityTypeId,
+      alcoholConsumptionTypeId: resolvedLifestyle.alcoholConsumptionTypeId,
     },
     estimatedLifeExpectancy: resolvedLifestyle.estimatedLifeExpectancy,
   };
@@ -866,10 +779,10 @@ export const createLifestyleProfileService = async (
 
   return {
     lifestyleProfile: {
-      smokingCode: resolvedLifestyle.smokingCode,
-      physicalActivityCode: resolvedLifestyle.physicalActivityCode,
-      dietQualityCode: resolvedLifestyle.dietQualityCode,
-      alcoholConsumptionCode: resolvedLifestyle.alcoholConsumptionCode,
+      smokingTypeId: resolvedLifestyle.smokingTypeId,
+      physicalActivityTypeId: resolvedLifestyle.physicalActivityTypeId,
+      dietQualityTypeId: resolvedLifestyle.dietQualityTypeId,
+      alcoholConsumptionTypeId: resolvedLifestyle.alcoholConsumptionTypeId,
     },
     estimatedLifeExpectancy: resolvedLifestyle.estimatedLifeExpectancy,
   };
@@ -891,11 +804,9 @@ export const updateFinancialInfo = async (
   }
 
   let preferredCurrencyId: number | undefined;
-  if (data.financialProfile?.currencyCode !== undefined) {
-    const found = await findCurrencyIdByCode(
-      data.financialProfile.currencyCode,
-    );
-    if (found == null) throw badRequest('Invalid currencyCode');
+  if (data.financialProfile?.currencyId !== undefined) {
+    const found = await findCurrencyIdById(data.financialProfile.currencyId);
+    if (found == null) throw badRequest('Invalid currencyId');
     preferredCurrencyId = found;
   }
 
@@ -966,9 +877,9 @@ export const updateFinancialProfileBasicService = async (
   }
 
   let preferredCurrencyId: number | undefined;
-  if (data.currencyCode !== undefined) {
-    const found = await findCurrencyIdByCode(data.currencyCode);
-    if (found == null) throw badRequest('Invalid currencyCode');
+  if (data.currencyId !== undefined) {
+    const found = await findCurrencyIdById(data.currencyId);
+    if (found == null) throw badRequest('Invalid currencyId');
     preferredCurrencyId = found;
   }
 

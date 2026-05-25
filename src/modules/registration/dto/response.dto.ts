@@ -28,7 +28,7 @@ type FinancialProfileResponseData = {
   currentSavings: number;
   desiredLifeExpectancy: number;
   estimatedLifeExpectancy: number;
-  currencyCode: string;
+  currencyId: number;
 };
 
 type PortfolioAllocationResponseItem = {
@@ -39,10 +39,10 @@ type PortfolioAllocationResponseItem = {
 };
 
 type LifestyleProfileResponseData = {
-  smokingCode: string;
-  physicalActivityCode: string;
-  dietQualityCode: string;
-  alcoholConsumptionCode: string;
+  smokingTypeId: number;
+  physicalActivityTypeId: number;
+  dietQualityTypeId: number;
+  alcoholConsumptionTypeId: number;
 };
 
 type FinancialSectionData = {
@@ -90,10 +90,10 @@ export type CreateAssetsResponseDto = ApiResponse<CreatedAssetItem[]>;
 export type ListAssetsResponseDto = ApiResponse<AssetDataResponseItem[]>;
 type LifestyleProfileData = {
   lifestyleProfile: {
-    smokingCode: string;
-    physicalActivityCode: string;
-    dietQualityCode: string;
-    alcoholConsumptionCode: string;
+    smokingTypeId: number;
+    physicalActivityTypeId: number;
+    dietQualityTypeId: number;
+    alcoholConsumptionTypeId: number;
   };
   estimatedLifeExpectancy: number;
 };

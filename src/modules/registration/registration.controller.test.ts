@@ -28,17 +28,17 @@ describe('Registration Controller', () => {
           financialProfile: {
             currentSavings: 62000,
             desiredLifeExpectancy: 95,
-            currencyCode: 'eur',
+            currencyId: 2,
           },
           portfolioAllocations: [
             { allocationType: 'PRE_FFP', u: 0.6, mu: 0.11, rf: 0.02 },
             { allocationType: 'POST_FFP', u: 0.35, mu: 0.07, rf: 0.02 },
           ],
           lifestyleProfile: {
-            smokingCode: 'NON_SMOKER',
-            physicalActivityCode: 'HIGH',
-            dietQualityCode: 'MEDIUM',
-            alcoholConsumptionCode: 'LOW',
+            smokingTypeId: 1,
+            physicalActivityTypeId: 2,
+            dietQualityTypeId: 3,
+            alcoholConsumptionTypeId: 4,
           },
         },
       },
@@ -51,22 +51,24 @@ describe('Registration Controller', () => {
           currentSavings: 62000,
           desiredLifeExpectancy: 95,
           estimatedLifeExpectancy: 83,
-          currencyCode: 'EUR',
+          currencyId: 2,
         },
         portfolioAllocations: [
           { allocationType: 'PRE_FFP' as const, u: 0.6, mu: 0.11, rf: 0.02 },
           { allocationType: 'POST_FFP' as const, u: 0.35, mu: 0.07, rf: 0.02 },
         ],
         lifestyleProfile: {
-          smokingCode: 'non_smoker',
-          physicalActivityCode: 'active',
-          dietQualityCode: 'average',
-          alcoholConsumptionCode: 'moderate',
+          smokingTypeId: 1,
+          physicalActivityTypeId: 2,
+          dietQualityTypeId: 3,
+          alcoholConsumptionTypeId: 4,
         },
       },
     };
 
-    vi.mocked(registrationService.updateFinancialInfo).mockResolvedValue(result);
+    vi.mocked(registrationService.updateFinancialInfo).mockResolvedValue(
+      result,
+    );
 
     await updateFinancialInfoHandler(req, res, next);
 
@@ -74,17 +76,17 @@ describe('Registration Controller', () => {
       financialProfile: {
         currentSavings: 62000,
         desiredLifeExpectancy: 95,
-        currencyCode: 'EUR',
+        currencyId: 2,
       },
       portfolioAllocations: [
         { allocationType: 'PRE_FFP', u: 0.6, mu: 0.11, rf: 0.02 },
         { allocationType: 'POST_FFP', u: 0.35, mu: 0.07, rf: 0.02 },
       ],
       lifestyleProfile: {
-        smokingCode: 'NON_SMOKER',
-        physicalActivityCode: 'HIGH',
-        dietQualityCode: 'MEDIUM',
-        alcoholConsumptionCode: 'LOW',
+        smokingTypeId: 1,
+        physicalActivityTypeId: 2,
+        dietQualityTypeId: 3,
+        alcoholConsumptionTypeId: 4,
       },
     });
     expect(next).not.toHaveBeenCalled();
