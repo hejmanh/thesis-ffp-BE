@@ -1,9 +1,11 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import { asyncHandler } from '@/utils/asyncHandler.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginRequestDto } from './dto/login.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
+import { VerifyEmailDto } from './dto/verify-email.dto.js';
 import * as authService from './auth.service.js';
 import type {
   RegisterResponseDto,
@@ -48,8 +50,7 @@ export const registerHandler = asyncHandler(
 
 export const verifyEmailHandler = asyncHandler(
   async (req: Request, res: Response<VerifyEmailResponseDto>) => {
-    const { token } = req.query;
-    if (typeof token !== 'string') throw badRequest('Invalid token');
+    const { token } = VerifyEmailDto.parse(req.body);
 
     await authService.verifyEmail(token);
 
