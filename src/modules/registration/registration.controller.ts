@@ -20,10 +20,26 @@ import type {
   ListAssetsResponseDto,
   CreateFinancialInfoResponseDto,
   GetFinancialInfoResponseDto,
+  GetUserInfoContextResponseDto,
   UpdateFinancialInfoResponseDto,
   GetStageDataResponseDto,
 } from './dto/response.dto.js';
 import * as registrationService from './registration.service.js';
+
+export const getUserInfoContextHandler = asyncHandler(
+  async (req: Request, res: Response<GetUserInfoContextResponseDto>) => {
+    const userId = req.userId;
+    if (!userId) throw unauthorized('No token provided');
+
+    const result = await registrationService.getUserInfoContextService(userId);
+
+    res.json({
+      success: true,
+      data: result,
+      message: 'User info context retrieved',
+    });
+  },
+);
 
 export const createFinancialInfoHandler = asyncHandler(
   async (req: Request, res: Response<CreateFinancialInfoResponseDto>) => {

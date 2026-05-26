@@ -6,6 +6,7 @@ import {
   deleteAssetHandler,
   getFinancialInfoHandler,
   getStageDataHandler,
+  getUserInfoContextHandler,
   updateAssetDataHandler,
   updateFinancialInfoHandler,
   updateStageDataHandler,
@@ -18,6 +19,7 @@ const router = Router();
 router.get('/financial', authMiddleware, getFinancialInfoHandler);
 router.post('/financial', authMiddleware, createFinancialInfoHandler);
 router.patch('/financial', authMiddleware, updateFinancialInfoHandler);
+router.get('/me', authMiddleware, getUserInfoContextHandler);
 router.get('/life-stages', authMiddleware, getStageDataHandler);
 router.post('/life-stages', authMiddleware, createStageDataHandler);
 router.patch('/life-stages', authMiddleware, updateStageDataHandler);

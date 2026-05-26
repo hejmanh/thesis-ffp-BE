@@ -27,6 +27,7 @@ import {
   findPhysicalActivityAdjustmentById,
   findProfileContextByUserId,
   findSmokingAdjustmentById,
+  getUserInfoContextByUserId,
   insertHabitsProfile,
   insertLifeStageProfile,
   insertPostFfpAsset,
@@ -194,6 +195,12 @@ const mapFinancialInfoSection = (
     lifestyleProfile,
   },
 });
+
+export const getUserInfoContextService = async (userId: number) => {
+  const context = await getUserInfoContextByUserId(userId);
+  if (!context) throw notFound('Profile not found');
+  return context;
+};
 
 export const createUserInfo = async (
   userId: number,

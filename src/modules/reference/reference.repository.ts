@@ -307,17 +307,6 @@ export const listDietQualityTypes = async (
   };
 };
 
-export const findLifeExpectancyByUserProfile = async (userId: number) => {
-  const res = await execQuery(
-    pool,
-    `SELECT estimated_life_expectancy FROM profile WHERE user_account_id = $1`,
-    [userId],
-  );
-
-  const age = res.rows[0]?.estimated_life_expectancy;
-  return age == null ? null : Number(age);
-};
-
 export const listAlcoholConsumptionTypes = async (
   pagination: PaginationOptions,
   sort: SortDirection,

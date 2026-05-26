@@ -231,6 +231,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/UpdateFinancialInfoResponse'
 
+  /user-info/me:
+    get:
+      tags: [User Info]
+      summary: Get user info context
+      description: 'Returns profile context details for the authenticated user.'
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfoContextResponse'
+        401:
+          description: Unauthorized
+        404:
+          description: Profile not found
+
   /user-info/assets:
     get:
       tags: [User Info - Assets]
@@ -721,25 +740,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AlcoholConsumptionTypeListResponse'
-
-  /reference/estimate-life-expectancy:
-    get:
-      tags: [Reference]
-      summary: Get life expectancy estimate
-      description: 'Returns the base life expectancy for the authenticated user based on their registered country and sex.'
-      security:
-        - BearerAuth: []
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EstimateLifeExpectancyResponse'
-        401:
-          description: Unauthorized
-        404:
-          description: Life expectancy data unavailable for the user's country and sex
 
 components:
   securitySchemes:
@@ -1415,7 +1415,7 @@ components:
                 estimatedLifeExpectancy:
                   type: number
                   example: 83
-    EstimateLifeExpectancyResponse:
+    UserInfoContextResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponseBase'
         - type: object
@@ -1423,9 +1423,20 @@ components:
             data:
               type: object
               properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                birthYear:
+                  type: integer
+                  nullable: true
                 estimatedLifeExpectancy:
                   type: number
-                  example: 82.9
+                  nullable: true
+                preferredCurrencyId:
+                  type: integer
+                  nullable: true
     Scenario1InputRequest:
       type: object
       required: [lifeExpectancy, inputFfpAge, inputFfpAnnualSpending]

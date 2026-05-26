@@ -14,6 +14,14 @@ export type RegistrationProfileContext = {
   hasPostFfpAsset: boolean;
 };
 
+export type UserInfoContextDetails = {
+  name: string;
+  email: string;
+  birthYear: number | null;
+  estimatedLifeExpectancy: number | null;
+  preferredCurrencyId: number | null;
+};
+
 export type FinancialProfileDetails = {
   currentSavings: number | null;
   desiredLifeExpectancy: number | null;
@@ -133,6 +141,38 @@ export const findProfileContextByUserId = async (
   );
 
   return res.rows[0] as RegistrationProfileContext | undefined;
+};
+
+export const getUserInfoContextByUserId = async (
+  userId: number,
+  client: QueryClient = pool,
+) => {
+  const res = await execQuery(
+    client,
+    `
+      SELECT
+        p.name AS "name",
+        c.email AS "email",
+        p.birth_year AS "birthYear",
+        p.estimated_life_expectancy AS "estimatedLifeExpectancy",
+        p.preferred_currency_id AS "preferredCurrencyId"
+      FROM profile p
+      JOIN credential c ON c.user_account_id = p.user_account_id
+      WHERE p.user_account_id = $1
+    `,
+    [userId],
+  );
+
+  const row = res.rows[0];
+  if (!row) return undefined;
+
+  return {
+    name: String(row.name),
+    email: String(row.email),
+    birthYear: toNumberOrNull(row.birthYear),
+    estimatedLifeExpectancy: toNumberOrNull(row.estimatedLifeExpectancy),
+    preferredCurrencyId: toNumberOrNull(row.preferredCurrencyId),
+  } satisfies UserInfoContextDetails;
 };
 
 export const findCurrencyIdByCode = async (

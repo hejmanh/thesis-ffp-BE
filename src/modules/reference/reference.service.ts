@@ -2,12 +2,11 @@ import type { Pagination } from '@/utils/pagination.js';
 import type { SortDirection } from '@/utils/pagination.js';
 import { buildPaginationMeta } from '@/utils/pagination.js';
 import { adjustFirstBeginningAge } from '@/utils/ffp-model/savings.js';
-import { badRequest, notFound } from '@/utils/error.js';
+import { badRequest } from '@/utils/error.js';
 import { withCache } from '@/utils/cache/cache.js';
 import { CACHE_TTL } from '@/types/cache.js';
 import type { PaginationOptions } from './reference.repository.js';
 import {
-  findLifeExpectancyByUserProfile,
   listAlcoholConsumptionTypes,
   listAssetTypes,
   listCountries,
@@ -257,13 +256,3 @@ export const getLifeStageRanges = async (
       return { data, meta: buildPaginationMeta(result.totalCount, pagination) };
     },
   );
-
-export const getEstimateLifeExpectancy = async (userId: number) => {
-  const age = await findLifeExpectancyByUserProfile(userId);
-  if (age == null) {
-    throw notFound(
-      'Life expectancy data is unavailable for your country and sex. Please ensure your profile is complete.',
-    );
-  }
-  return { estimatedLifeExpectancy: age };
-};

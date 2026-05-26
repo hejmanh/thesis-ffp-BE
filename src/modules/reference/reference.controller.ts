@@ -1,8 +1,5 @@
-import type { Request, Response } from 'express';
 import { LifeStageQueryDto, PaginationQueryDto } from './dto/query.dto.js';
 import { listHandler } from '@/utils/listHandler.js';
-import { asyncHandler } from '@/utils/asyncHandler.js';
-import { unauthorized } from '@/utils/error.js';
 import * as referenceService from './reference.service.js';
 
 export const getCurrencies = listHandler(
@@ -55,16 +52,4 @@ export const getAlcoholConsumptionTypes = listHandler(
   PaginationQueryDto,
   (pagination, sort) =>
     referenceService.getAlcoholConsumptionTypes(pagination, sort),
-);
-
-export const getEstimateLifeExpectancy = asyncHandler(
-  async (req: Request, res: Response) => {
-    const userId = req.userId;
-    if (!userId) throw unauthorized('No token provided');
-    const result = await referenceService.getEstimateLifeExpectancy(userId);
-    res.json({
-      success: true,
-      data: result,
-    });
-  },
 );
