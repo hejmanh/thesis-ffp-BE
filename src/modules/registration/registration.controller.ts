@@ -5,6 +5,7 @@ import {
   CreateFinancialInfoDto,
   UpdateFinancialInfoDto,
 } from './dto/financial-info.dto.js';
+import { UpdateUserInfoContextDto } from './dto/update-user-info.dto.js';
 import {
   UpdateAssetDataDto,
   CreateStageDataDto,
@@ -21,6 +22,7 @@ import type {
   CreateFinancialInfoResponseDto,
   GetFinancialInfoResponseDto,
   GetUserInfoContextResponseDto,
+  UpdateUserInfoContextResponseDto,
   UpdateFinancialInfoResponseDto,
   GetStageDataResponseDto,
 } from './dto/response.dto.js';
@@ -37,6 +39,25 @@ export const getUserInfoContextHandler = asyncHandler(
       success: true,
       data: result,
       message: 'User info context retrieved',
+    });
+  },
+);
+
+export const updateUserInfoContextHandler = asyncHandler(
+  async (req: Request, res: Response<UpdateUserInfoContextResponseDto>) => {
+    const userId = req.userId;
+    if (!userId) throw unauthorized('No token provided');
+
+    const data = UpdateUserInfoContextDto.parse(req.body);
+    const result = await registrationService.updateUserInfoContextService(
+      userId,
+      data.userInfo,
+    );
+
+    res.json({
+      success: true,
+      data: result,
+      message: 'User info context updated',
     });
   },
 );

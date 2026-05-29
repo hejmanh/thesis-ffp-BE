@@ -18,6 +18,8 @@ export type UserInfoContextDetails = {
   name: string;
   email: string;
   birthYear: number | null;
+  countryId: number | null;
+  sexTypeId: number | null;
   estimatedLifeExpectancy: number | null;
   preferredCurrencyId: number | null;
 };
@@ -154,6 +156,8 @@ export const getUserInfoContextByUserId = async (
         p.name AS "name",
         c.email AS "email",
         p.birth_year AS "birthYear",
+        p.country_id AS "countryId",
+        p.sex_type_id AS "sexTypeId",
         p.estimated_life_expectancy AS "estimatedLifeExpectancy",
         p.preferred_currency_id AS "preferredCurrencyId"
       FROM profile p
@@ -170,9 +174,73 @@ export const getUserInfoContextByUserId = async (
     name: String(row.name),
     email: String(row.email),
     birthYear: toNumberOrNull(row.birthYear),
+    countryId: toNumberOrNull(row.countryId),
+    sexTypeId: toNumberOrNull(row.sexTypeId),
     estimatedLifeExpectancy: toNumberOrNull(row.estimatedLifeExpectancy),
     preferredCurrencyId: toNumberOrNull(row.preferredCurrencyId),
   } satisfies UserInfoContextDetails;
+};
+
+export const findCountryIdById = async (
+  id: number,
+  client: QueryClient = pool,
+) => {
+  const res = await execQuery(client, 'SELECT id FROM country WHERE id = $1', [
+    id,
+  ]);
+
+  return (res.rows[0]?.id as number | undefined) ?? null;
+};
+
+export const findSexTypeIdById = async (
+  id: number,
+  client: QueryClient = pool,
+) => {
+  const res = await execQuery(client, 'SELECT id FROM sex_type WHERE id = $1', [
+    id,
+  ]);
+
+  return (res.rows[0]?.id as number | undefined) ?? null;
+};
+
+export const updateUserInfoContext = async (
+  profileId: number,
+  fields: {
+    name?: string;
+    birthYear?: number;
+    countryId?: number;
+    sexTypeId?: number;
+  },
+  client: QueryClient = pool,
+) => {
+  const setClauses: string[] = [];
+  const values: unknown[] = [profileId];
+  let idx = 2;
+
+  if (fields.name !== undefined) {
+    setClauses.push(`name = $${idx++}`);
+    values.push(fields.name);
+  }
+  if (fields.birthYear !== undefined) {
+    setClauses.push(`birth_year = $${idx++}`);
+    values.push(fields.birthYear);
+  }
+  if (fields.countryId !== undefined) {
+    setClauses.push(`country_id = $${idx++}`);
+    values.push(fields.countryId);
+  }
+  if (fields.sexTypeId !== undefined) {
+    setClauses.push(`sex_type_id = $${idx++}`);
+    values.push(fields.sexTypeId);
+  }
+
+  if (setClauses.length === 0) return;
+
+  await execQuery(
+    client,
+    `UPDATE profile SET ${setClauses.join(', ')} WHERE id = $1`,
+    values,
+  );
 };
 
 export const findCurrencyIdByCode = async (

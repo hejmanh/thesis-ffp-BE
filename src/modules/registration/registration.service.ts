@@ -14,17 +14,20 @@ import type {
   UpdateLifestyleProfileDto,
   CreateAssetDataDto,
 } from './dto/update-financial-profile.dto.js';
+import type { UpdateUserInfoContextFieldsDto } from './dto/update-user-info.dto.js';
 import {
   getFinancialProfileDetails,
   getHabitsProfileDetails,
   findAlcoholConsumptionAdjustmentById,
   findCurrencyIdById,
+  findCountryIdById,
   findDietQualityAdjustmentById,
   findExistingAssetTypeIds,
   findExistingAssetUidsForProfile,
   findExistingLifeStageRangeIdsForProfile,
   findLifeExpectancyByCountryAndSex,
   findPhysicalActivityAdjustmentById,
+  findSexTypeIdById,
   findProfileContextByUserId,
   findSmokingAdjustmentById,
   getUserInfoContextByUserId,
@@ -44,6 +47,7 @@ import {
   updatePortfolioAllocation,
   updatePostFfpAsset,
   deletePostFfpAsset,
+  updateUserInfoContext,
   updateProfileFinancialProfile,
 } from './registration.repository.js';
 import { calculateCurrentAge } from '@/utils/ffp-model/lifeExpectancy.js';
@@ -200,6 +204,33 @@ export const getUserInfoContextService = async (userId: number) => {
   const context = await getUserInfoContextByUserId(userId);
   if (!context) throw notFound('Profile not found');
   return context;
+};
+
+export const updateUserInfoContextService = async (
+  userId: number,
+  data: UpdateUserInfoContextFieldsDto,
+) => {
+  const profile = await findProfileContextByUserId(userId);
+  if (!profile) throw notFound('Profile not found');
+
+  if (data.countryId !== undefined) {
+    const countryId = await findCountryIdById(data.countryId);
+    if (countryId == null) throw badRequest('Invalid countryId');
+  }
+
+  if (data.sexTypeId !== undefined) {
+    const sexTypeId = await findSexTypeIdById(data.sexTypeId);
+    if (sexTypeId == null) throw badRequest('Invalid sexTypeId');
+  }
+
+  await updateUserInfoContext(profile.profileId, {
+    ...(data.name !== undefined && { name: data.name }),
+    ...(data.birthYear !== undefined && { birthYear: data.birthYear }),
+    ...(data.countryId !== undefined && { countryId: data.countryId }),
+    ...(data.sexTypeId !== undefined && { sexTypeId: data.sexTypeId }),
+  });
+
+  return getUserInfoContextService(userId);
 };
 
 export const createUserInfo = async (

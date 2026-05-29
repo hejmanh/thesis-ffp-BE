@@ -12,6 +12,7 @@ import {
   updateStageDataHandler,
   createAssetsHandler,
   listAssetsHandler,
+  updateUserInfoContextHandler,
 } from './registration.controller.js';
 
 const router = Router();
@@ -20,6 +21,7 @@ router.get('/financial', authMiddleware, getFinancialInfoHandler);
 router.post('/financial', authMiddleware, createFinancialInfoHandler);
 router.patch('/financial', authMiddleware, updateFinancialInfoHandler);
 router.get('/me', authMiddleware, getUserInfoContextHandler);
+router.patch('/me', authMiddleware, updateUserInfoContextHandler);
 router.get('/life-stages', authMiddleware, getStageDataHandler);
 router.post('/life-stages', authMiddleware, createStageDataHandler);
 router.patch('/life-stages', authMiddleware, updateStageDataHandler);

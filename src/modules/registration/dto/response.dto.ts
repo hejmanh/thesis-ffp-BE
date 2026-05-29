@@ -24,6 +24,8 @@ type UserInfoContextData = {
   name: string;
   email: string;
   birthYear: number | null;
+  countryId: number | null;
+  sexTypeId: number | null;
   estimatedLifeExpectancy: number | null;
   preferredCurrencyId: number | null;
 };
@@ -33,6 +35,7 @@ export type CreateUserInfoResponseDto = ApiResponse<UserInfoDataDto>;
 export type GetUserInfoResponseDto = ApiResponse<GetUserInfoData>;
 
 export type GetUserInfoContextResponseDto = ApiResponse<UserInfoContextData>;
+export type UpdateUserInfoContextResponseDto = ApiResponse<UserInfoContextData>;
 
 type FinancialProfileResponseData = {
   currentSavings: number;
