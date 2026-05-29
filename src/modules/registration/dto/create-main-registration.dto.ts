@@ -6,7 +6,9 @@ import {
 
 const StageDataDto = z.object({
   lifeStageRangeId: z.number().int().positive(),
-  initialAnnualSavings: z.number(),
+  initialAnnualSavings: z
+    .number()
+    .min(0, 'initial annual savings must be at least than 0'),
   growthRate: z
     .number()
     .min(0, 'growthRate must be at least 0')

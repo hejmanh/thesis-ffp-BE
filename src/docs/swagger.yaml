@@ -932,7 +932,8 @@ components:
           enum: [PRE_FFP, POST_FFP]
         u:
           type: number
-          exclusiveMinimum: 0
+          inclusiveMinimum: -1
+          inclusiveMaximum: 1
         mu:
           type: number
           exclusiveMinimum: -1
@@ -1020,6 +1021,7 @@ components:
           description: Life stage range ID previously returned by the server for this user's birth year.
         initialAnnualSavings:
           type: number
+          inclusiveMinimum: 0
         growthRate:
           type: number
           exclusiveMinimum: -1
@@ -1066,6 +1068,7 @@ components:
           description: Must be a lifeStageRangeId already in this profile.
         initialAnnualSavings:
           type: number
+          exclusiveMinimum: 0
         growthRate:
           type: number
     UpdateStageDataRequest:

@@ -32,7 +32,10 @@ export type CreateAssetDataDto = z.infer<typeof CreateAssetDataDto>;
 
 export const PortfolioAllocationItemDto = z.object({
   allocationType: z.enum(['PRE_FFP', 'POST_FFP']),
-  u: z.number().gt(0, 'u must be greater than 0'),
+  u: z
+    .number()
+    .min(0, 'u must be at least 0')
+    .max(1, 'u must be at most 1'),
   mu: z.number().gt(-1, 'mu must be greater than -1'),
   rf: z.number().gt(-1, 'rf must be greater than -1'),
 });
@@ -109,7 +112,9 @@ export type UpdatePortfolioAllocationsDto = z.infer<
 
 const CreateStageItemDto = z.object({
   lifeStageRangeId: z.number().int().positive(),
-  initialAnnualSavings: z.number(),
+  initialAnnualSavings: z
+    .number()
+    .gt(0, 'initial annual savings must be greater than 0'),
   growthRate: z
     .number()
     .gt(-1, 'growth rate must be greater than -1'),
@@ -136,7 +141,10 @@ export type CreateStageDataDto = z.infer<typeof CreateStageDataDto>;
 const UpdateStageItemDto = z
   .object({
     lifeStageRangeId: z.number().int().positive(),
-    initialAnnualSavings: z.number().optional(),
+    initialAnnualSavings: z
+      .number()
+      .gt(0, 'initial annual savings must be greater than 0')
+      .optional(),
     growthRate: z
       .number()
       .gt(-1, 'growth rate must be greater than -1')
