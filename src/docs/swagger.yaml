@@ -932,7 +932,7 @@ components:
           enum: [PRE_FFP, POST_FFP]
         u:
           type: number
-          inclusiveMinimum: -1
+          inclusiveMinimum: 0
           inclusiveMaximum: 1
         mu:
           type: number
