@@ -11,8 +11,7 @@ const StageDataDto = z.object({
     .min(0, 'initial annual savings must be at least than 0'),
   growthRate: z
     .number()
-    .min(0, 'growthRate must be at least 0')
-    .max(1, 'growthRate must be at most 1'),
+    .gt(-1, 'growth rate must be greater than -1'),
 });
 
 const AssetDataDto = z.object({
