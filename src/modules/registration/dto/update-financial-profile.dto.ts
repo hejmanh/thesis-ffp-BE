@@ -143,7 +143,7 @@ const UpdateStageItemDto = z
     lifeStageRangeId: z.number().int().positive(),
     initialAnnualSavings: z
       .number()
-      .gt(0, 'initial annual savings must be greater than 0')
+      .min(0, 'initial annual savings must be at least 0')
       .optional(),
     growthRate: z
       .number()
