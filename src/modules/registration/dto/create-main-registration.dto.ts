@@ -8,8 +8,7 @@ const StageDataDto = z.object({
   lifeStageRangeId: z.number().int().positive(),
   initialAnnualSavings: z
     .number()
-    .min(0, 'initial annual savings must be at least than 0'),
-  growthRate: z
+    .min(0, 'initial annual savings must be at least 0'),
     .number()
     .gt(-1, 'growth rate must be greater than -1'),
 });
