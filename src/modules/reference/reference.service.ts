@@ -3,7 +3,7 @@ import type { SortDirection } from '@/utils/pagination.js';
 import { buildPaginationMeta } from '@/utils/pagination.js';
 import { adjustFirstBeginningAge } from '@/utils/ffp-model/savings.js';
 import { badRequest } from '@/utils/error.js';
-import { withCache } from '@/utils/cache/cache.js';
+import { withCache } from '@/modules/cache/cache.js';
 import { CACHE_TTL } from '@/types/cache.js';
 import type { PaginationOptions } from './reference.repository.js';
 import {
