@@ -114,7 +114,7 @@ const CreateStageItemDto = z.object({
   lifeStageRangeId: z.number().int().positive(),
   initialAnnualSavings: z
     .number()
-    .gt(0, 'initial annual savings must be greater than 0'),
+    .min(0, 'initial annual savings must be at least 0'),
   growthRate: z
     .number()
     .gt(-1, 'growth rate must be greater than -1'),
