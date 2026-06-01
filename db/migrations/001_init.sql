@@ -223,7 +223,7 @@ CREATE TABLE post_ffp_asset (
     profile_id INT NOT NULL REFERENCES profile(id) ON DELETE CASCADE,
     asset_type_id INT REFERENCES asset_type(id),
 
-    initial_annual_income NUMERIC,
+    initial_annual_income NUMERIC CHECK (initial_annual_income >= 0),
     growth_rate NUMERIC
 );
 

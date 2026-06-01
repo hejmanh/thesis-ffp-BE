@@ -5,6 +5,7 @@ import {
   CreateFinancialInfoDto,
   UpdateFinancialInfoDto,
 } from './dto/financial-info.dto.js';
+import { UpdateUserInfoContextDto } from './dto/update-user-info.dto.js';
 import {
   UpdateAssetDataDto,
   CreateStageDataDto,
@@ -20,10 +21,46 @@ import type {
   ListAssetsResponseDto,
   CreateFinancialInfoResponseDto,
   GetFinancialInfoResponseDto,
+  GetUserInfoContextResponseDto,
+  UpdateUserInfoContextResponseDto,
   UpdateFinancialInfoResponseDto,
   GetStageDataResponseDto,
 } from './dto/response.dto.js';
 import * as registrationService from './registration.service.js';
+
+export const getUserInfoContextHandler = asyncHandler(
+  async (req: Request, res: Response<GetUserInfoContextResponseDto>) => {
+    const userId = req.userId;
+    if (!userId) throw unauthorized('No token provided');
+
+    const result = await registrationService.getUserInfoContextService(userId);
+
+    res.json({
+      success: true,
+      data: result,
+      message: 'User info context retrieved',
+    });
+  },
+);
+
+export const updateUserInfoContextHandler = asyncHandler(
+  async (req: Request, res: Response<UpdateUserInfoContextResponseDto>) => {
+    const userId = req.userId;
+    if (!userId) throw unauthorized('No token provided');
+
+    const data = UpdateUserInfoContextDto.parse(req.body);
+    const result = await registrationService.updateUserInfoContextService(
+      userId,
+      data.userInfo,
+    );
+
+    res.json({
+      success: true,
+      data: result,
+      message: 'User info context updated',
+    });
+  },
+);
 
 export const createFinancialInfoHandler = asyncHandler(
   async (req: Request, res: Response<CreateFinancialInfoResponseDto>) => {

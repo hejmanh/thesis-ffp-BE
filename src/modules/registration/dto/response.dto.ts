@@ -20,15 +20,28 @@ type GetUserInfoData = {
   };
 };
 
+type UserInfoContextData = {
+  name: string;
+  email: string;
+  birthYear: number | null;
+  countryId: number | null;
+  sexTypeId: number | null;
+  estimatedLifeExpectancy: number | null;
+  preferredCurrencyId: number | null;
+};
+
 export type CreateUserInfoResponseDto = ApiResponse<UserInfoDataDto>;
 
 export type GetUserInfoResponseDto = ApiResponse<GetUserInfoData>;
+
+export type GetUserInfoContextResponseDto = ApiResponse<UserInfoContextData>;
+export type UpdateUserInfoContextResponseDto = ApiResponse<UserInfoContextData>;
 
 type FinancialProfileResponseData = {
   currentSavings: number;
   desiredLifeExpectancy: number;
   estimatedLifeExpectancy: number;
-  currencyCode: string;
+  currencyId: number;
 };
 
 type PortfolioAllocationResponseItem = {
@@ -39,10 +52,10 @@ type PortfolioAllocationResponseItem = {
 };
 
 type LifestyleProfileResponseData = {
-  smokingCode: string;
-  physicalActivityCode: string;
-  dietQualityCode: string;
-  alcoholConsumptionCode: string;
+  smokingTypeId: number;
+  physicalActivityTypeId: number;
+  dietQualityTypeId: number;
+  alcoholConsumptionTypeId: number;
 };
 
 type FinancialSectionData = {
@@ -90,10 +103,10 @@ export type CreateAssetsResponseDto = ApiResponse<CreatedAssetItem[]>;
 export type ListAssetsResponseDto = ApiResponse<AssetDataResponseItem[]>;
 type LifestyleProfileData = {
   lifestyleProfile: {
-    smokingCode: string;
-    physicalActivityCode: string;
-    dietQualityCode: string;
-    alcoholConsumptionCode: string;
+    smokingTypeId: number;
+    physicalActivityTypeId: number;
+    dietQualityTypeId: number;
+    alcoholConsumptionTypeId: number;
   };
   estimatedLifeExpectancy: number;
 };

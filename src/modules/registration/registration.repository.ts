@@ -14,11 +14,21 @@ export type RegistrationProfileContext = {
   hasPostFfpAsset: boolean;
 };
 
+export type UserInfoContextDetails = {
+  name: string;
+  email: string;
+  birthYear: number | null;
+  countryId: number | null;
+  sexTypeId: number | null;
+  estimatedLifeExpectancy: number | null;
+  preferredCurrencyId: number | null;
+};
+
 export type FinancialProfileDetails = {
   currentSavings: number | null;
   desiredLifeExpectancy: number | null;
   estimatedLifeExpectancy: number | null;
-  currencyCode: string | null;
+  currencyId: number | null;
 };
 
 export type PortfolioAllocationDetails = {
@@ -63,6 +73,25 @@ const findAdjustmentByCode = async (
       WHERE code = $1
     `,
     [code],
+  );
+
+  const adjustment = res.rows[0]?.adjustmentYears;
+  return adjustment == null ? null : Number(adjustment);
+};
+
+const findAdjustmentById = async (
+  tableName: string,
+  id: number,
+  client: QueryClient = pool,
+) => {
+  const res = await execQuery(
+    client,
+    `
+      SELECT adjustment_years AS "adjustmentYears"
+      FROM ${tableName}
+      WHERE id = $1
+    `,
+    [id],
   );
 
   const adjustment = res.rows[0]?.adjustmentYears;
@@ -116,6 +145,104 @@ export const findProfileContextByUserId = async (
   return res.rows[0] as RegistrationProfileContext | undefined;
 };
 
+export const getUserInfoContextByUserId = async (
+  userId: number,
+  client: QueryClient = pool,
+) => {
+  const res = await execQuery(
+    client,
+    `
+      SELECT
+        p.name AS "name",
+        c.email AS "email",
+        p.birth_year AS "birthYear",
+        p.country_id AS "countryId",
+        p.sex_type_id AS "sexTypeId",
+        p.estimated_life_expectancy AS "estimatedLifeExpectancy",
+        p.preferred_currency_id AS "preferredCurrencyId"
+      FROM profile p
+      JOIN credential c ON c.user_account_id = p.user_account_id
+      WHERE p.user_account_id = $1
+    `,
+    [userId],
+  );
+
+  const row = res.rows[0];
+  if (!row) return undefined;
+
+  return {
+    name: String(row.name),
+    email: String(row.email),
+    birthYear: toNumberOrNull(row.birthYear),
+    countryId: toNumberOrNull(row.countryId),
+    sexTypeId: toNumberOrNull(row.sexTypeId),
+    estimatedLifeExpectancy: toNumberOrNull(row.estimatedLifeExpectancy),
+    preferredCurrencyId: toNumberOrNull(row.preferredCurrencyId),
+  } satisfies UserInfoContextDetails;
+};
+
+export const findCountryIdById = async (
+  id: number,
+  client: QueryClient = pool,
+) => {
+  const res = await execQuery(client, 'SELECT id FROM country WHERE id = $1', [
+    id,
+  ]);
+
+  return (res.rows[0]?.id as number | undefined) ?? null;
+};
+
+export const findSexTypeIdById = async (
+  id: number,
+  client: QueryClient = pool,
+) => {
+  const res = await execQuery(client, 'SELECT id FROM sex_type WHERE id = $1', [
+    id,
+  ]);
+
+  return (res.rows[0]?.id as number | undefined) ?? null;
+};
+
+export const updateUserInfoContext = async (
+  profileId: number,
+  fields: {
+    name?: string;
+    birthYear?: number;
+    countryId?: number;
+    sexTypeId?: number;
+  },
+  client: QueryClient = pool,
+) => {
+  const setClauses: string[] = [];
+  const values: unknown[] = [profileId];
+  let idx = 2;
+
+  if (fields.name !== undefined) {
+    setClauses.push(`name = $${idx++}`);
+    values.push(fields.name);
+  }
+  if (fields.birthYear !== undefined) {
+    setClauses.push(`birth_year = $${idx++}`);
+    values.push(fields.birthYear);
+  }
+  if (fields.countryId !== undefined) {
+    setClauses.push(`country_id = $${idx++}`);
+    values.push(fields.countryId);
+  }
+  if (fields.sexTypeId !== undefined) {
+    setClauses.push(`sex_type_id = $${idx++}`);
+    values.push(fields.sexTypeId);
+  }
+
+  if (setClauses.length === 0) return;
+
+  await execQuery(
+    client,
+    `UPDATE profile SET ${setClauses.join(', ')} WHERE id = $1`,
+    values,
+  );
+};
+
 export const findCurrencyIdByCode = async (
   code: string,
   client: QueryClient = pool,
@@ -125,6 +252,17 @@ export const findCurrencyIdByCode = async (
     'SELECT id FROM currency WHERE code = $1',
     [code],
   );
+
+  return (res.rows[0]?.id as number | undefined) ?? null;
+};
+
+export const findCurrencyIdById = async (
+  id: number,
+  client: QueryClient = pool,
+) => {
+  const res = await execQuery(client, 'SELECT id FROM currency WHERE id = $1', [
+    id,
+  ]);
 
   return (res.rows[0]?.id as number | undefined) ?? null;
 };
@@ -168,6 +306,26 @@ export const findAlcoholConsumptionAdjustmentByCode = async (
   client: QueryClient = pool,
 ) => findAdjustmentByCode('alcohol_consumption_type', code, client);
 
+export const findSmokingAdjustmentById = async (
+  id: number,
+  client: QueryClient = pool,
+) => findAdjustmentById('smoking_type', id, client);
+
+export const findPhysicalActivityAdjustmentById = async (
+  id: number,
+  client: QueryClient = pool,
+) => findAdjustmentById('physical_activity_type', id, client);
+
+export const findDietQualityAdjustmentById = async (
+  id: number,
+  client: QueryClient = pool,
+) => findAdjustmentById('diet_quality_type', id, client);
+
+export const findAlcoholConsumptionAdjustmentById = async (
+  id: number,
+  client: QueryClient = pool,
+) => findAdjustmentById('alcohol_consumption_type', id, client);
+
 export const updateProfileFinancialProfile = async (
   profileId: number,
   currentSavings: number,
@@ -208,9 +366,8 @@ export const getFinancialProfileDetails = async (
         current_savings AS "currentSavings",
         desired_life_expectancy AS "desiredLifeExpectancy",
         estimated_life_expectancy AS "estimatedLifeExpectancy",
-        c.code AS "currencyCode"
+        preferred_currency_id AS "currencyId"
       FROM profile p
-      LEFT JOIN currency c ON c.id = p.preferred_currency_id
       WHERE p.id = $1
     `,
     [profileId],
@@ -223,7 +380,7 @@ export const getFinancialProfileDetails = async (
     currentSavings: toNumberOrNull(row.currentSavings),
     desiredLifeExpectancy: toNumberOrNull(row.desiredLifeExpectancy),
     estimatedLifeExpectancy: toNumberOrNull(row.estimatedLifeExpectancy),
-    currencyCode: row.currencyCode ?? null,
+    currencyId: row.currencyId == null ? null : Number(row.currencyId),
   } satisfies FinancialProfileDetails;
 };
 
@@ -703,10 +860,10 @@ export const findExistingAssetUidsForProfile = async (
 };
 
 export type LifestyleProfileDetails = {
-  smokingCode: string | null;
-  physicalActivityCode: string | null;
-  dietQualityCode: string | null;
-  alcoholConsumptionCode: string | null;
+  smokingTypeId: number | null;
+  physicalActivityTypeId: number | null;
+  dietQualityTypeId: number | null;
+  alcoholConsumptionTypeId: number | null;
 };
 
 export const getHabitsProfileDetails = async (
@@ -717,15 +874,11 @@ export const getHabitsProfileDetails = async (
     client,
     `
       SELECT
-        st.code AS "smokingCode",
-        pat.code AS "physicalActivityCode",
-        dqt.code AS "dietQualityCode",
-        act.code AS "alcoholConsumptionCode"
+        hp.smoking_type_id AS "smokingTypeId",
+        hp.physical_activity_type_id AS "physicalActivityTypeId",
+        hp.diet_quality_type_id AS "dietQualityTypeId",
+        hp.alcohol_consumption_type_id AS "alcoholConsumptionTypeId"
       FROM habits_profile hp
-      LEFT JOIN smoking_type st ON st.id = hp.smoking_type_id
-      LEFT JOIN physical_activity_type pat ON pat.id = hp.physical_activity_type_id
-      LEFT JOIN diet_quality_type dqt ON dqt.id = hp.diet_quality_type_id
-      LEFT JOIN alcohol_consumption_type act ON act.id = hp.alcohol_consumption_type_id
       WHERE hp.profile_id = $1
     `,
     [profileId],
@@ -735,10 +888,17 @@ export const getHabitsProfileDetails = async (
   if (!row) return null;
 
   return {
-    smokingCode: row.smokingCode ?? null,
-    physicalActivityCode: row.physicalActivityCode ?? null,
-    dietQualityCode: row.dietQualityCode ?? null,
-    alcoholConsumptionCode: row.alcoholConsumptionCode ?? null,
+    smokingTypeId: row.smokingTypeId == null ? null : Number(row.smokingTypeId),
+    physicalActivityTypeId:
+      row.physicalActivityTypeId == null
+        ? null
+        : Number(row.physicalActivityTypeId),
+    dietQualityTypeId:
+      row.dietQualityTypeId == null ? null : Number(row.dietQualityTypeId),
+    alcoholConsumptionTypeId:
+      row.alcoholConsumptionTypeId == null
+        ? null
+        : Number(row.alcoholConsumptionTypeId),
   } satisfies LifestyleProfileDetails;
 };
 

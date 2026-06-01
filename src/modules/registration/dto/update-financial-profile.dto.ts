@@ -4,8 +4,10 @@ export const CreateAssetItemDto = z.object({
   assetTypeId: z.number().int().positive(),
   initialAnnualIncome: z
     .number()
-    .min(0, 'initialAnnualIncome must be at least 0'),
-  growthRate: z.number(),
+    .min(0, 'initial annual income must be at least 0'),
+  growthRate: z
+    .number()
+    .gt(-1, 'growth rate must be greater than -1'),
 });
 
 export const CreateAssetDataDto = z.object({
@@ -18,7 +20,7 @@ export const CreateAssetDataDto = z.object({
         if (seen.has(asset.assetTypeId)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Duplicate assetTypeId: ${asset.assetTypeId}`,
+            message: `Duplicate asset type id: ${asset.assetTypeId}`,
           });
         }
         seen.add(asset.assetTypeId);
@@ -30,9 +32,12 @@ export type CreateAssetDataDto = z.infer<typeof CreateAssetDataDto>;
 
 export const PortfolioAllocationItemDto = z.object({
   allocationType: z.enum(['PRE_FFP', 'POST_FFP']),
-  u: z.number().min(0, 'u must be at least 0').max(1, 'u must be at most 1'),
-  mu: z.number().min(0, 'mu must be at least 0'),
-  rf: z.number().min(0, 'rf must be at least 0'),
+  u: z
+    .number()
+    .min(0, 'u must be at least 0')
+    .max(1, 'u must be at most 1'),
+  mu: z.number().gt(-1, 'mu must be greater than -1'),
+  rf: z.number().gt(-1, 'rf must be greater than -1'),
 });
 
 export const portfolioAllocationsRefine = (
@@ -44,14 +49,14 @@ export const portfolioAllocationsRefine = (
   if (!allocationTypes.has('PRE_FFP')) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'portfolioAllocations must include PRE_FFP',
+      message: 'portfolio allocations must include PRE_FFP',
     });
   }
 
   if (!allocationTypes.has('POST_FFP')) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'portfolioAllocations must include POST_FFP',
+      message: 'portfolio allocations must include POST_FFP',
     });
   }
 
@@ -59,7 +64,7 @@ export const portfolioAllocationsRefine = (
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message:
-        'portfolioAllocations must not contain duplicate allocationType values',
+        'portfolio allocations must not contain duplicate allocation type values',
     });
   }
 };
@@ -68,26 +73,25 @@ export const UpdateFinancialProfileBasicDto = z
   .object({
     currentSavings: z
       .number()
-      .min(0, 'currentSavings must be at least 0')
+      .min(0, 'current savings must be at least 0')
       .optional(),
     desiredLifeExpectancy: z
       .number()
-      .int('desiredLifeExpectancy must be an integer')
-      .min(1, 'desiredLifeExpectancy must be at least 1')
-      .max(150, 'desiredLifeExpectancy must be at most 150')
+      .int('desired life expectancy must be an integer')
+      .min(1, 'desired life expectancy must be at least 1')
+      .max(150, 'desired life expectancy must be at most 150')
       .optional(),
-    currencyCode: z
-      .string()
-      .trim()
-      .length(3, 'currencyCode must be a 3-letter code')
-      .transform((value) => value.toUpperCase())
+    currencyId: z
+      .number()
+      .int('currency id must be an integer')
+      .positive('currency id must be positive')
       .optional(),
   })
   .refine(
     (data) =>
       data.currentSavings !== undefined ||
       data.desiredLifeExpectancy !== undefined ||
-      data.currencyCode !== undefined,
+      data.currencyId !== undefined,
     { message: 'At least one field must be provided' },
   );
 
@@ -99,7 +103,7 @@ const UpdatePortfolioAllocationItemDto = PortfolioAllocationItemDto;
 
 export const UpdatePortfolioAllocationsDto = z
   .array(UpdatePortfolioAllocationItemDto)
-  .length(2, 'portfolioAllocations must include PRE_FFP and POST_FFP')
+  .length(2, 'portfolio allocations must include PRE_FFP and POST_FFP')
   .superRefine(portfolioAllocationsRefine);
 
 export type UpdatePortfolioAllocationsDto = z.infer<
@@ -108,8 +112,12 @@ export type UpdatePortfolioAllocationsDto = z.infer<
 
 const CreateStageItemDto = z.object({
   lifeStageRangeId: z.number().int().positive(),
-  initialAnnualSavings: z.number(),
-  growthRate: z.number(),
+  initialAnnualSavings: z
+    .number()
+    .min(0, 'initial annual savings must be at least 0'),
+  growthRate: z
+    .number()
+    .gt(-1, 'growth rate must be greater than -1'),
 });
 
 export const CreateStageDataDto = z
@@ -121,7 +129,7 @@ export const CreateStageDataDto = z
       if (seen.has(stage.lifeStageRangeId)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Duplicate lifeStageRangeId: ${stage.lifeStageRangeId}`,
+          message: `Duplicate life stage range id: ${stage.lifeStageRangeId}`,
         });
       }
       seen.add(stage.lifeStageRangeId);
@@ -133,15 +141,21 @@ export type CreateStageDataDto = z.infer<typeof CreateStageDataDto>;
 const UpdateStageItemDto = z
   .object({
     lifeStageRangeId: z.number().int().positive(),
-    initialAnnualSavings: z.number().optional(),
-    growthRate: z.number().optional(),
+    initialAnnualSavings: z
+      .number()
+      .min(0, 'initial annual savings must be at least 0')
+      .optional(),
+    growthRate: z
+      .number()
+      .gt(-1, 'growth rate must be greater than -1')
+      .optional(),
   })
   .refine(
     (data) =>
       data.initialAnnualSavings !== undefined || data.growthRate !== undefined,
     {
       message:
-        'At least one of initialAnnualSavings or growthRate must be provided',
+        'At least one of initial annual savings or growth rate must be provided',
     },
   );
 
@@ -156,22 +170,25 @@ const UpdateAssetItemDto = z
     uid: z.string().uuid('uid must be a valid UUID'),
     initialAnnualIncome: z
       .number()
-      .min(0, 'initialAnnualIncome must be at least 0')
+      .min(0, 'initial annual income must be at least 0')
       .optional(),
-    growthRate: z.number().optional(),
+    growthRate: z
+      .number()
+      .gt(-1, 'growth rate must be greater than -1')
+      .optional(),
   })
   .refine(
     (data) =>
       data.initialAnnualIncome !== undefined || data.growthRate !== undefined,
     {
       message:
-        'At least one of initialAnnualIncome or growthRate must be provided',
+        'At least one of initial annual income or growth rate must be provided',
     },
   );
 
 export const UpdateAssetDataDto = z
   .array(UpdateAssetItemDto)
-  .min(1, 'At least one asset must be provided')
+    .min(1, 'At least one asset must be provided')
   .superRefine((assets, ctx) => {
     const seen = new Set<string>();
     for (const asset of assets) {
@@ -188,16 +205,22 @@ export const UpdateAssetDataDto = z
 export type UpdateAssetDataDto = z.infer<typeof UpdateAssetDataDto>;
 
 export const UpdateLifestyleProfileDto = z.object({
-  smokingCode: z.string().trim().min(1, 'smokingCode is required'),
-  physicalActivityCode: z
-    .string()
-    .trim()
-    .min(1, 'physicalActivityCode is required'),
-  dietQualityCode: z.string().trim().min(1, 'dietQualityCode is required'),
-  alcoholConsumptionCode: z
-    .string()
-    .trim()
-    .min(1, 'alcoholConsumptionCode is required'),
+  smokingTypeId: z
+    .number()
+    .int('smoking type id must be an integer')
+    .positive('smoking type id must be positive'),
+  physicalActivityTypeId: z
+    .number()
+    .int('physical activity type id must be an integer')
+    .positive('physical activity type id must be positive'),
+  dietQualityTypeId: z
+    .number()
+    .int('diet quality type id must be an integer')
+    .positive('diet quality type id must be positive'),
+  alcoholConsumptionTypeId: z
+    .number()
+    .int('alcohol consumption type id must be an integer')
+    .positive('alcohol consumption type id must be positive'),
 });
 
 export type UpdateLifestyleProfileDto = z.infer<
