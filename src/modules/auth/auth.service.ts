@@ -236,6 +236,53 @@ export const resetPassword = async (token: string, password: string) => {
   });
 };
 
+export const updatePassword = async (
+  userAccountId: number,
+  currentPassword: string,
+  newPassword: string,
+) => {
+  await withTransaction(async (client) => {
+    const credentialResult = await execQuery(
+      client,
+      `SELECT id, hashed_password FROM credential WHERE user_account_id = $1`,
+      [userAccountId],
+    );
+
+    const credential = credentialResult.rows[0];
+    if (!credential) throw unauthorized('Invalid credentials');
+
+    const isCurrentPasswordValid = await comparePassword(
+      currentPassword,
+      credential.hashed_password,
+    );
+    if (!isCurrentPasswordValid) {
+      throw badRequest('Current password is incorrect');
+    }
+
+    const isSamePassword = await comparePassword(
+      newPassword,
+      credential.hashed_password,
+    );
+    if (isSamePassword) {
+      throw badRequest('New password must be different from current password');
+    }
+
+    const hashedPassword = await hashPassword(newPassword);
+
+    await execQuery(
+      client,
+      `UPDATE credential SET hashed_password = $1 WHERE id = $2`,
+      [hashedPassword, credential.id],
+    );
+
+    await execQuery(
+      client,
+      `UPDATE refresh_token SET revoked = true WHERE user_account_id = $1`,
+      [userAccountId],
+    );
+  });
+};
+
 export const refresh = async (rawToken: string) => {
   const hashedToken = hashToken(rawToken);
 

@@ -13,11 +13,10 @@ export const FinancialProfileDto = z.object({
     .min(1, 'desiredLifeExpectancy must be at least 1')
     .max(150, 'desiredLifeExpectancy must be at most 150'),
   currentSavings: z.number().min(0, 'currentSavings must be at least 0'),
-  currencyCode: z
-    .string()
-    .trim()
-    .length(3, 'currencyCode must be a 3-letter code')
-    .transform((value) => value.toUpperCase()),
+  currencyId: z
+    .number()
+    .int()
+    .positive('currencyId must be a positive integer'),
 });
 
 export const FinancialInfoDto = z.object({
@@ -59,4 +58,6 @@ export type FinancialProfileDto = z.infer<typeof FinancialProfileDto>;
 export type FinancialInfoDto = z.infer<typeof FinancialInfoDto>;
 export type CreateFinancialInfoDto = z.infer<typeof CreateFinancialInfoDto>;
 export type UpdateFinancialInfoDto = z.infer<typeof UpdateFinancialInfoDto>;
-export type UpdateFinancialSectionDto = z.infer<typeof UpdateFinancialSectionDto>;
+export type UpdateFinancialSectionDto = z.infer<
+  typeof UpdateFinancialSectionDto
+>;

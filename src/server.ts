@@ -1,8 +1,8 @@
 import app from '@/app.js';
 import config from '@/config/config.js';
 import { checkDBConnection } from '@/utils/checkDB.js';
-import { redisClient } from '@/utils/cache/redis.js';
-import { warmCache } from '@/utils/cache/warmCache.js';
+import { redisClient } from '@/modules/cache/redis.js';
+import { warmCache } from '@/modules/cache/warmCache.js';
 
 function startServer(): Promise<void> {
   return new Promise((resolve, reject) => {

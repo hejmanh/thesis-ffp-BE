@@ -12,16 +12,12 @@ vi.mock('./registration.repository.js', () => ({
   getFinancialProfileDetails: vi.fn(),
   getHabitsProfileDetails: vi.fn(),
 
-  findCurrencyIdByCode: vi.fn(),
+  findCurrencyIdById: vi.fn(),
   findLifeExpectancyByCountryAndSex: vi.fn(),
-  findSmokingAdjustmentByCode: vi.fn(),
-  findPhysicalActivityAdjustmentByCode: vi.fn(),
-  findDietQualityAdjustmentByCode: vi.fn(),
-  findAlcoholConsumptionAdjustmentByCode: vi.fn(),
-  findSmokingTypeIdByCode: vi.fn(),
-  findPhysicalActivityTypeIdByCode: vi.fn(),
-  findDietQualityTypeIdByCode: vi.fn(),
-  findAlcoholConsumptionTypeIdByCode: vi.fn(),
+  findSmokingAdjustmentById: vi.fn(),
+  findPhysicalActivityAdjustmentById: vi.fn(),
+  findDietQualityAdjustmentById: vi.fn(),
+  findAlcoholConsumptionAdjustmentById: vi.fn(),
   listEligibleLifeStageRangeIds: vi.fn(),
   findExistingAssetTypeIds: vi.fn(),
   listPortfolioAllocationDetails: vi.fn(),
@@ -51,7 +47,7 @@ const financialSectionPayload = {
     financialProfile: {
       desiredLifeExpectancy: 90,
       currentSavings: 50000,
-      currencyCode: 'USD',
+      currencyId: 1,
     },
     portfolioAllocations: [
       {
@@ -68,10 +64,10 @@ const financialSectionPayload = {
       },
     ],
     lifestyleProfile: {
-      smokingCode: 'NON_SMOKER',
-      physicalActivityCode: 'HIGH',
-      dietQualityCode: 'MEDIUM',
-      alcoholConsumptionCode: 'LOW',
+      smokingTypeId: 1,
+      physicalActivityTypeId: 2,
+      dietQualityTypeId: 3,
+      alcoholConsumptionTypeId: 4,
     },
   },
 };
@@ -82,7 +78,7 @@ const financialSectionResponse = {
       currentSavings: 50000,
       desiredLifeExpectancy: 90,
       estimatedLifeExpectancy: 83,
-      currencyCode: 'USD',
+      currencyId: 1,
     },
     portfolioAllocations: [
       {
@@ -99,17 +95,17 @@ const financialSectionResponse = {
       },
     ],
     lifestyleProfile: {
-      smokingCode: 'non_smoker',
-      physicalActivityCode: 'active',
-      dietQualityCode: 'average',
-      alcoholConsumptionCode: 'moderate',
+      smokingTypeId: 1,
+      physicalActivityTypeId: 2,
+      dietQualityTypeId: 3,
+      alcoholConsumptionTypeId: 4,
     },
   },
 };
 
 describe('Registration Service', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     asMock(withTransaction).mockImplementation(async (callback) =>
       callback({} as never),
     );
@@ -130,32 +126,22 @@ describe('Registration Service', () => {
         hasPostFfpAsset: false,
       },
     );
-    asMock(registrationRepository.findCurrencyIdByCode).mockResolvedValue(44);
+    asMock(registrationRepository.findCurrencyIdById).mockResolvedValue(44);
     asMock(
       registrationRepository.findLifeExpectancyByCountryAndSex,
     ).mockResolvedValue(80.4);
+    asMock(registrationRepository.findSmokingAdjustmentById).mockResolvedValue(
+      0,
+    );
     asMock(
-      registrationRepository.findSmokingAdjustmentByCode,
-    ).mockResolvedValue(0);
-    asMock(
-      registrationRepository.findPhysicalActivityAdjustmentByCode,
+      registrationRepository.findPhysicalActivityAdjustmentById,
     ).mockResolvedValue(2.5);
     asMock(
-      registrationRepository.findDietQualityAdjustmentByCode,
+      registrationRepository.findDietQualityAdjustmentById,
     ).mockResolvedValue(0);
     asMock(
-      registrationRepository.findAlcoholConsumptionAdjustmentByCode,
+      registrationRepository.findAlcoholConsumptionAdjustmentById,
     ).mockResolvedValue(0);
-    asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(1);
-    asMock(
-      registrationRepository.findPhysicalActivityTypeIdByCode,
-    ).mockResolvedValue(2);
-    asMock(
-      registrationRepository.findDietQualityTypeIdByCode,
-    ).mockResolvedValue(3);
-    asMock(
-      registrationRepository.findAlcoholConsumptionTypeIdByCode,
-    ).mockResolvedValue(4);
     asMock(
       registrationRepository.listEligibleLifeStageRangeIds,
     ).mockResolvedValue([101, 102]);
@@ -168,7 +154,7 @@ describe('Registration Service', () => {
         financialProfile: {
           desiredLifeExpectancy: 90,
           currentSavings: 50000,
-          currencyCode: 'USD',
+          currencyId: 1,
         },
         portfolioAllocations: [
           {
@@ -185,10 +171,10 @@ describe('Registration Service', () => {
           },
         ],
         lifestyleProfile: {
-          smokingCode: 'NON_SMOKER',
-          physicalActivityCode: 'HIGH',
-          dietQualityCode: 'MEDIUM',
-          alcoholConsumptionCode: 'LOW',
+          smokingTypeId: 1,
+          physicalActivityTypeId: 2,
+          dietQualityTypeId: 3,
+          alcoholConsumptionTypeId: 4,
         },
         stageData: [
           {
@@ -222,7 +208,7 @@ describe('Registration Service', () => {
         financialProfile: {
           currentSavings: 50000,
           desiredLifeExpectancy: 90,
-          currencyCode: 'USD',
+          currencyId: 1,
         },
         portfolioAllocations: [
           {
@@ -239,10 +225,10 @@ describe('Registration Service', () => {
           },
         ],
         lifestyleProfile: {
-          smokingCode: 'non_smoker',
-          physicalActivityCode: 'active',
-          dietQualityCode: 'average',
-          alcoholConsumptionCode: 'moderate',
+          smokingTypeId: 1,
+          physicalActivityTypeId: 2,
+          dietQualityTypeId: 3,
+          alcoholConsumptionTypeId: 4,
         },
         stageData: [
           {
@@ -312,7 +298,7 @@ describe('Registration Service', () => {
           financialProfile: {
             desiredLifeExpectancy: 90,
             currentSavings: 50000,
-            currencyCode: 'USD',
+            currencyId: 1,
           },
           portfolioAllocations: [
             {
@@ -329,10 +315,10 @@ describe('Registration Service', () => {
             },
           ],
           lifestyleProfile: {
-            smokingCode: 'NON_SMOKER',
-            physicalActivityCode: 'ACTIVE',
-            dietQualityCode: 'AVERAGE',
-            alcoholConsumptionCode: 'MODERATE',
+            smokingTypeId: 1,
+            physicalActivityTypeId: 2,
+            dietQualityTypeId: 3,
+            alcoholConsumptionTypeId: 4,
           },
           stageData: [
             {
@@ -366,32 +352,22 @@ describe('Registration Service', () => {
         hasPostFfpAsset: false,
       },
     );
-    asMock(registrationRepository.findCurrencyIdByCode).mockResolvedValue(44);
+    asMock(registrationRepository.findCurrencyIdById).mockResolvedValue(44);
     asMock(
       registrationRepository.findLifeExpectancyByCountryAndSex,
     ).mockResolvedValue(null);
+    asMock(registrationRepository.findSmokingAdjustmentById).mockResolvedValue(
+      0,
+    );
     asMock(
-      registrationRepository.findSmokingAdjustmentByCode,
-    ).mockResolvedValue(0);
-    asMock(
-      registrationRepository.findPhysicalActivityAdjustmentByCode,
+      registrationRepository.findPhysicalActivityAdjustmentById,
     ).mockResolvedValue(2.5);
     asMock(
-      registrationRepository.findDietQualityAdjustmentByCode,
+      registrationRepository.findDietQualityAdjustmentById,
     ).mockResolvedValue(0);
     asMock(
-      registrationRepository.findAlcoholConsumptionAdjustmentByCode,
+      registrationRepository.findAlcoholConsumptionAdjustmentById,
     ).mockResolvedValue(0);
-    asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(1);
-    asMock(
-      registrationRepository.findPhysicalActivityTypeIdByCode,
-    ).mockResolvedValue(2);
-    asMock(
-      registrationRepository.findDietQualityTypeIdByCode,
-    ).mockResolvedValue(3);
-    asMock(
-      registrationRepository.findAlcoholConsumptionTypeIdByCode,
-    ).mockResolvedValue(4);
     asMock(
       registrationRepository.listEligibleLifeStageRangeIds,
     ).mockResolvedValue([101, 102]);
@@ -405,7 +381,7 @@ describe('Registration Service', () => {
           financialProfile: {
             desiredLifeExpectancy: 90,
             currentSavings: 50000,
-            currencyCode: 'USD',
+            currencyId: 1,
           },
           portfolioAllocations: [
             {
@@ -422,10 +398,10 @@ describe('Registration Service', () => {
             },
           ],
           lifestyleProfile: {
-            smokingCode: 'NON_SMOKER',
-            physicalActivityCode: 'ACTIVE',
-            dietQualityCode: 'AVERAGE',
-            alcoholConsumptionCode: 'MODERATE',
+            smokingTypeId: 1,
+            physicalActivityTypeId: 2,
+            dietQualityTypeId: 3,
+            alcoholConsumptionTypeId: 4,
           },
           stageData: [
             {
@@ -460,32 +436,22 @@ describe('Registration Service', () => {
         hasPostFfpAsset: false,
       },
     );
-    asMock(registrationRepository.findCurrencyIdByCode).mockResolvedValue(44);
+    asMock(registrationRepository.findCurrencyIdById).mockResolvedValue(44);
     asMock(
       registrationRepository.findLifeExpectancyByCountryAndSex,
     ).mockResolvedValue(80.4);
+    asMock(registrationRepository.findSmokingAdjustmentById).mockResolvedValue(
+      0,
+    );
     asMock(
-      registrationRepository.findSmokingAdjustmentByCode,
-    ).mockResolvedValue(0);
-    asMock(
-      registrationRepository.findPhysicalActivityAdjustmentByCode,
+      registrationRepository.findPhysicalActivityAdjustmentById,
     ).mockResolvedValue(2.5);
     asMock(
-      registrationRepository.findDietQualityAdjustmentByCode,
+      registrationRepository.findDietQualityAdjustmentById,
     ).mockResolvedValue(0);
     asMock(
-      registrationRepository.findAlcoholConsumptionAdjustmentByCode,
+      registrationRepository.findAlcoholConsumptionAdjustmentById,
     ).mockResolvedValue(0);
-    asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(1);
-    asMock(
-      registrationRepository.findPhysicalActivityTypeIdByCode,
-    ).mockResolvedValue(2);
-    asMock(
-      registrationRepository.findDietQualityTypeIdByCode,
-    ).mockResolvedValue(3);
-    asMock(
-      registrationRepository.findAlcoholConsumptionTypeIdByCode,
-    ).mockResolvedValue(4);
     asMock(
       registrationRepository.listEligibleLifeStageRangeIds,
     ).mockResolvedValue([101, 102]);
@@ -499,7 +465,7 @@ describe('Registration Service', () => {
           financialProfile: {
             desiredLifeExpectancy: 90,
             currentSavings: 50000,
-            currencyCode: 'USD',
+            currencyId: 1,
           },
           portfolioAllocations: [
             {
@@ -516,10 +482,10 @@ describe('Registration Service', () => {
             },
           ],
           lifestyleProfile: {
-            smokingCode: 'NON_SMOKER',
-            physicalActivityCode: 'ACTIVE',
-            dietQualityCode: 'AVERAGE',
-            alcoholConsumptionCode: 'MODERATE',
+            smokingTypeId: 1,
+            physicalActivityTypeId: 2,
+            dietQualityTypeId: 3,
+            alcoholConsumptionTypeId: 4,
           },
           stageData: [
             {
@@ -554,7 +520,7 @@ describe('Registration Service', () => {
         currentSavings: 50000,
         desiredLifeExpectancy: 90,
         estimatedLifeExpectancy: 83,
-        currencyCode: 'USD',
+        currencyId: 1,
       },
     );
     asMock(
@@ -595,10 +561,10 @@ describe('Registration Service', () => {
       },
     ]);
     asMock(registrationRepository.getHabitsProfileDetails).mockResolvedValue({
-      smokingCode: 'non_smoker',
-      physicalActivityCode: 'active',
-      dietQualityCode: 'average',
-      alcoholConsumptionCode: 'moderate',
+      smokingTypeId: 1,
+      physicalActivityTypeId: 2,
+      dietQualityTypeId: 3,
+      alcoholConsumptionTypeId: 4,
     });
 
     const result = await registrationService.getUserInfo(99);
@@ -609,7 +575,7 @@ describe('Registration Service', () => {
           currentSavings: 50000,
           desiredLifeExpectancy: 90,
           estimatedLifeExpectancy: 83,
-          currencyCode: 'USD',
+          currencyId: 1,
         },
         portfolioAllocations: [
           {
@@ -626,10 +592,10 @@ describe('Registration Service', () => {
           },
         ],
         lifestyleProfile: {
-          smokingCode: 'non_smoker',
-          physicalActivityCode: 'active',
-          dietQualityCode: 'average',
-          alcoholConsumptionCode: 'moderate',
+          smokingTypeId: 1,
+          physicalActivityTypeId: 2,
+          dietQualityTypeId: 3,
+          alcoholConsumptionTypeId: 4,
         },
         stageData: [
           {
@@ -687,34 +653,22 @@ describe('Registration Service', () => {
         hasLifeStageProfile: false,
         hasPostFfpAsset: false,
       });
-      asMock(registrationRepository.findCurrencyIdByCode).mockResolvedValue(44);
+      asMock(registrationRepository.findCurrencyIdById).mockResolvedValue(44);
       asMock(
         registrationRepository.findLifeExpectancyByCountryAndSex,
       ).mockResolvedValue(80.4);
       asMock(
-        registrationRepository.findSmokingAdjustmentByCode,
+        registrationRepository.findSmokingAdjustmentById,
       ).mockResolvedValue(0);
       asMock(
-        registrationRepository.findPhysicalActivityAdjustmentByCode,
+        registrationRepository.findPhysicalActivityAdjustmentById,
       ).mockResolvedValue(2.5);
       asMock(
-        registrationRepository.findDietQualityAdjustmentByCode,
+        registrationRepository.findDietQualityAdjustmentById,
       ).mockResolvedValue(0);
       asMock(
-        registrationRepository.findAlcoholConsumptionAdjustmentByCode,
+        registrationRepository.findAlcoholConsumptionAdjustmentById,
       ).mockResolvedValue(0);
-      asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(
-        1,
-      );
-      asMock(
-        registrationRepository.findPhysicalActivityTypeIdByCode,
-      ).mockResolvedValue(2);
-      asMock(
-        registrationRepository.findDietQualityTypeIdByCode,
-      ).mockResolvedValue(3);
-      asMock(
-        registrationRepository.findAlcoholConsumptionTypeIdByCode,
-      ).mockResolvedValue(4);
 
       const result = await registrationService.createFinancialInfo(
         99,
@@ -772,7 +726,7 @@ describe('Registration Service', () => {
         currentSavings: 50000,
         desiredLifeExpectancy: 90,
         estimatedLifeExpectancy: 83,
-        currencyCode: 'USD',
+        currencyId: 1,
       });
       asMock(
         registrationRepository.listPortfolioAllocationDetails,
@@ -780,10 +734,10 @@ describe('Registration Service', () => {
         financialSectionResponse.financial.portfolioAllocations,
       );
       asMock(registrationRepository.getHabitsProfileDetails).mockResolvedValue({
-        smokingCode: 'non_smoker',
-        physicalActivityCode: 'active',
-        dietQualityCode: 'average',
-        alcoholConsumptionCode: 'moderate',
+        smokingTypeId: 1,
+        physicalActivityTypeId: 2,
+        dietQualityTypeId: 3,
+        alcoholConsumptionTypeId: 4,
       });
 
       await expect(registrationService.getFinancialInfo(99)).resolves.toEqual(
@@ -807,41 +761,29 @@ describe('Registration Service', () => {
   describe('updateFinancialInfo', () => {
     it('updates profile, portfolio, and lifestyle data through one endpoint flow', async () => {
       mockFullProfile();
-      asMock(registrationRepository.findCurrencyIdByCode).mockResolvedValue(66);
+      asMock(registrationRepository.findCurrencyIdById).mockResolvedValue(66);
       asMock(
         registrationRepository.findLifeExpectancyByCountryAndSex,
       ).mockResolvedValue(80.4);
       asMock(
-        registrationRepository.findSmokingAdjustmentByCode,
+        registrationRepository.findSmokingAdjustmentById,
       ).mockResolvedValue(0);
       asMock(
-        registrationRepository.findPhysicalActivityAdjustmentByCode,
+        registrationRepository.findPhysicalActivityAdjustmentById,
       ).mockResolvedValue(2.5);
       asMock(
-        registrationRepository.findDietQualityAdjustmentByCode,
+        registrationRepository.findDietQualityAdjustmentById,
       ).mockResolvedValue(0);
       asMock(
-        registrationRepository.findAlcoholConsumptionAdjustmentByCode,
+        registrationRepository.findAlcoholConsumptionAdjustmentById,
       ).mockResolvedValue(0);
-      asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(
-        1,
-      );
-      asMock(
-        registrationRepository.findPhysicalActivityTypeIdByCode,
-      ).mockResolvedValue(2);
-      asMock(
-        registrationRepository.findDietQualityTypeIdByCode,
-      ).mockResolvedValue(3);
-      asMock(
-        registrationRepository.findAlcoholConsumptionTypeIdByCode,
-      ).mockResolvedValue(4);
       asMock(
         registrationRepository.getFinancialProfileDetails,
       ).mockResolvedValue({
         currentSavings: 62000,
         desiredLifeExpectancy: 95,
         estimatedLifeExpectancy: 83,
-        currencyCode: 'EUR',
+        currencyId: 2,
       });
       asMock(
         registrationRepository.listPortfolioAllocationDetails,
@@ -850,27 +792,27 @@ describe('Registration Service', () => {
         { allocationType: 'POST_FFP', u: 0.35, mu: 0.07, rf: 0.02 },
       ]);
       asMock(registrationRepository.getHabitsProfileDetails).mockResolvedValue({
-        smokingCode: 'non_smoker',
-        physicalActivityCode: 'active',
-        dietQualityCode: 'average',
-        alcoholConsumptionCode: 'moderate',
+        smokingTypeId: 1,
+        physicalActivityTypeId: 2,
+        dietQualityTypeId: 3,
+        alcoholConsumptionTypeId: 4,
       });
 
       const result = await registrationService.updateFinancialInfo(99, {
         financialProfile: {
           currentSavings: 62000,
           desiredLifeExpectancy: 95,
-          currencyCode: 'EUR',
+          currencyId: 2,
         },
         portfolioAllocations: [
           { allocationType: 'PRE_FFP', u: 0.6, mu: 0.11, rf: 0.02 },
           { allocationType: 'POST_FFP', u: 0.35, mu: 0.07, rf: 0.02 },
         ],
         lifestyleProfile: {
-          smokingCode: 'NON_SMOKER',
-          physicalActivityCode: 'HIGH',
-          dietQualityCode: 'MEDIUM',
-          alcoholConsumptionCode: 'LOW',
+          smokingTypeId: 1,
+          physicalActivityTypeId: 2,
+          dietQualityTypeId: 3,
+          alcoholConsumptionTypeId: 4,
         },
       });
 
@@ -905,17 +847,17 @@ describe('Registration Service', () => {
             currentSavings: 62000,
             desiredLifeExpectancy: 95,
             estimatedLifeExpectancy: 83,
-            currencyCode: 'EUR',
+            currencyId: 2,
           },
           portfolioAllocations: [
             { allocationType: 'PRE_FFP', u: 0.6, mu: 0.11, rf: 0.02 },
             { allocationType: 'POST_FFP', u: 0.35, mu: 0.07, rf: 0.02 },
           ],
           lifestyleProfile: {
-            smokingCode: 'non_smoker',
-            physicalActivityCode: 'active',
-            dietQualityCode: 'average',
-            alcoholConsumptionCode: 'moderate',
+            smokingTypeId: 1,
+            physicalActivityTypeId: 2,
+            dietQualityTypeId: 3,
+            alcoholConsumptionTypeId: 4,
           },
         },
       });
@@ -997,17 +939,17 @@ describe('Registration Service', () => {
   // ---------------------------------------------------------------------------
 
   describe('updateFinancialProfileBasicService', () => {
-    it('updates basic fields and resolves currency when currencyCode is provided', async () => {
+    it('updates basic fields and resolves currency when currencyId is provided', async () => {
       mockFullProfile();
-      asMock(registrationRepository.findCurrencyIdByCode).mockResolvedValue(44);
+      asMock(registrationRepository.findCurrencyIdById).mockResolvedValue(44);
 
       await registrationService.updateFinancialProfileBasicService(99, {
         currentSavings: 60000,
-        currencyCode: 'EUR',
+        currencyId: 44,
       });
 
-      expect(registrationRepository.findCurrencyIdByCode).toHaveBeenCalledWith(
-        'EUR',
+      expect(registrationRepository.findCurrencyIdById).toHaveBeenCalledWith(
+        44,
       );
       expect(
         registrationRepository.updateFinancialProfileBasic,
@@ -1017,16 +959,14 @@ describe('Registration Service', () => {
       });
     });
 
-    it('updates without currency lookup when currencyCode is omitted', async () => {
+    it('updates without currency lookup when currencyId is omitted', async () => {
       mockFullProfile();
 
       await registrationService.updateFinancialProfileBasicService(99, {
         desiredLifeExpectancy: 95,
       });
 
-      expect(
-        registrationRepository.findCurrencyIdByCode,
-      ).not.toHaveBeenCalled();
+      expect(registrationRepository.findCurrencyIdById).not.toHaveBeenCalled();
       expect(
         registrationRepository.updateFinancialProfileBasic,
       ).toHaveBeenCalledWith(11, {
@@ -1059,15 +999,13 @@ describe('Registration Service', () => {
       ).not.toHaveBeenCalled();
     });
 
-    it('throws when currencyCode is invalid', async () => {
+    it('throws when currencyId is invalid', async () => {
       mockFullProfile();
-      asMock(registrationRepository.findCurrencyIdByCode).mockResolvedValue(
-        null,
-      );
+      asMock(registrationRepository.findCurrencyIdById).mockResolvedValue(null);
 
       await expect(
         registrationService.updateFinancialProfileBasicService(99, {
-          currencyCode: 'XYZ',
+          currencyId: 999,
         }),
       ).rejects.toBeTruthy();
       expect(
@@ -1440,29 +1378,17 @@ describe('Registration Service', () => {
   describe('updateLifestyleProfileService', () => {
     it('updates lifestyle habits and returns recalculated life expectancy', async () => {
       mockFullProfile();
-      asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(
-        1,
-      );
       asMock(
-        registrationRepository.findPhysicalActivityTypeIdByCode,
-      ).mockResolvedValue(2);
-      asMock(
-        registrationRepository.findDietQualityTypeIdByCode,
-      ).mockResolvedValue(3);
-      asMock(
-        registrationRepository.findAlcoholConsumptionTypeIdByCode,
-      ).mockResolvedValue(4);
-      asMock(
-        registrationRepository.findSmokingAdjustmentByCode,
+        registrationRepository.findSmokingAdjustmentById,
       ).mockResolvedValue(-2);
       asMock(
-        registrationRepository.findPhysicalActivityAdjustmentByCode,
+        registrationRepository.findPhysicalActivityAdjustmentById,
       ).mockResolvedValue(2.5);
       asMock(
-        registrationRepository.findDietQualityAdjustmentByCode,
+        registrationRepository.findDietQualityAdjustmentById,
       ).mockResolvedValue(0);
       asMock(
-        registrationRepository.findAlcoholConsumptionAdjustmentByCode,
+        registrationRepository.findAlcoholConsumptionAdjustmentById,
       ).mockResolvedValue(-1);
       asMock(
         registrationRepository.findLifeExpectancyByCountryAndSex,
@@ -1471,20 +1397,20 @@ describe('Registration Service', () => {
       const result = await registrationService.updateLifestyleProfileService(
         99,
         {
-          smokingCode: 'NON_SMOKER',
-          physicalActivityCode: 'HIGH',
-          dietQualityCode: 'AVERAGE',
-          alcoholConsumptionCode: 'MODERATE',
+          smokingTypeId: 1,
+          physicalActivityTypeId: 2,
+          dietQualityTypeId: 3,
+          alcoholConsumptionTypeId: 4,
         },
       );
 
       // 80 + (-2 + 2.5 + 0 + -1) = 79.5 → Math.round → 80
       expect(result.estimatedLifeExpectancy).toBe(80);
       expect(result.lifestyleProfile).toEqual({
-        smokingCode: 'non_smoker',
-        physicalActivityCode: 'active',
-        dietQualityCode: 'average',
-        alcoholConsumptionCode: 'moderate',
+        smokingTypeId: 1,
+        physicalActivityTypeId: 2,
+        dietQualityTypeId: 3,
+        alcoholConsumptionTypeId: 4,
       });
       expect(registrationRepository.updateHabitsProfile).toHaveBeenCalledWith(
         11,
@@ -1506,10 +1432,10 @@ describe('Registration Service', () => {
 
       await expect(
         registrationService.updateLifestyleProfileService(99, {
-          smokingCode: 'NON_SMOKER',
-          physicalActivityCode: 'ACTIVE',
-          dietQualityCode: 'HEALTHY',
-          alcoholConsumptionCode: 'NONE',
+          smokingTypeId: 1,
+          physicalActivityTypeId: 2,
+          dietQualityTypeId: 3,
+          alcoholConsumptionTypeId: 4,
         }),
       ).rejects.toBeTruthy();
     });
@@ -1519,24 +1445,24 @@ describe('Registration Service', () => {
 
       await expect(
         registrationService.updateLifestyleProfileService(99, {
-          smokingCode: 'NON_SMOKER',
-          physicalActivityCode: 'ACTIVE',
-          dietQualityCode: 'HEALTHY',
-          alcoholConsumptionCode: 'NONE',
+          smokingTypeId: 1,
+          physicalActivityTypeId: 2,
+          dietQualityTypeId: 3,
+          alcoholConsumptionTypeId: 4,
         }),
       ).rejects.toBeTruthy();
       expect(registrationRepository.updateHabitsProfile).not.toHaveBeenCalled();
     });
 
-    it('throws when an invalid lifestyle code is provided', async () => {
+    it('throws when an invalid lifestyle id is provided', async () => {
       mockFullProfile();
 
       await expect(
         registrationService.updateLifestyleProfileService(99, {
-          smokingCode: 'INVALID_CODE',
-          physicalActivityCode: 'ACTIVE',
-          dietQualityCode: 'HEALTHY',
-          alcoholConsumptionCode: 'NONE',
+          smokingTypeId: 999,
+          physicalActivityTypeId: 2,
+          dietQualityTypeId: 3,
+          alcoholConsumptionTypeId: 4,
         }),
       ).rejects.toBeTruthy();
       expect(registrationRepository.updateHabitsProfile).not.toHaveBeenCalled();
@@ -1550,29 +1476,17 @@ describe('Registration Service', () => {
   describe('createLifestyleProfileService', () => {
     it('creates lifestyle profile and returns recalculated life expectancy', async () => {
       mockFullProfile({ hasHabitsProfile: false });
-      asMock(registrationRepository.findSmokingTypeIdByCode).mockResolvedValue(
-        1,
-      );
       asMock(
-        registrationRepository.findPhysicalActivityTypeIdByCode,
-      ).mockResolvedValue(2);
-      asMock(
-        registrationRepository.findDietQualityTypeIdByCode,
-      ).mockResolvedValue(3);
-      asMock(
-        registrationRepository.findAlcoholConsumptionTypeIdByCode,
-      ).mockResolvedValue(4);
-      asMock(
-        registrationRepository.findSmokingAdjustmentByCode,
+        registrationRepository.findSmokingAdjustmentById,
       ).mockResolvedValue(0);
       asMock(
-        registrationRepository.findPhysicalActivityAdjustmentByCode,
+        registrationRepository.findPhysicalActivityAdjustmentById,
       ).mockResolvedValue(2.5);
       asMock(
-        registrationRepository.findDietQualityAdjustmentByCode,
+        registrationRepository.findDietQualityAdjustmentById,
       ).mockResolvedValue(0);
       asMock(
-        registrationRepository.findAlcoholConsumptionAdjustmentByCode,
+        registrationRepository.findAlcoholConsumptionAdjustmentById,
       ).mockResolvedValue(0);
       asMock(
         registrationRepository.findLifeExpectancyByCountryAndSex,
@@ -1581,10 +1495,10 @@ describe('Registration Service', () => {
       const result = await registrationService.createLifestyleProfileService(
         99,
         {
-          smokingCode: 'NON_SMOKER',
-          physicalActivityCode: 'HIGH',
-          dietQualityCode: 'MEDIUM',
-          alcoholConsumptionCode: 'LOW',
+          smokingTypeId: 1,
+          physicalActivityTypeId: 2,
+          dietQualityTypeId: 3,
+          alcoholConsumptionTypeId: 4,
         },
       );
 
@@ -1601,10 +1515,10 @@ describe('Registration Service', () => {
       ).toHaveBeenCalledWith(11, 83, expect.anything());
       expect(result).toEqual({
         lifestyleProfile: {
-          smokingCode: 'non_smoker',
-          physicalActivityCode: 'active',
-          dietQualityCode: 'average',
-          alcoholConsumptionCode: 'moderate',
+          smokingTypeId: 1,
+          physicalActivityTypeId: 2,
+          dietQualityTypeId: 3,
+          alcoholConsumptionTypeId: 4,
         },
         estimatedLifeExpectancy: 83,
       });
@@ -1615,10 +1529,10 @@ describe('Registration Service', () => {
 
       await expect(
         registrationService.createLifestyleProfileService(99, {
-          smokingCode: 'NON_SMOKER',
-          physicalActivityCode: 'HIGH',
-          dietQualityCode: 'MEDIUM',
-          alcoholConsumptionCode: 'LOW',
+          smokingTypeId: 1,
+          physicalActivityTypeId: 2,
+          dietQualityTypeId: 3,
+          alcoholConsumptionTypeId: 4,
         }),
       ).rejects.toBeTruthy();
       expect(registrationRepository.insertHabitsProfile).not.toHaveBeenCalled();

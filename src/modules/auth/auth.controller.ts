@@ -1,15 +1,19 @@
 import type { Request, Response } from 'express';
+import { z } from 'zod';
 import { asyncHandler } from '@/utils/asyncHandler.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginRequestDto } from './dto/login.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
+import { UpdatePasswordDto } from './dto/update-password.dto.js';
+import { VerifyEmailDto } from './dto/verify-email.dto.js';
 import * as authService from './auth.service.js';
 import type {
   RegisterResponseDto,
   VerifyEmailResponseDto,
   ForgotPasswordResponseDto,
   ResetPasswordResponseDto,
+  UpdatePasswordResponseDto,
   RefreshResponseDto,
   LogoutResponseDto,
 } from './dto/response.dto.js';
@@ -48,8 +52,7 @@ export const registerHandler = asyncHandler(
 
 export const verifyEmailHandler = asyncHandler(
   async (req: Request, res: Response<VerifyEmailResponseDto>) => {
-    const { token } = req.query;
-    if (typeof token !== 'string') throw badRequest('Invalid token');
+    const { token } = VerifyEmailDto.parse(req.body);
 
     await authService.verifyEmail(token);
 
@@ -108,6 +111,26 @@ export const resetPasswordHandler = asyncHandler(
       success: true,
       data: null,
       message: 'Password reset successful',
+    });
+  },
+);
+
+export const updatePasswordHandler = asyncHandler(
+  async (req: Request, res: Response<UpdatePasswordResponseDto>) => {
+    if (!req.userId) throw unauthorized('No token provided');
+
+    const data = UpdatePasswordDto.parse(req.body);
+
+    await authService.updatePassword(
+      req.userId,
+      data.currentPassword,
+      data.newPassword,
+    );
+
+    res.json({
+      success: true,
+      data: null,
+      message: 'Password updated successfully',
     });
   },
 );
