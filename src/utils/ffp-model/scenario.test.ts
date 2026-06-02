@@ -185,4 +185,28 @@ describe('runScenario4', () => {
     expect(result.requiredAnnualSaving).toBeLessThanOrEqual(0.01);
     expect(result.isTerminalStageAdded).toBe(true);
   });
+
+  it('throws when stages already cover the FFP age', () => {
+    expect(() =>
+      runScenario4({
+        currentSavings: 0,
+        currentAge: 30,
+        ffpAge: 35,
+        stages: [
+          {
+            startAge: 30,
+            endAge: 40,
+            initialAnnualSaving: 100,
+            growthRate: 0,
+          },
+        ],
+        annualSpending: 10,
+        retirementDuration: 10,
+        u_pre: 0,
+        u_post: 0,
+        mu: 0,
+        r_f: 0,
+      }),
+    ).toThrow(/Stages already cover up to or past ffpAge/);
+  });
 });
