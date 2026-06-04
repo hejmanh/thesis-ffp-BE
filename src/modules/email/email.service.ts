@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import type { SendMailOptions } from 'nodemailer';
 import { google } from 'googleapis';
 import { internal } from '@/utils/error.js';
 import config from '@/config/config.js';
@@ -11,32 +12,62 @@ type EmailConfig = {
   clientId: string;
   clientSecret: string;
   refreshToken: string;
+  redirectUri: string | undefined;
   frontendUrl: string;
 };
+
+type CachedAccessToken = {
+  token: string;
+  expiresAt: number;
+};
+
+const ACCESS_TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
+let cachedAccessToken: CachedAccessToken | null = null;
 
 const getEmailConfig = (): EmailConfig => {
   const user = process.env.GOOGLE_EMAIL;
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
   const frontendUrl = process.env.FRONTEND_URL;
 
   if (!user || !clientId || !clientSecret || !refreshToken || !frontendUrl) {
     throw internal('Email service not configured');
   }
 
-  return { user, clientId, clientSecret, refreshToken, frontendUrl };
+  return {
+    user,
+    clientId,
+    clientSecret,
+    refreshToken,
+    redirectUri,
+    frontendUrl,
+  };
 };
 
 const getGoogleAccessToken = async ({
   clientId,
   clientSecret,
   refreshToken,
+  redirectUri,
 }: Pick<
   EmailConfig,
-  'clientId' | 'clientSecret' | 'refreshToken'
->): Promise<string> => {
-  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
+  'clientId' | 'clientSecret' | 'refreshToken' | 'redirectUri'
+>, forceRefresh = false): Promise<string> => {
+  if (
+    !forceRefresh &&
+    cachedAccessToken &&
+    cachedAccessToken.expiresAt - ACCESS_TOKEN_REFRESH_BUFFER_MS > Date.now()
+  ) {
+    return cachedAccessToken.token;
+  }
+
+  const oauth2Client = new google.auth.OAuth2(
+    clientId,
+    clientSecret,
+    redirectUri,
+  );
 
   oauth2Client.setCredentials({
     refresh_token: refreshToken,
@@ -48,6 +79,12 @@ const getGoogleAccessToken = async ({
     throw internal('Email service could not get Google access token');
   }
 
+  cachedAccessToken = {
+    token: accessToken.token,
+    expiresAt:
+      accessToken.res?.data?.expiry_date ?? Date.now() + 55 * 60 * 1000,
+  };
+
   return accessToken.token;
 };
 
@@ -56,12 +93,14 @@ const createTransporter = async ({
   clientId,
   clientSecret,
   refreshToken,
-}: EmailConfig) => {
-  const accessToken = await getGoogleAccessToken({ // s nodemailer 0 tu lay access tok dc uhuhu
+  redirectUri,
+}: EmailConfig, forceRefreshToken = false) => {
+  const accessToken = await getGoogleAccessToken({
     clientId,
     clientSecret,
     refreshToken,
-  });
+    redirectUri,
+  }, forceRefreshToken);
 
   return nodemailer.createTransport({
     service: 'gmail',
@@ -76,19 +115,70 @@ const createTransporter = async ({
   });
 };
 
+const isAuthError = (err: unknown): boolean => {
+  const error = err as {
+    code?: string;
+    responseCode?: number;
+    message?: string;
+  };
+
+  return (
+    error.code === 'EAUTH' ||
+    error.responseCode === 535 ||
+    /auth|credential|expired|invalid token/i.test(error.message ?? '')
+  );
+};
+
+const sendEmail = async (
+  label: string,
+  emailConfig: EmailConfig,
+  mailOptions: SendMailOptions,
+) => {
+  const recipient = mailOptions.to;
+
+  try {
+    const transporter = await createTransporter(emailConfig);
+    const info = await transporter.sendMail(mailOptions);
+
+    if (Array.isArray(info.rejected) && info.rejected.length > 0) {
+      console.warn(`[Email] ${label} rejected by SMTP`, {
+        rejected: info.rejected,
+      });
+    }
+
+    return info;
+  } catch (err) {
+    if (!isAuthError(err)) {
+      throw err;
+    }
+
+    console.warn(`[Email] ${label} auth failed, retrying with fresh token`);
+    cachedAccessToken = null;
+
+    const transporter = await createTransporter(emailConfig, true);
+    const info = await transporter.sendMail(mailOptions);
+
+    if (Array.isArray(info.rejected) && info.rejected.length > 0) {
+      console.warn(`[Email] ${label} rejected by SMTP`, {
+        rejected: info.rejected,
+      });
+    }
+
+    return info;
+  }
+};
+
 export const sendVerificationEmail = async (to: string, token: string) => {
   const emailConfig = getEmailConfig();
   const { frontendUrl, user } = emailConfig;
   const verificationLink = `${frontendUrl}/verify-email?token=${token}`;
   const recipient = normalizeEmail(to);
 
-  const transporter = await createTransporter(emailConfig);
-
   const expiresText = config.security.emailVerificationExpiresIn || '24 hours';
   const html = buildVerificationEmail({ verificationLink, expiresText });
 
-  await transporter.sendMail({
-    from: `Coinfused <${user}>`, // 0 co user thi se bi overwritten thanh byunmanh34, sdt het tao them mail dc r uhuhu
+  await sendEmail('verification email', emailConfig, {
+    from: `Coinfused <${user}>`,
     to: recipient,
     subject: 'Verify Your Email',
     html,
@@ -101,22 +191,13 @@ export const sendPasswordResetEmail = async (to: string, token: string) => {
   const resetLink = `${frontendUrl}/reset-password?token=${token}`;
   const recipient = normalizeEmail(to);
 
-  const transporter = await createTransporter(emailConfig);
-
   const expiresText = config.security.passwordResetExpiresIn || '24 hours';
   const html = buildPasswordResetEmail({ resetLink, expiresText });
 
-  const info = await transporter.sendMail({
+  await sendEmail('password reset email', emailConfig, {
     from: `Coinfused <${user}>`,
     to: recipient,
     subject: 'Reset Your Password',
     html,
   });
-
-  // console.log('[Email] Password reset email sent', {
-  //   messageId: info.messageId,
-  //   accepted: info.accepted,
-  //   rejected: info.rejected,
-  //   response: info.response,
-  // });
 };
