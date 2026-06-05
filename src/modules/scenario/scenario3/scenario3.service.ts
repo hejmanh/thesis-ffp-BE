@@ -69,7 +69,7 @@ const toLifeStages = (
 
     if (index > 0) {
       const prevEndAge = sorted[index - 1]!.endingAge ?? fallbackEndAge;
-      if (prevEndAge !== stage.beginningAge) {
+      if (prevEndAge + 1 !== stage.beginningAge) {
         throw badRequest('Stages must be contiguous and non-overlapping');
       }
     }
@@ -214,7 +214,7 @@ const upsertScenario3Input = async (
     throw badRequest('Retirement duration must be greater than 0');
   }
 
-  const stages = toLifeStages(context.stages, payload.inputFfpAge);
+  const stages = toLifeStages(context.stages, lifeExpectancy);
   const assets = toPassiveIncomeAssets(context.assets);
 
   const portfolioReturnPre = calculatePortfolioReturn(

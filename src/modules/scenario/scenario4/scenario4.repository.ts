@@ -14,7 +14,8 @@ export const upsertScenario4 = async (
   lifeExpectancy: number,
   inputFfpAge: number,
   inputFfpAnnualSpending: number,
-  outputAnnualSaving: number,
+  requiredAnnualSaving: number,
+  requiredWealthAtFFPAge: number,
   client: QueryClient = pool,
 ) => {
   let scenarioId = await findScenarioIdByProfile(
@@ -35,22 +36,25 @@ export const upsertScenario4 = async (
         input_life_expectancy,
         input_ffp_age,
         input_ffp_annual_spending,
-        output_annual_saving
+        output_annual_saving,
+        output_required_wealth_at_ffp_age
       )
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (scenario_id)
       DO UPDATE SET
         input_life_expectancy = EXCLUDED.input_life_expectancy,
         input_ffp_age = EXCLUDED.input_ffp_age,
         input_ffp_annual_spending = EXCLUDED.input_ffp_annual_spending,
-        output_annual_saving = EXCLUDED.output_annual_saving
+        output_annual_saving = EXCLUDED.output_annual_saving,
+        output_required_wealth_at_ffp_age = EXCLUDED.output_required_wealth_at_ffp_age
     `,
     [
       scenarioId,
       lifeExpectancy,
       inputFfpAge,
       inputFfpAnnualSpending,
-      outputAnnualSaving,
+      requiredAnnualSaving,
+      requiredWealthAtFFPAge,
     ],
   );
 };
@@ -92,7 +96,10 @@ export const getScenario4Output = async (
   const res = await execQuery(
     client,
     `
-      SELECT s4.output_annual_saving AS "outputAnnualSaving"
+      SELECT
+        s4.output_annual_saving AS "requiredAnnualSaving",
+        s4.input_ffp_age AS "ffpAge",
+        s4.output_required_wealth_at_ffp_age AS "requiredWealthAtFFPAge"
       FROM scenario s
       JOIN scenario_4 s4 ON s4.scenario_id = s.id
       WHERE s.profile_id = $1 AND s.scenario_type_id = $2
@@ -104,6 +111,8 @@ export const getScenario4Output = async (
   if (!row) return null;
 
   return {
-    outputAnnualSaving: toNumberOrNull(row.outputAnnualSaving),
+    requiredAnnualSaving: toNumberOrNull(row.requiredAnnualSaving),
+    ffpAge: toNumberOrNull(row.ffpAge),
+    requiredWealthAtFFPAge: toNumberOrNull(row.requiredWealthAtFFPAge),
   };
 };

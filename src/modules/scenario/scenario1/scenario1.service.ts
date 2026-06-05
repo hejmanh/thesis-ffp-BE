@@ -57,13 +57,13 @@ const toLifeStages = (
     if (endAge == null) {
       throw badRequest('Only the last stage can have a null endingAge');
     }
-    if (endAge <= stage.beginningAge) {
+    if (!isLast && endAge <= stage.beginningAge) {
       throw badRequest('Stage endingAge must be greater than beginningAge');
     }
 
     if (index > 0) {
       const prevEndAge = sorted[index - 1]!.endingAge ?? fallbackEndAge;
-      if (prevEndAge !== stage.beginningAge) {
+      if (prevEndAge + 1 !== stage.beginningAge) {
         throw badRequest('Stages must be contiguous and non-overlapping');
       }
     }

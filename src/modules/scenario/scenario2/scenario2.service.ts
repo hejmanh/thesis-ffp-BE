@@ -59,7 +59,7 @@ const toLifeStages = (
 
     if (index > 0) {
       const prevEndAge = sorted[index - 1]!.endingAge ?? fallbackEndAge;
-      if (prevEndAge !== stage.beginningAge) {
+      if (prevEndAge + 1 !== stage.beginningAge) {
         throw badRequest('Stages must be contiguous and non-overlapping');
       }
     }

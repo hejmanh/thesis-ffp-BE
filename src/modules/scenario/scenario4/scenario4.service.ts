@@ -4,7 +4,6 @@ import {
   findProfileContextByUserId,
   getFinancialProfileDetails,
   listPortfolioAllocationDetails,
-  listStageDataDetails,
 } from '@/modules/registration/registration.repository.js';
 import {
   calculateCurrentAge,
@@ -12,7 +11,6 @@ import {
 } from '@/utils/ffp-model/lifeExpectancy.js';
 import { runScenario4 } from '@/utils/ffp-model/scenario.js';
 import { validateFFPAge } from '@/utils/ffp-model/validation.js';
-import type { LifeStage } from '@/types/ffp-model/financial.js';
 import type { Scenario4InputDto } from './dto/input.dto.js';
 import {
   getScenario4Input,
@@ -22,60 +20,6 @@ import {
 import { findScenarioTypeIdByNo } from '../scenario.repository.js';
 
 const SCENARIO_NO = 4;
-const OPEN_ENDED_STAGE_AGE = Number.MAX_SAFE_INTEGER;
-
-const toLifeStages = (
-  stageDetails: Awaited<ReturnType<typeof listStageDataDetails>>,
-): LifeStage[] => {
-  const normalized = stageDetails.map((stage) => {
-    if (stage.beginningAge == null) {
-      throw badRequest('Stage beginningAge is required');
-    }
-    if (stage.initialAnnualSavings == null) {
-      throw badRequest('Stage initialAnnualSavings is required');
-    }
-    if (stage.growthRate == null) {
-      throw badRequest('Stage growthRate is required');
-    }
-
-    return {
-      beginningAge: stage.beginningAge,
-      endingAge: stage.endingAge,
-      initialAnnualSavings: stage.initialAnnualSavings,
-      growthRate: stage.growthRate,
-    };
-  });
-
-  const sorted = [...normalized].sort(
-    (a, b) => a.beginningAge - b.beginningAge,
-  );
-
-  return sorted.map((stage, index) => {
-    const isLast = index === sorted.length - 1;
-    const endAge = stage.endingAge ?? (isLast ? OPEN_ENDED_STAGE_AGE : null);
-
-    if (endAge == null) {
-      throw badRequest('Only the last stage can have a null endingAge');
-    }
-    if (endAge <= stage.beginningAge) {
-      throw badRequest('Stage endingAge must be greater than beginningAge');
-    }
-
-    if (index > 0) {
-      const prevEndAge = sorted[index - 1]!.endingAge ?? OPEN_ENDED_STAGE_AGE;
-      if (prevEndAge !== stage.beginningAge) {
-        throw badRequest('Stages must be contiguous and non-overlapping');
-      }
-    }
-
-    return {
-      startAge: stage.beginningAge,
-      endAge,
-      initialAnnualSaving: stage.initialAnnualSavings,
-      growthRate: stage.growthRate,
-    };
-  });
-};
 
 const getScenarioContext = async (userId: number) => {
   const profile = await findProfileContextByUserId(userId);
@@ -107,13 +51,10 @@ const getScenarioContext = async (userId: number) => {
     throw badRequest('POST_FFP portfolio allocation is incomplete');
   }
 
-  const stages = await listStageDataDetails(profile.profileId);
-
   return {
     profileId: profile.profileId,
     currentSavings: financialProfile.currentSavings,
     currentAge: calculateCurrentAge(profile.birthYear),
-    stages,
     portfolio: {
       uPre: pre.u,
       uPost: post.u,
@@ -184,16 +125,13 @@ const upsertScenario4Input = async (
     throw badRequest('Retirement duration must be greater than 0');
   }
 
-  const stages = toLifeStages(context.stages);
-
   let result;
   try {
     result = runScenario4({
       currentSavings: context.currentSavings,
       currentAge: context.currentAge,
       ffpAge: payload.inputFfpAge,
-      stages,
-      annualSpending: payload.inputFfpAnnualSpending,
+      inputAnnualSpending: payload.inputFfpAnnualSpending,
       retirementDuration,
       u_pre: context.portfolio.uPre,
       u_post: context.portfolio.uPost,
@@ -217,6 +155,7 @@ const upsertScenario4Input = async (
       payload.inputFfpAge,
       payload.inputFfpAnnualSpending,
       result.requiredAnnualSaving,
+      result.requiredWealthAtFFPAge,
       client,
     );
   });
@@ -271,11 +210,14 @@ export const getScenario4OutputService = async (userId: number) => {
   if (!profile) throw notFound('Profile not found');
 
   const output = await getScenario4Output(profile.profileId, scenarioTypeId);
-  if (!output || output.outputAnnualSaving == null) {
+  if (
+    !output ||
+    output.requiredAnnualSaving == null ||
+    output.ffpAge == null ||
+    output.requiredWealthAtFFPAge == null
+  ) {
     throw notFound('Scenario 4 output not found');
   }
 
-  return {
-    outputAnnualSaving: output.outputAnnualSaving as number,
-  };
+  return output;
 };

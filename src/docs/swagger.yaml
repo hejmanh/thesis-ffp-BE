@@ -672,6 +672,7 @@ paths:
     get:
       tags: [Scenario 4]
       summary: Get scenario 4 input
+      description: Returns the saved Scenario 4 input, including life expectancy, target FFP age, and annual spending at FFP.
       security:
         - BearerAuth: []
       responses:
@@ -688,6 +689,7 @@ paths:
     post:
       tags: [Scenario 4]
       summary: Create scenario 4 input
+      description: Creates Scenario 4 input with life expectancy, target FFP age, and annual spending at FFP.
       security:
         - BearerAuth: []
       requestBody:
@@ -1717,10 +1719,14 @@ components:
       properties:
         lifeExpectancy:
           type: integer
+          example: 85
         inputFfpAge:
           type: integer
+          example: 60
         inputFfpAnnualSpending:
           type: number
+          description: Annual spending target at the FFP age.
+          example: 12000
     Scenario4InputResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponseBase'
@@ -1731,10 +1737,14 @@ components:
               properties:
                 lifeExpectancy:
                   type: integer
+                  example: 85
                 inputFfpAge:
                   type: integer
+                  example: 60
                 inputFfpAnnualSpending:
                   type: number
+                  description: Annual spending target at the FFP age.
+                  example: 12000
     Scenario4OutputResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponseBase'
@@ -1743,7 +1753,11 @@ components:
             data:
               type: object
               properties:
-                outputAnnualSaving:
+                requiredAnnualSaving:
+                  type: number
+                ffpAge:
+                  type: integer
+                requiredWealthAtFFPAge:
                   type: number
     CurrencyListResponse:
       allOf:

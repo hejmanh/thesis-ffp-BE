@@ -7,7 +7,9 @@ export type Scenario4InputData = {
 };
 
 export type Scenario4OutputData = {
-  outputAnnualSaving: number;
+  requiredAnnualSaving: number;
+  ffpAge: number;
+  requiredWealthAtFFPAge: number;
 };
 
 export type CreateScenario4InputResponseDto = ApiResponse<Scenario4InputData>;
