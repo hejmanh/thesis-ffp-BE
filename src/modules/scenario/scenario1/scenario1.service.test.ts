@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createScenario1Input } from './scenario1.service.js';
+import {
+  createScenario1Input,
+  getScenario1OutputService,
+} from './scenario1.service.js';
 import * as registrationRepository from '@/modules/registration/registration.repository.js';
 import * as scenario1Repository from './scenario1.repository.js';
 import { withTransaction } from '@/database/transaction.js';
@@ -27,12 +30,13 @@ vi.mock('../scenario.repository.js', () => ({
 }));
 
 const asMock = <T>(fn: T) => fn as unknown as ReturnType<typeof vi.fn>;
+const currentYear = new Date().getFullYear();
 
 const baseContextMocks = () => {
   asMock(registrationRepository.findProfileContextByUserId).mockResolvedValue({
     profileId: 10,
     profileUid: 'profile-uid',
-    birthYear: 2000,
+    birthYear: currentYear - 30,
     countryId: 1,
     sexTypeId: 1,
     hasFinancialProfile: true,
@@ -77,34 +81,69 @@ describe('Scenario1 Service', () => {
         stageNo: 1,
         title: 'Stage 1',
         beginningAge: 30,
-        endingAge: 31,
-        initialAnnualSavings: 0,
-        growthRate: 0,
-      },
-      {
-        lifeStageRangeId: 2,
-        stageNo: 2,
-        title: 'Stage 2',
-        beginningAge: 31,
         endingAge: null,
-        initialAnnualSavings: 0,
+        initialAnnualSavings: 100,
         growthRate: 0,
       },
     ]);
 
     await createScenario1Input(99, {
-      lifeExpectancy: 80,
-      inputFfpAge: 40,
-      inputFfpAnnualSpending: 0,
+      lifeExpectancy: 32,
+      inputFfpAge: 31,
+      inputFfpAnnualSpending: 100,
     });
 
     expect(scenario1Repository.upsertScenario1).toHaveBeenCalledWith(
       10,
       1,
-      80,
-      40,
-      0,
+      32,
+      31,
+      100,
       true,
+      expect.anything(),
+    );
+  });
+
+  it('persists an unachievable output when zero-return math misses the target', async () => {
+    baseContextMocks();
+
+    asMock(findScenarioTypeIdByNo).mockResolvedValue(1);
+    asMock(scenario1Repository.getScenario1Input).mockResolvedValue(null);
+
+    asMock(registrationRepository.getFinancialProfileDetails).mockResolvedValue(
+      {
+        currentSavings: 50,
+        desiredLifeExpectancy: null,
+        estimatedLifeExpectancy: null,
+        currencyCode: 'USD',
+      },
+    );
+
+    asMock(registrationRepository.listStageDataDetails).mockResolvedValue([
+      {
+        lifeStageRangeId: 1,
+        stageNo: 1,
+        title: 'Stage 1',
+        beginningAge: 30,
+        endingAge: null,
+        initialAnnualSavings: 50,
+        growthRate: 0,
+      },
+    ]);
+
+    await createScenario1Input(99, {
+      lifeExpectancy: 32,
+      inputFfpAge: 31,
+      inputFfpAnnualSpending: 120,
+    });
+
+    expect(scenario1Repository.upsertScenario1).toHaveBeenCalledWith(
+      10,
+      1,
+      32,
+      31,
+      120,
+      false,
       expect.anything(),
     );
   });
@@ -129,7 +168,7 @@ describe('Scenario1 Service', () => {
         lifeStageRangeId: 2,
         stageNo: 2,
         title: 'Stage 2',
-        beginningAge: 33,
+        beginningAge: 34,
         endingAge: null,
         initialAnnualSavings: 0,
         growthRate: 0,
@@ -143,5 +182,37 @@ describe('Scenario1 Service', () => {
         inputFfpAnnualSpending: 0,
       }),
     ).rejects.toThrow('Stages must be contiguous and non-overlapping');
+  });
+
+  it('returns the enriched output payload with required wealth and projection', async () => {
+    baseContextMocks();
+
+    asMock(findScenarioTypeIdByNo).mockResolvedValue(1);
+    asMock(scenario1Repository.getScenario1Input).mockResolvedValue({
+      lifeExpectancy: 32,
+      inputFfpAge: 31,
+      inputFfpAnnualSpending: 100,
+    });
+
+    asMock(registrationRepository.listStageDataDetails).mockResolvedValue([
+      {
+        lifeStageRangeId: 1,
+        stageNo: 1,
+        title: 'Stage 1',
+        beginningAge: 30,
+        endingAge: null,
+        initialAnnualSavings: 100,
+        growthRate: 0,
+      },
+    ]);
+
+    await expect(getScenario1OutputService(99)).resolves.toEqual({
+      outputIsAchievable: true,
+      requiredWealthAtFFPAge: 100,
+      wealthProjection: [
+        { age: 30, wealth: 0 },
+        { age: 31, wealth: 100 },
+      ],
+    });
   });
 });

@@ -4,11 +4,28 @@ import type {
 } from '@/types/ffp-model/financial.js';
 import { calculatePortfolioReturn } from './portfolio.js';
 import { calculateTotalPassiveIncome } from './passiveIncome.js';
+import { calculateSavingAtAge } from './savings.js';
 import {
   calculateAvailableSpending,
   calculateRequiredWealth,
 } from './retirement.js';
-import { calculateWealthBeforeFFP } from './wealth.js';
+import { calculateWealthAfterFFP, calculateWealthBeforeFFP } from './wealth.js';
+
+export type Scenario1WealthProjectionPoint = {
+  age: number;
+  wealth: number;
+};
+
+export type Scenario2WealthProjectionPoint = {
+  age: number;
+  wealth: number;
+  requiredWealth: number;
+};
+
+export type Scenario3RetirementCashflowPoint = {
+  age: number;
+  wealth: number;
+};
 
 export function canReachFFPGoal(
   wealthAtFFP: number,
@@ -178,6 +195,152 @@ export function runScenario3({
   };
 }
 
+export function buildScenario1WealthProjection({
+  currentSavings,
+  currentAge,
+  ffpAge,
+  stages,
+  u_pre,
+  mu_pre,
+  r_f_pre,
+}: {
+  currentSavings: number;
+  currentAge: number;
+  ffpAge: number;
+  stages: LifeStage[];
+  u_pre: number;
+  mu_pre: number;
+  r_f_pre: number;
+}): Scenario1WealthProjectionPoint[] {
+  const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu_pre, r_f_pre);
+  const projection: Scenario1WealthProjectionPoint[] = [
+    {
+      age: currentAge,
+      wealth: currentSavings,
+    },
+  ];
+
+  let wealth = currentSavings;
+
+  for (let age = currentAge; age < ffpAge; age++) {
+    wealth =
+      wealth * (1 + portfolioReturnPre) + calculateSavingAtAge(age, stages);
+
+    projection.push({
+      age: age + 1,
+      wealth,
+    });
+  }
+
+  return projection;
+}
+
+export function buildScenario2WealthProjection({
+  currentSavings,
+  currentAge,
+  lifeExpectancy,
+  outputFfpAge,
+  stages,
+  annualSpending,
+  u_pre,
+  u_post,
+  mu_pre,
+  r_f_pre,
+  mu_post,
+  r_f_post,
+}: {
+  currentSavings: number;
+  currentAge: number;
+  lifeExpectancy: number;
+  outputFfpAge: number | null;
+  stages: LifeStage[];
+  annualSpending: number;
+  u_pre: number;
+  u_post: number;
+  mu_pre: number;
+  r_f_pre: number;
+  mu_post: number;
+  r_f_post: number;
+}): Scenario2WealthProjectionPoint[] {
+  const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu_pre, r_f_pre);
+  const portfolioReturnPost = calculatePortfolioReturn(
+    u_post,
+    mu_post,
+    r_f_post,
+  );
+  const projectionEndAge = outputFfpAge ?? lifeExpectancy;
+  const projection: Scenario2WealthProjectionPoint[] = [];
+
+  for (let age = currentAge; age <= projectionEndAge; age++) {
+    projection.push({
+      age,
+      wealth: calculateWealthBeforeFFP(
+        currentSavings,
+        currentAge,
+        age,
+        stages,
+        portfolioReturnPre,
+      ),
+      requiredWealth: calculateRequiredWealth(
+        annualSpending,
+        portfolioReturnPost,
+        lifeExpectancy - age,
+      ),
+    });
+  }
+
+  return projection;
+}
+
+export function buildScenario3RetirementCashflow({
+  wealthAtFFP,
+  annualSpending,
+  lifeExpectancy,
+  ffpAge,
+  u_post,
+  mu,
+  r_f,
+  assets,
+}: {
+  wealthAtFFP: number;
+  annualSpending: number;
+  lifeExpectancy: number;
+  ffpAge: number;
+  u_post: number;
+  mu: number;
+  r_f: number;
+  assets: PassiveIncomeAsset[];
+}): Scenario3RetirementCashflowPoint[] {
+  const portfolioReturnPost = calculatePortfolioReturn(u_post, mu, r_f);
+  const cashflow: Scenario3RetirementCashflowPoint[] = [
+    {
+      age: ffpAge,
+      wealth: wealthAtFFP,
+    },
+  ];
+
+  let wealth = wealthAtFFP;
+
+  for (let age = ffpAge; age < lifeExpectancy; age++) {
+    const yearsAfterFFP = age - ffpAge;
+    const passiveIncome = calculateTotalPassiveIncome(assets, yearsAfterFFP);
+    wealth = calculateWealthAfterFFP(
+      wealth,
+      annualSpending,
+      passiveIncome,
+      portfolioReturnPost,
+      1,
+    );
+
+    cashflow.push({
+      age: age + 1,
+      wealth: Math.abs(wealth) < 1e-9 ? 0 : wealth,
+    });
+  }
+
+  return cashflow;
+}
+
 /**
  * Low-level binary search for terminal stage annual saving amount.
  * CRITICAL: Only affects terminal stage defined by terminalStageIndex.
@@ -205,12 +368,7 @@ export function calculateRequiredSaving({
   const precision = 0.01;
   const maxIterations = 200;
   let left = 0;
-  let right = 1_000_000_000;
-
-  for (let iteration = 0; iteration < maxIterations; iteration++) {
-    if (right - left <= precision) break;
-    const mid = (left + right) / 2;
-
+  const projectWealthAtSaving = (annualSaving: number) => {
     let wealth = currentSavings;
 
     for (let age = currentAge; age < ffpAge; age++) {
@@ -221,7 +379,7 @@ export function calculateRequiredSaving({
         const stage = stages[stageIndex]!;
         if (age >= stage.startAge && age < stage.endAge) {
           if (stageIndex === terminalStageIndex) {
-            savingAtAge = mid;
+            savingAtAge = annualSaving;
           } else {
             // Regular stage: apply growth formula
             const yearsIntoStage = age - stage.startAge;
@@ -236,6 +394,20 @@ export function calculateRequiredSaving({
       wealth = wealth * (1 + portfolioReturn) + savingAtAge;
     }
 
+    return wealth;
+  };
+  let right = findSavingSearchUpperBound({
+    targetWealth,
+    epsilon: precision,
+    projectWealthAtSaving,
+    errorMessage: 'Required saving could not be bracketed for binary search',
+  });
+
+  for (let iteration = 0; iteration < maxIterations; iteration++) {
+    if (right - left <= precision) break;
+    const mid = (left + right) / 2;
+    const wealth = projectWealthAtSaving(mid);
+
     if (wealth >= targetWealth) {
       right = mid;
     } else {
@@ -246,41 +418,176 @@ export function calculateRequiredSaving({
   return right;
 }
 
-/**
- * High-level Scenario 4 wrapper that handles:
- * - Stage extension logic
- * - Terminal stage creation
- * - Constraint validation
- * - Calls low-level binary search solver
- */
-export function runScenario4({
+const SCENARIO4_MIN_SAVING = 0;
+const SCENARIO4_EPSILON = 0.000001;
+const SCENARIO4_MAX_ITERATIONS = 200;
+const SAVING_SEARCH_INITIAL_UPPER_BOUND = 1_000;
+const SAVING_SEARCH_MAX_EXPANSIONS = 200;
+
+function findSavingSearchUpperBound({
+  targetWealth,
+  epsilon,
+  projectWealthAtSaving,
+  errorMessage,
+}: {
+  targetWealth: number;
+  epsilon: number;
+  projectWealthAtSaving: (annualSaving: number) => number;
+  errorMessage: string;
+}): number {
+  const wealthAtZeroSaving = projectWealthAtSaving(0);
+
+  if (wealthAtZeroSaving + epsilon >= targetWealth) {
+    return 0;
+  }
+
+  let right = SAVING_SEARCH_INITIAL_UPPER_BOUND;
+
+  for (
+    let expansion = 0;
+    expansion < SAVING_SEARCH_MAX_EXPANSIONS;
+    expansion++
+  ) {
+    const projectedWealth = projectWealthAtSaving(right);
+
+    if (projectedWealth + epsilon >= targetWealth) {
+      return right;
+    }
+
+    if (!Number.isFinite(projectedWealth)) {
+      break;
+    }
+
+    right *= 2;
+  }
+
+  throw new Error(errorMessage);
+}
+
+export function projectWealthBeforeFFPWithConstantSaving({
   currentSavings,
   currentAge,
   ffpAge,
-  stages,
-  annualSpending,
-  retirementDuration,
-  u_pre,
-  u_post,
-  mu,
-  r_f,
+  portfolioReturn,
+  annualSaving,
 }: {
   currentSavings: number;
   currentAge: number;
   ffpAge: number;
-  stages: LifeStage[];
-  annualSpending: number;
+  portfolioReturn: number;
+  annualSaving: number;
+}): number {
+  let wealth = currentSavings;
+
+  for (let age = currentAge; age < ffpAge; age++) {
+    wealth = wealth * (1 + portfolioReturn) + annualSaving;
+  }
+
+  return wealth;
+}
+
+export function calculateScenario4RequiredWealthAtFFP({
+  inputAnnualSpending,
+  portfolioReturnPost,
+  retirementDuration,
+}: {
+  inputAnnualSpending: number;
+  portfolioReturnPost: number;
+  retirementDuration: number;
+}): number {
+  return calculateRequiredWealth(
+    inputAnnualSpending,
+    portfolioReturnPost,
+    retirementDuration,
+  );
+}
+
+export function solveScenario4RequiredAnnualSaving({
+  targetWealth,
+  currentSavings,
+  currentAge,
+  ffpAge,
+  portfolioReturnPre,
+}: {
+  targetWealth: number;
+  currentSavings: number;
+  currentAge: number;
+  ffpAge: number;
+  portfolioReturnPre: number;
+}): number {
+  let minSaving = SCENARIO4_MIN_SAVING;
+  let maxSaving = findSavingSearchUpperBound({
+    targetWealth,
+    epsilon: SCENARIO4_EPSILON,
+    projectWealthAtSaving: (annualSaving) =>
+      projectWealthBeforeFFPWithConstantSaving({
+        currentSavings,
+        currentAge,
+        ffpAge,
+        portfolioReturn: portfolioReturnPre,
+        annualSaving,
+      }),
+    errorMessage:
+      'Required annual saving could not be bracketed for binary search',
+  });
+
+  for (let iteration = 0; iteration < SCENARIO4_MAX_ITERATIONS; iteration++) {
+    const candidateSaving = (minSaving + maxSaving) / 2;
+    const projectedWealth = projectWealthBeforeFFPWithConstantSaving({
+      currentSavings,
+      currentAge,
+      ffpAge,
+      portfolioReturn: portfolioReturnPre,
+      annualSaving: candidateSaving,
+    });
+
+    if (Math.abs(projectedWealth - targetWealth) < SCENARIO4_EPSILON) {
+      return candidateSaving;
+    }
+
+    if (projectedWealth < targetWealth) {
+      minSaving = candidateSaving;
+    } else {
+      maxSaving = candidateSaving;
+    }
+
+    if (maxSaving - minSaving < SCENARIO4_EPSILON) {
+      break;
+    }
+  }
+
+  return (minSaving + maxSaving) / 2;
+}
+
+export function runScenario4({
+  currentSavings,
+  currentAge,
+  ffpAge,
+  inputAnnualSpending,
+  retirementDuration,
+  u_pre,
+  u_post,
+  mu_pre,
+  r_f_pre,
+  mu_post,
+  r_f_post,
+}: {
+  currentSavings: number;
+  currentAge: number;
+  ffpAge: number;
+  inputAnnualSpending: number;
   retirementDuration: number;
   u_pre: number;
   u_post: number;
-  mu: number;
-  r_f: number;
+  mu_pre: number;
+  r_f_pre: number;
+  mu_post: number;
+  r_f_post: number;
 }): {
   requiredAnnualSaving: number;
-  stages: LifeStage[];
-  isTerminalStageAdded: boolean;
+  ffpAge: number;
+  requiredWealthAtFFPAge: number;
 } {
-  // Validate input constraints
   if (ffpAge < currentAge || ffpAge > currentAge + 100) {
     throw new Error(
       'Invalid ffpAge: must be between currentAge and currentAge + 100',
@@ -295,73 +602,33 @@ export function runScenario4({
   if (retirementDuration <= 0) {
     throw new Error('retirementDuration must be > 0');
   }
-  if (annualSpending < 0) {
-    throw new Error('annualSpending must be >= 0');
+  if (inputAnnualSpending < 0) {
+    throw new Error('inputAnnualSpending must be >= 0');
   }
 
-  // Calculate required wealth at FFP using post-FFP portfolio
-  const portfolioReturnPost = calculatePortfolioReturn(u_post, mu, r_f);
-
-  const requiredWealth = calculateRequiredWealth(
-    annualSpending,
+  const portfolioReturnPost = calculatePortfolioReturn(
+    u_post,
+    mu_post,
+    r_f_post,
+  );
+  const requiredWealthAtFFPAge = calculateScenario4RequiredWealthAtFFP({
+    inputAnnualSpending,
     portfolioReturnPost,
     retirementDuration,
-  );
+  });
 
-  // Portfolio return for pre-FFP wealth accumulation
-  const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu, r_f);
-
-  // Handle stage extension: determine terminal stage
-  let workingStages = [...stages];
-  let isTerminalStageAdded = false;
-
-  if (stages.length === 0) {
-    // Case 2: No stages provided → create single terminal stage
-    workingStages = [
-      {
-        startAge: currentAge,
-        endAge: ffpAge,
-        initialAnnualSaving: 0, // Terminal stage placeholder solved by binary search
-        growthRate: 0,
-      },
-    ];
-    isTerminalStageAdded = true;
-  } else {
-    const lastStage = stages[stages.length - 1]!;
-
-    if (lastStage.endAge < ffpAge) {
-      // Case 1: Add terminal stage between last existing stage and ffpAge
-      workingStages.push({
-        startAge: lastStage.endAge,
-        endAge: ffpAge,
-        initialAnnualSaving: 0, // Terminal stage placeholder solved by binary search
-        growthRate: 0,
-      });
-      isTerminalStageAdded = true;
-    } else if (lastStage.endAge >= ffpAge) {
-      // Case 3: Stages already cover up to or past ffpAge → cannot solve
-      throw new Error(
-        'Stages already cover up to or past ffpAge. ' +
-          'Please select other scenarios, adjust ffpAge, or reduce endAge of stages.',
-      );
-    }
-  }
-
-  // Binary search for required terminal stage saving
-  // CRITICAL: passes workingStages so only terminal stage is unknown
-  const requiredAnnualSaving = calculateRequiredSaving({
-    targetWealth: requiredWealth,
+  const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu_pre, r_f_pre);
+  const requiredAnnualSaving = solveScenario4RequiredAnnualSaving({
+    targetWealth: requiredWealthAtFFPAge,
     currentSavings,
     currentAge,
     ffpAge,
-    portfolioReturn: portfolioReturnPre,
-    stages: workingStages,
-    terminalStageIndex: workingStages.length - 1,
+    portfolioReturnPre,
   });
 
   return {
     requiredAnnualSaving,
-    stages: workingStages,
-    isTerminalStageAdded,
+    ffpAge,
+    requiredWealthAtFFPAge,
   };
 }

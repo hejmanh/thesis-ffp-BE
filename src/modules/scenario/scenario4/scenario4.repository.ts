@@ -2,19 +2,20 @@ import { pool } from '@/database/index.js';
 import { execQuery, type QueryClient } from '@/database/query.js';
 import {
   findScenarioIdByProfile,
-  findScenarioTypeIdByNo,
   insertScenario,
 } from '../scenario.repository.js';
 
 const toNumberOrNull = (value: unknown) =>
   value == null ? null : Number(value);
 
-export const upsertScenario2 = async (
+export const upsertScenario4 = async (
   profileId: number,
   scenarioTypeId: number,
   lifeExpectancy: number,
+  inputFfpAge: number,
   inputFfpAnnualSpending: number,
-  outputFfpAge: number | null,
+  requiredAnnualSaving: number,
+  requiredWealthAtFFPAge: number,
   client: QueryClient = pool,
 ) => {
   let scenarioId = await findScenarioIdByProfile(
@@ -30,24 +31,35 @@ export const upsertScenario2 = async (
   await execQuery(
     client,
     `
-      INSERT INTO scenario_2 (
+      INSERT INTO scenario_4 (
         scenario_id,
         input_life_expectancy,
+        input_ffp_age,
         input_ffp_annual_spending,
-        output_ffp_age
+        output_annual_saving,
+        output_required_wealth_at_ffp_age
       )
-      VALUES ($1, $2, $3, $4)
+      VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (scenario_id)
       DO UPDATE SET
         input_life_expectancy = EXCLUDED.input_life_expectancy,
+        input_ffp_age = EXCLUDED.input_ffp_age,
         input_ffp_annual_spending = EXCLUDED.input_ffp_annual_spending,
-        output_ffp_age = EXCLUDED.output_ffp_age
+        output_annual_saving = EXCLUDED.output_annual_saving,
+        output_required_wealth_at_ffp_age = EXCLUDED.output_required_wealth_at_ffp_age
     `,
-    [scenarioId, lifeExpectancy, inputFfpAnnualSpending, outputFfpAge],
+    [
+      scenarioId,
+      lifeExpectancy,
+      inputFfpAge,
+      inputFfpAnnualSpending,
+      requiredAnnualSaving,
+      requiredWealthAtFFPAge,
+    ],
   );
 };
 
-export const getScenario2Input = async (
+export const getScenario4Input = async (
   profileId: number,
   scenarioTypeId: number,
   client: QueryClient = pool,
@@ -56,10 +68,11 @@ export const getScenario2Input = async (
     client,
     `
       SELECT
-        s2.input_life_expectancy AS "lifeExpectancy",
-        s2.input_ffp_annual_spending AS "inputFfpAnnualSpending"
+        s4.input_life_expectancy AS "lifeExpectancy",
+        s4.input_ffp_age AS "inputFfpAge",
+        s4.input_ffp_annual_spending AS "inputFfpAnnualSpending"
       FROM scenario s
-      JOIN scenario_2 s2 ON s2.scenario_id = s.id
+      JOIN scenario_4 s4 ON s4.scenario_id = s.id
       WHERE s.profile_id = $1 AND s.scenario_type_id = $2
     `,
     [profileId, scenarioTypeId],
@@ -70,11 +83,12 @@ export const getScenario2Input = async (
 
   return {
     lifeExpectancy: toNumberOrNull(row.lifeExpectancy),
+    inputFfpAge: toNumberOrNull(row.inputFfpAge),
     inputFfpAnnualSpending: toNumberOrNull(row.inputFfpAnnualSpending),
   };
 };
 
-export const getScenario2Output = async (
+export const getScenario4Output = async (
   profileId: number,
   scenarioTypeId: number,
   client: QueryClient = pool,
@@ -83,11 +97,11 @@ export const getScenario2Output = async (
     client,
     `
       SELECT
-        s2.input_life_expectancy AS "lifeExpectancy",
-        s2.input_ffp_annual_spending AS "inputFfpAnnualSpending",
-        s2.output_ffp_age AS "outputFfpAge"
+        s4.output_annual_saving AS "requiredAnnualSaving",
+        s4.input_ffp_age AS "ffpAge",
+        s4.output_required_wealth_at_ffp_age AS "requiredWealthAtFFPAge"
       FROM scenario s
-      JOIN scenario_2 s2 ON s2.scenario_id = s.id
+      JOIN scenario_4 s4 ON s4.scenario_id = s.id
       WHERE s.profile_id = $1 AND s.scenario_type_id = $2
     `,
     [profileId, scenarioTypeId],
@@ -97,8 +111,8 @@ export const getScenario2Output = async (
   if (!row) return null;
 
   return {
-    lifeExpectancy: toNumberOrNull(row.lifeExpectancy),
-    inputFfpAnnualSpending: toNumberOrNull(row.inputFfpAnnualSpending),
-    outputFfpAge: toNumberOrNull(row.outputFfpAge),
+    requiredAnnualSaving: toNumberOrNull(row.requiredAnnualSaving),
+    ffpAge: toNumberOrNull(row.ffpAge),
+    requiredWealthAtFFPAge: toNumberOrNull(row.requiredWealthAtFFPAge),
   };
 };

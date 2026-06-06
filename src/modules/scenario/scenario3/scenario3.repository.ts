@@ -2,19 +2,18 @@ import { pool } from '@/database/index.js';
 import { execQuery, type QueryClient } from '@/database/query.js';
 import {
   findScenarioIdByProfile,
-  findScenarioTypeIdByNo,
   insertScenario,
 } from '../scenario.repository.js';
 
 const toNumberOrNull = (value: unknown) =>
   value == null ? null : Number(value);
 
-export const upsertScenario2 = async (
+export const upsertScenario3 = async (
   profileId: number,
   scenarioTypeId: number,
   lifeExpectancy: number,
-  inputFfpAnnualSpending: number,
-  outputFfpAge: number | null,
+  inputFfpAge: number,
+  outputFfpAnnualSpending: number,
   client: QueryClient = pool,
 ) => {
   let scenarioId = await findScenarioIdByProfile(
@@ -30,24 +29,24 @@ export const upsertScenario2 = async (
   await execQuery(
     client,
     `
-      INSERT INTO scenario_2 (
+      INSERT INTO scenario_3 (
         scenario_id,
         input_life_expectancy,
-        input_ffp_annual_spending,
-        output_ffp_age
+        input_ffp_age,
+        output_ffp_annual_spending
       )
       VALUES ($1, $2, $3, $4)
       ON CONFLICT (scenario_id)
       DO UPDATE SET
         input_life_expectancy = EXCLUDED.input_life_expectancy,
-        input_ffp_annual_spending = EXCLUDED.input_ffp_annual_spending,
-        output_ffp_age = EXCLUDED.output_ffp_age
+        input_ffp_age = EXCLUDED.input_ffp_age,
+        output_ffp_annual_spending = EXCLUDED.output_ffp_annual_spending
     `,
-    [scenarioId, lifeExpectancy, inputFfpAnnualSpending, outputFfpAge],
+    [scenarioId, lifeExpectancy, inputFfpAge, outputFfpAnnualSpending],
   );
 };
 
-export const getScenario2Input = async (
+export const getScenario3Input = async (
   profileId: number,
   scenarioTypeId: number,
   client: QueryClient = pool,
@@ -56,10 +55,10 @@ export const getScenario2Input = async (
     client,
     `
       SELECT
-        s2.input_life_expectancy AS "lifeExpectancy",
-        s2.input_ffp_annual_spending AS "inputFfpAnnualSpending"
+        s3.input_life_expectancy AS "lifeExpectancy",
+        s3.input_ffp_age AS "inputFfpAge"
       FROM scenario s
-      JOIN scenario_2 s2 ON s2.scenario_id = s.id
+      JOIN scenario_3 s3 ON s3.scenario_id = s.id
       WHERE s.profile_id = $1 AND s.scenario_type_id = $2
     `,
     [profileId, scenarioTypeId],
@@ -70,11 +69,11 @@ export const getScenario2Input = async (
 
   return {
     lifeExpectancy: toNumberOrNull(row.lifeExpectancy),
-    inputFfpAnnualSpending: toNumberOrNull(row.inputFfpAnnualSpending),
+    inputFfpAge: toNumberOrNull(row.inputFfpAge),
   };
 };
 
-export const getScenario2Output = async (
+export const getScenario3Output = async (
   profileId: number,
   scenarioTypeId: number,
   client: QueryClient = pool,
@@ -83,11 +82,11 @@ export const getScenario2Output = async (
     client,
     `
       SELECT
-        s2.input_life_expectancy AS "lifeExpectancy",
-        s2.input_ffp_annual_spending AS "inputFfpAnnualSpending",
-        s2.output_ffp_age AS "outputFfpAge"
+        s3.input_life_expectancy AS "lifeExpectancy",
+        s3.input_ffp_age AS "inputFfpAge",
+        s3.output_ffp_annual_spending AS "outputFfpAnnualSpending"
       FROM scenario s
-      JOIN scenario_2 s2 ON s2.scenario_id = s.id
+      JOIN scenario_3 s3 ON s3.scenario_id = s.id
       WHERE s.profile_id = $1 AND s.scenario_type_id = $2
     `,
     [profileId, scenarioTypeId],
@@ -98,7 +97,7 @@ export const getScenario2Output = async (
 
   return {
     lifeExpectancy: toNumberOrNull(row.lifeExpectancy),
-    inputFfpAnnualSpending: toNumberOrNull(row.inputFfpAnnualSpending),
-    outputFfpAge: toNumberOrNull(row.outputFfpAge),
+    inputFfpAge: toNumberOrNull(row.inputFfpAge),
+    outputFfpAnnualSpending: toNumberOrNull(row.outputFfpAnnualSpending),
   };
 };

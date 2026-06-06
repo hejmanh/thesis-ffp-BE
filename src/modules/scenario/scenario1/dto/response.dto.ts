@@ -6,8 +6,15 @@ export type Scenario1InputData = {
   inputFfpAnnualSpending: number;
 };
 
+export type Scenario1WealthProjectionPoint = {
+  age: number;
+  wealth: number;
+};
+
 export type Scenario1OutputData = {
   outputIsAchievable: boolean;
+  requiredWealthAtFFPAge: number;
+  wealthProjection: Scenario1WealthProjectionPoint[];
 };
 
 export type CreateScenario1InputResponseDto = ApiResponse<Scenario1InputData>;
