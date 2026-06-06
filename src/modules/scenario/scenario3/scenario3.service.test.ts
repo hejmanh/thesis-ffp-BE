@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createScenario3Input } from './scenario3.service.js';
+import {
+  createScenario3Input,
+  getScenario3OutputService,
+} from './scenario3.service.js';
 import * as registrationRepository from '@/modules/registration/registration.repository.js';
 import * as scenario3Repository from './scenario3.repository.js';
 import { withTransaction } from '@/database/transaction.js';
@@ -105,5 +108,46 @@ describe('Scenario3 Service', () => {
       .calls[0]?.[4];
 
     expect(persistedSpending).toBe(expectedSpending);
+  });
+
+  it('returns the enriched output payload with monthly spending and cashflow', async () => {
+    baseContextMocks();
+
+    asMock(findScenarioTypeIdByNo).mockResolvedValue(3);
+    asMock(scenario3Repository.getScenario3Output).mockResolvedValue({
+      lifeExpectancy: currentAge + 3,
+      inputFfpAge: currentAge + 1,
+      outputFfpAnnualSpending: 60,
+    });
+    asMock(registrationRepository.getFinancialProfileDetails).mockResolvedValue(
+      {
+        currentSavings: 120,
+        desiredLifeExpectancy: null,
+        estimatedLifeExpectancy: null,
+        currencyCode: 'USD',
+      },
+    );
+    asMock(registrationRepository.listStageDataDetails).mockResolvedValue([
+      {
+        lifeStageRangeId: 1,
+        stageNo: 1,
+        title: 'Stage 1',
+        beginningAge: currentAge,
+        endingAge: null,
+        initialAnnualSavings: 0,
+        growthRate: 0,
+      },
+    ]);
+    asMock(registrationRepository.listAssetDataDetails).mockResolvedValue([]);
+
+    await expect(getScenario3OutputService(99)).resolves.toEqual({
+      outputFfpAnnualSpending: 60,
+      outputFfpMonthlySpending: 5,
+      retirementCashflow: [
+        { age: currentAge + 1, wealth: 120 },
+        { age: currentAge + 2, wealth: 60 },
+        { age: currentAge + 3, wealth: 0 },
+      ],
+    });
   });
 });

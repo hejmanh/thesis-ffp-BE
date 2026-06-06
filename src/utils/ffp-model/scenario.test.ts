@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import type { LifeStage } from '../../types/ffp-model/financial.js';
 import {
+  buildScenario1WealthProjection,
+  buildScenario2WealthProjection,
+  buildScenario3RetirementCashflow,
   calculateScenario4RequiredWealthAtFFP,
   calculateRequiredSaving,
   estimateFFPAge,
@@ -177,6 +180,85 @@ describe('runScenario3', () => {
     });
 
     expect(result.availableSpending).toBe(10);
+  });
+});
+
+describe('buildScenario1WealthProjection', () => {
+  it('returns yearly wealth points from current age through FFP age', () => {
+    const projection = buildScenario1WealthProjection({
+      currentSavings: 100,
+      currentAge: 30,
+      ffpAge: 32,
+      stages: [
+        {
+          startAge: 30,
+          endAge: 32,
+          initialAnnualSaving: 50,
+          growthRate: 0,
+        },
+      ],
+      u_pre: 0,
+      mu_pre: 0,
+      r_f_pre: 0,
+    });
+
+    expect(projection).toEqual([
+      { age: 30, wealth: 100 },
+      { age: 31, wealth: 150 },
+      { age: 32, wealth: 200 },
+    ]);
+  });
+});
+
+describe('buildScenario2WealthProjection', () => {
+  it('returns yearly wealth and required wealth points until the goal age', () => {
+    const projection = buildScenario2WealthProjection({
+      currentSavings: 100,
+      currentAge: 30,
+      lifeExpectancy: 32,
+      outputFfpAge: 31,
+      stages: [
+        {
+          startAge: 30,
+          endAge: 32,
+          initialAnnualSaving: 50,
+          growthRate: 0,
+        },
+      ],
+      annualSpending: 80,
+      u_pre: 0,
+      u_post: 0,
+      mu_pre: 0,
+      r_f_pre: 0,
+      mu_post: 0,
+      r_f_post: 0,
+    });
+
+    expect(projection).toEqual([
+      { age: 30, wealth: 100, requiredWealth: 160 },
+      { age: 31, wealth: 150, requiredWealth: 80 },
+    ]);
+  });
+});
+
+describe('buildScenario3RetirementCashflow', () => {
+  it('returns yearly retirement wealth points using the scenario 3 spending model', () => {
+    const cashflow = buildScenario3RetirementCashflow({
+      wealthAtFFP: 100,
+      annualSpending: 10,
+      lifeExpectancy: 32,
+      ffpAge: 30,
+      u_post: 0,
+      mu: 0,
+      r_f: 0,
+      assets: [],
+    });
+
+    expect(cashflow).toEqual([
+      { age: 30, wealth: 100 },
+      { age: 31, wealth: 90 },
+      { age: 32, wealth: 80 },
+    ]);
   });
 });
 

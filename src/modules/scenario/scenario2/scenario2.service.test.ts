@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createScenario2Input } from './scenario2.service.js';
+import {
+  createScenario2Input,
+  getScenario2OutputService,
+} from './scenario2.service.js';
 import * as registrationRepository from '@/modules/registration/registration.repository.js';
 import * as scenario2Repository from './scenario2.repository.js';
 import { withTransaction } from '@/database/transaction.js';
@@ -183,5 +186,43 @@ describe('Scenario2 Service', () => {
         inputFfpAnnualSpending: 0,
       }),
     ).rejects.toThrow('Stages must be contiguous and non-overlapping');
+  });
+
+  it('returns the enriched output payload with a wealth projection', async () => {
+    baseContextMocks();
+
+    asMock(findScenarioTypeIdByNo).mockResolvedValue(2);
+    asMock(scenario2Repository.getScenario2Output).mockResolvedValue({
+      lifeExpectancy: 32,
+      inputFfpAnnualSpending: 80,
+      outputFfpAge: 31,
+    });
+    asMock(registrationRepository.getFinancialProfileDetails).mockResolvedValue(
+      {
+        currentSavings: 100,
+        desiredLifeExpectancy: null,
+        estimatedLifeExpectancy: null,
+        currencyCode: 'USD',
+      },
+    );
+    asMock(registrationRepository.listStageDataDetails).mockResolvedValue([
+      {
+        lifeStageRangeId: 1,
+        stageNo: 1,
+        title: 'Stage 1',
+        beginningAge: 30,
+        endingAge: null,
+        initialAnnualSavings: 50,
+        growthRate: 0,
+      },
+    ]);
+
+    await expect(getScenario2OutputService(99)).resolves.toEqual({
+      outputFfpAge: 31,
+      wealthProjection: [
+        { age: 30, wealth: 100, requiredWealth: 160 },
+        { age: 31, wealth: 150, requiredWealth: 80 },
+      ],
+    });
   });
 });

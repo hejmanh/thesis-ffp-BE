@@ -7,7 +7,10 @@ import {
   listStageDataDetails,
 } from '@/modules/registration/registration.repository.js';
 import { calculateCurrentAge } from '@/utils/ffp-model/lifeExpectancy.js';
-import { estimateFFPAge } from '@/utils/ffp-model/scenario.js';
+import {
+  buildScenario2WealthProjection,
+  estimateFFPAge,
+} from '@/utils/ffp-model/scenario.js';
 import type { LifeStage } from '@/types/ffp-model/financial.js';
 import type { Scenario2InputDto } from './dto/input.dto.js';
 import {
@@ -237,7 +240,50 @@ export const getScenario2OutputService = async (userId: number) => {
   if (!profile) throw notFound('Profile not found');
 
   const output = await getScenario2Output(profile.profileId, scenarioTypeId);
-  if (!output) throw notFound('Scenario 2 output not found');
+  if (
+    !output ||
+    output.lifeExpectancy == null ||
+    output.inputFfpAnnualSpending == null
+  ) {
+    throw notFound('Scenario 2 output not found');
+  }
 
-  return output;
+  const context = await getScenarioContext(userId);
+
+  if (output.lifeExpectancy <= context.currentAge) {
+    throw badRequest('lifeExpectancy must be greater than current age');
+  }
+
+  const stages = toLifeStages(context.stages, output.lifeExpectancy);
+  const outputFfpAge = estimateFFPAge({
+    currentSavings: context.currentSavings,
+    currentAge: context.currentAge,
+    lifeExpectancy: output.lifeExpectancy,
+    stages,
+    annualSpending: output.inputFfpAnnualSpending,
+    u_pre: context.portfolio.uPre,
+    u_post: context.portfolio.uPost,
+    mu_pre: context.portfolio.muPre,
+    r_f_pre: context.portfolio.rFPre,
+    mu_post: context.portfolio.muPost,
+    r_f_post: context.portfolio.rFPost,
+  });
+
+  return {
+    outputFfpAge,
+    wealthProjection: buildScenario2WealthProjection({
+      currentSavings: context.currentSavings,
+      currentAge: context.currentAge,
+      lifeExpectancy: output.lifeExpectancy,
+      outputFfpAge,
+      stages,
+      annualSpending: output.inputFfpAnnualSpending,
+      u_pre: context.portfolio.uPre,
+      u_post: context.portfolio.uPost,
+      mu_pre: context.portfolio.muPre,
+      r_f_pre: context.portfolio.rFPre,
+      mu_post: context.portfolio.muPost,
+      r_f_post: context.portfolio.rFPost,
+    }),
+  };
 };

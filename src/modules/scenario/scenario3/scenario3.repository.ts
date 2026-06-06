@@ -81,7 +81,10 @@ export const getScenario3Output = async (
   const res = await execQuery(
     client,
     `
-      SELECT s3.output_ffp_annual_spending AS "outputFfpAnnualSpending"
+      SELECT
+        s3.input_life_expectancy AS "lifeExpectancy",
+        s3.input_ffp_age AS "inputFfpAge",
+        s3.output_ffp_annual_spending AS "outputFfpAnnualSpending"
       FROM scenario s
       JOIN scenario_3 s3 ON s3.scenario_id = s.id
       WHERE s.profile_id = $1 AND s.scenario_type_id = $2
@@ -93,6 +96,8 @@ export const getScenario3Output = async (
   if (!row) return null;
 
   return {
+    lifeExpectancy: toNumberOrNull(row.lifeExpectancy),
+    inputFfpAge: toNumberOrNull(row.inputFfpAge),
     outputFfpAnnualSpending: toNumberOrNull(row.outputFfpAnnualSpending),
   };
 };

@@ -1652,6 +1652,17 @@ components:
               properties:
                 outputIsAchievable:
                   type: boolean
+                requiredWealthAtFFPAge:
+                  type: number
+                wealthProjection:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      age:
+                        type: integer
+                      wealth:
+                        type: number
     Scenario2InputRequest:
       type: object
       required: [lifeExpectancy, inputFfpAnnualSpending]
@@ -1683,6 +1694,17 @@ components:
                 outputFfpAge:
                   type: integer
                   nullable: true
+                wealthProjection:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      age:
+                        type: integer
+                      wealth:
+                        type: number
+                      requiredWealth:
+                        type: number
     Scenario3InputRequest:
       type: object
       required: [lifeExpectancy, inputFfpAge]
@@ -1713,6 +1735,17 @@ components:
               properties:
                 outputFfpAnnualSpending:
                   type: number
+                outputFfpMonthlySpending:
+                  type: number
+                retirementCashflow:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      age:
+                        type: integer
+                      wealth:
+                        type: number
     Scenario4InputRequest:
       type: object
       required: [lifeExpectancy, inputFfpAge, inputFfpAnnualSpending]

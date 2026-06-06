@@ -82,7 +82,10 @@ export const getScenario2Output = async (
   const res = await execQuery(
     client,
     `
-      SELECT s2.output_ffp_age AS "outputFfpAge"
+      SELECT
+        s2.input_life_expectancy AS "lifeExpectancy",
+        s2.input_ffp_annual_spending AS "inputFfpAnnualSpending",
+        s2.output_ffp_age AS "outputFfpAge"
       FROM scenario s
       JOIN scenario_2 s2 ON s2.scenario_id = s.id
       WHERE s.profile_id = $1 AND s.scenario_type_id = $2
@@ -94,6 +97,8 @@ export const getScenario2Output = async (
   if (!row) return null;
 
   return {
+    lifeExpectancy: toNumberOrNull(row.lifeExpectancy),
+    inputFfpAnnualSpending: toNumberOrNull(row.inputFfpAnnualSpending),
     outputFfpAge: toNumberOrNull(row.outputFfpAge),
   };
 };

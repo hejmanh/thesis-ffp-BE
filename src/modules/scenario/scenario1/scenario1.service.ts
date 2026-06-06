@@ -10,15 +10,14 @@ import {
   calculateCurrentAge,
   calculateRetirementDuration,
 } from '@/utils/ffp-model/lifeExpectancy.js';
-import { runScenario1 } from '@/utils/ffp-model/scenario.js';
+import {
+  buildScenario1WealthProjection,
+  runScenario1,
+} from '@/utils/ffp-model/scenario.js';
 import { validateFFPAge } from '@/utils/ffp-model/validation.js';
 import type { LifeStage } from '@/types/ffp-model/financial.js';
 import type { Scenario1InputDto } from './dto/input.dto.js';
-import {
-  getScenario1Input,
-  getScenario1Output,
-  upsertScenario1,
-} from './scenario1.repository.js';
+import { getScenario1Input, upsertScenario1 } from './scenario1.repository.js';
 import { findScenarioTypeIdByNo } from '../scenario.repository.js';
 
 const SCENARIO_NO = 1;
@@ -262,11 +261,59 @@ export const getScenario1OutputService = async (userId: number) => {
   const scenarioTypeId = await findScenarioTypeIdByNo(SCENARIO_NO);
   if (!scenarioTypeId) throw notFound('Scenario type not found');
 
-  const profile = await findProfileContextByUserId(userId);
-  if (!profile) throw notFound('Profile not found');
+  const input = await getScenario1InputByUser(userId, scenarioTypeId);
+  if (!input) throw notFound('Scenario 1 output not found');
 
-  const output = await getScenario1Output(profile.profileId, scenarioTypeId);
-  if (!output) throw notFound('Scenario 1 output not found');
+  const context = await getScenarioContext(userId);
 
-  return output;
+  if (input.lifeExpectancy <= context.currentAge) {
+    throw badRequest('lifeExpectancy must be greater than current age');
+  }
+
+  if (
+    !validateFFPAge(context.currentAge, input.inputFfpAge, input.lifeExpectancy)
+  ) {
+    throw badRequest(
+      'inputFfpAge must be within current age and life expectancy',
+    );
+  }
+
+  const retirementDuration = calculateRetirementDuration(
+    input.lifeExpectancy,
+    input.inputFfpAge,
+  );
+
+  if (retirementDuration <= 0) {
+    throw badRequest('Retirement duration must be greater than 0');
+  }
+
+  const stages = toLifeStages(context.stages, input.inputFfpAge);
+  const result = runScenario1({
+    currentSavings: context.currentSavings,
+    currentAge: context.currentAge,
+    ffpAge: input.inputFfpAge,
+    stages,
+    annualSpending: input.inputFfpAnnualSpending,
+    retirementDuration,
+    u_pre: context.portfolio.uPre,
+    u_post: context.portfolio.uPost,
+    mu_pre: context.portfolio.muPre,
+    r_f_pre: context.portfolio.rFPre,
+    mu_post: context.portfolio.muPost,
+    r_f_post: context.portfolio.rFPost,
+  });
+
+  return {
+    outputIsAchievable: result.achievable,
+    requiredWealthAtFFPAge: result.requiredWealth,
+    wealthProjection: buildScenario1WealthProjection({
+      currentSavings: context.currentSavings,
+      currentAge: context.currentAge,
+      ffpAge: input.inputFfpAge,
+      stages,
+      u_pre: context.portfolio.uPre,
+      mu_pre: context.portfolio.muPre,
+      r_f_pre: context.portfolio.rFPre,
+    }),
+  };
 };

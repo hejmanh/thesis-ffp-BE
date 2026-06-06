@@ -11,7 +11,10 @@ import {
   calculateCurrentAge,
   calculateRetirementDuration,
 } from '@/utils/ffp-model/lifeExpectancy.js';
-import { runScenario3 } from '@/utils/ffp-model/scenario.js';
+import {
+  buildScenario3RetirementCashflow,
+  runScenario3,
+} from '@/utils/ffp-model/scenario.js';
 import { calculatePortfolioReturn } from '@/utils/ffp-model/portfolio.js';
 import { calculateWealthBeforeFFP } from '@/utils/ffp-model/wealth.js';
 import { validateFFPAge } from '@/utils/ffp-model/validation.js';
@@ -295,11 +298,77 @@ export const getScenario3OutputService = async (userId: number) => {
   if (!profile) throw notFound('Profile not found');
 
   const output = await getScenario3Output(profile.profileId, scenarioTypeId);
-  if (!output || output.outputFfpAnnualSpending == null) {
+  if (
+    !output ||
+    output.lifeExpectancy == null ||
+    output.inputFfpAge == null ||
+    output.outputFfpAnnualSpending == null
+  ) {
     throw notFound('Scenario 3 output not found');
   }
 
+  const context = await getScenarioContext(userId);
+
+  if (output.lifeExpectancy <= context.currentAge) {
+    throw badRequest('lifeExpectancy must be greater than current age');
+  }
+
+  if (
+    !validateFFPAge(
+      context.currentAge,
+      output.inputFfpAge,
+      output.lifeExpectancy,
+    )
+  ) {
+    throw badRequest(
+      'inputFfpAge must be within current age and life expectancy',
+    );
+  }
+
+  const retirementDuration = calculateRetirementDuration(
+    output.lifeExpectancy,
+    output.inputFfpAge,
+  );
+
+  if (retirementDuration <= 0) {
+    throw badRequest('Retirement duration must be greater than 0');
+  }
+
+  const stages = toLifeStages(context.stages, output.lifeExpectancy);
+  const assets = toPassiveIncomeAssets(context.assets);
+  const portfolioReturnPre = calculatePortfolioReturn(
+    context.portfolio.uPre,
+    context.portfolio.muPre,
+    context.portfolio.rFPre,
+  );
+  const wealthAtFFP = calculateWealthBeforeFFP(
+    context.currentSavings,
+    context.currentAge,
+    output.inputFfpAge,
+    stages,
+    portfolioReturnPre,
+  );
+  const scenario3Output = runScenario3({
+    wealthAtFFP,
+    u_post: context.portfolio.uPost,
+    mu: context.portfolio.muPost,
+    r_f: context.portfolio.rFPost,
+    retirementDuration,
+    assets,
+  });
+
   return {
-    outputFfpAnnualSpending: output.outputFfpAnnualSpending as number,
+    outputFfpAnnualSpending: scenario3Output.availableSpending,
+    outputFfpMonthlySpending: scenario3Output.availableSpending / 12,
+    retirementCashflow: buildScenario3RetirementCashflow({
+      wealthAtFFP,
+      annualSpending: scenario3Output.availableSpending,
+      lifeExpectancy: output.lifeExpectancy,
+      ffpAge: output.inputFfpAge,
+      u_post: context.portfolio.uPost,
+      mu: context.portfolio.muPost,
+      r_f: context.portfolio.rFPost,
+      assets,
+    }),
   };
 };

@@ -4,11 +4,28 @@ import type {
 } from '@/types/ffp-model/financial.js';
 import { calculatePortfolioReturn } from './portfolio.js';
 import { calculateTotalPassiveIncome } from './passiveIncome.js';
+import { calculateSavingAtAge } from './savings.js';
 import {
   calculateAvailableSpending,
   calculateRequiredWealth,
 } from './retirement.js';
-import { calculateWealthBeforeFFP } from './wealth.js';
+import { calculateWealthAfterFFP, calculateWealthBeforeFFP } from './wealth.js';
+
+export type Scenario1WealthProjectionPoint = {
+  age: number;
+  wealth: number;
+};
+
+export type Scenario2WealthProjectionPoint = {
+  age: number;
+  wealth: number;
+  requiredWealth: number;
+};
+
+export type Scenario3RetirementCashflowPoint = {
+  age: number;
+  wealth: number;
+};
 
 export function canReachFFPGoal(
   wealthAtFFP: number,
@@ -178,6 +195,151 @@ export function runScenario3({
   };
 }
 
+export function buildScenario1WealthProjection({
+  currentSavings,
+  currentAge,
+  ffpAge,
+  stages,
+  u_pre,
+  mu_pre,
+  r_f_pre,
+}: {
+  currentSavings: number;
+  currentAge: number;
+  ffpAge: number;
+  stages: LifeStage[];
+  u_pre: number;
+  mu_pre: number;
+  r_f_pre: number;
+}): Scenario1WealthProjectionPoint[] {
+  const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu_pre, r_f_pre);
+  const projection: Scenario1WealthProjectionPoint[] = [
+    {
+      age: currentAge,
+      wealth: currentSavings,
+    },
+  ];
+
+  let wealth = currentSavings;
+
+  for (let age = currentAge; age < ffpAge; age++) {
+    wealth =
+      wealth * (1 + portfolioReturnPre) + calculateSavingAtAge(age, stages);
+
+    projection.push({
+      age: age + 1,
+      wealth,
+    });
+  }
+
+  return projection;
+}
+
+export function buildScenario2WealthProjection({
+  currentSavings,
+  currentAge,
+  lifeExpectancy,
+  outputFfpAge,
+  stages,
+  annualSpending,
+  u_pre,
+  u_post,
+  mu_pre,
+  r_f_pre,
+  mu_post,
+  r_f_post,
+}: {
+  currentSavings: number;
+  currentAge: number;
+  lifeExpectancy: number;
+  outputFfpAge: number | null;
+  stages: LifeStage[];
+  annualSpending: number;
+  u_pre: number;
+  u_post: number;
+  mu_pre: number;
+  r_f_pre: number;
+  mu_post: number;
+  r_f_post: number;
+}): Scenario2WealthProjectionPoint[] {
+  const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu_pre, r_f_pre);
+  const portfolioReturnPost = calculatePortfolioReturn(
+    u_post,
+    mu_post,
+    r_f_post,
+  );
+  const projectionEndAge = outputFfpAge ?? lifeExpectancy;
+  const projection: Scenario2WealthProjectionPoint[] = [];
+
+  for (let age = currentAge; age <= projectionEndAge; age++) {
+    projection.push({
+      age,
+      wealth: calculateWealthBeforeFFP(
+        currentSavings,
+        currentAge,
+        age,
+        stages,
+        portfolioReturnPre,
+      ),
+      requiredWealth: calculateRequiredWealth(
+        annualSpending,
+        portfolioReturnPost,
+        lifeExpectancy - age,
+      ),
+    });
+  }
+
+  return projection;
+}
+
+export function buildScenario3RetirementCashflow({
+  wealthAtFFP,
+  annualSpending,
+  lifeExpectancy,
+  ffpAge,
+  u_post,
+  mu,
+  r_f,
+  assets,
+}: {
+  wealthAtFFP: number;
+  annualSpending: number;
+  lifeExpectancy: number;
+  ffpAge: number;
+  u_post: number;
+  mu: number;
+  r_f: number;
+  assets: PassiveIncomeAsset[];
+}): Scenario3RetirementCashflowPoint[] {
+  const portfolioReturnPost = calculatePortfolioReturn(u_post, mu, r_f);
+  const passiveIncome = calculateTotalPassiveIncome(assets, 0);
+  const cashflow: Scenario3RetirementCashflowPoint[] = [
+    {
+      age: ffpAge,
+      wealth: wealthAtFFP,
+    },
+  ];
+
+  let wealth = wealthAtFFP;
+
+  for (let age = ffpAge; age < lifeExpectancy; age++) {
+    wealth = calculateWealthAfterFFP(
+      wealth,
+      annualSpending,
+      passiveIncome,
+      portfolioReturnPost,
+      1,
+    );
+
+    cashflow.push({
+      age: age + 1,
+      wealth: Math.abs(wealth) < 1e-9 ? 0 : wealth,
+    });
+  }
+
+  return cashflow;
+}
+
 /**
  * Low-level binary search for terminal stage annual saving amount.
  * CRITICAL: Only affects terminal stage defined by terminalStageIndex.
@@ -332,15 +494,15 @@ export function calculateScenario4RequiredWealthAtFFP({
   portfolioReturnPost: number;
   retirementDuration: number;
 }): number {
-  console.log("Input Annual Spending:", inputAnnualSpending);
-  console.log("Portfolio Return Post-FFP:", portfolioReturnPost);
-  console.log("Retirement Duration:", retirementDuration);
+  console.log('Input Annual Spending:', inputAnnualSpending);
+  console.log('Portfolio Return Post-FFP:', portfolioReturnPost);
+  console.log('Retirement Duration:', retirementDuration);
   const result = calculateRequiredWealth(
     inputAnnualSpending,
     portfolioReturnPost,
     retirementDuration,
   );
-  console.log("Calculated Required Wealth at FFP:", result);
+  console.log('Calculated Required Wealth at FFP:', result);
   return result;
 }
 
