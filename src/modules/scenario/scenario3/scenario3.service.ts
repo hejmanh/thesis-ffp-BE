@@ -3,24 +3,34 @@ import { badRequest, notFound } from '@/utils/error.js';
 import {
   findProfileContextByUserId,
   getFinancialProfileDetails,
+  listAssetDataDetails,
   listPortfolioAllocationDetails,
   listStageDataDetails,
 } from '@/modules/registration/registration.repository.js';
-import { calculateCurrentAge } from '@/utils/ffp-model/lifeExpectancy.js';
 import {
-  buildScenario2WealthProjection,
-  estimateFFPAge,
+  calculateCurrentAge,
+  calculateRetirementDuration,
+} from '@/utils/ffp-model/lifeExpectancy.js';
+import {
+  buildScenario3RetirementCashflow,
+  runScenario3,
 } from '@/utils/ffp-model/scenario.js';
-import type { LifeStage } from '@/types/ffp-model/financial.js';
-import type { Scenario2InputDto } from './dto/input.dto.js';
+import { calculatePortfolioReturn } from '@/utils/ffp-model/portfolio.js';
+import { calculateWealthBeforeFFP } from '@/utils/ffp-model/wealth.js';
+import { validateFFPAge } from '@/utils/ffp-model/validation.js';
+import type {
+  LifeStage,
+  PassiveIncomeAsset,
+} from '@/types/ffp-model/financial.js';
+import type { Scenario3InputDto } from './dto/input.dto.js';
 import {
-  getScenario2Input,
-  getScenario2Output,
-  upsertScenario2,
-} from './scenario2.repository.js';
+  getScenario3Input,
+  getScenario3Output,
+  upsertScenario3,
+} from './scenario3.repository.js';
 import { findScenarioTypeIdByNo } from '../scenario.repository.js';
 
-const SCENARIO_NO = 2;
+const SCENARIO_NO = 3;
 
 const toLifeStages = (
   stageDetails: Awaited<ReturnType<typeof listStageDataDetails>>,
@@ -52,7 +62,7 @@ const toLifeStages = (
   return sorted.map((stage, index) => {
     const isLast = index === sorted.length - 1;
     const endAge =
-      stage.endingAge == null ? (isLast ? fallbackEndAge : null) : stage.endingAge + 1;
+       stage.endingAge == null ? (isLast ? fallbackEndAge : null) : stage.endingAge + 1;
 
     if (endAge == null) {
       throw badRequest('Only the last stage can have a null endingAge');
@@ -76,6 +86,24 @@ const toLifeStages = (
     };
   });
 };
+
+const toPassiveIncomeAssets = (
+  assetDetails: Awaited<ReturnType<typeof listAssetDataDetails>>,
+): PassiveIncomeAsset[] =>
+  assetDetails.map((asset) => {
+    if (asset.initialAnnualIncome == null) {
+      throw badRequest('Post-FFP asset initialAnnualIncome is required');
+    }
+    if (asset.growthRate == null) {
+      throw badRequest('Post-FFP asset growthRate is required');
+    }
+
+    return {
+      type: asset.assetTypeCode ?? asset.assetTypeTitle ?? asset.uid,
+      initialIncome: asset.initialAnnualIncome,
+      growthRate: asset.growthRate,
+    };
+  });
 
 const getScenarioContext = async (userId: number) => {
   const profile = await findProfileContextByUserId(userId);
@@ -112,11 +140,14 @@ const getScenarioContext = async (userId: number) => {
     throw badRequest('Life stages are required');
   }
 
+  const assets = await listAssetDataDetails(profile.profileId);
+
   return {
     profileId: profile.profileId,
     currentSavings: financialProfile.currentSavings,
     currentAge: calculateCurrentAge(profile.birthYear),
     stages,
+    assets,
     portfolio: {
       uPre: pre.u,
       uPost: post.u,
@@ -128,39 +159,39 @@ const getScenarioContext = async (userId: number) => {
   };
 };
 
-export const createScenario2Input = async (
+export const createScenario3Input = async (
   userId: number,
-  payload: Scenario2InputDto,
+  payload: Scenario3InputDto,
 ) => {
   const scenarioTypeId = await findScenarioTypeIdByNo(SCENARIO_NO);
   if (!scenarioTypeId) throw notFound('Scenario type not found');
 
-  const existing = await getScenario2InputByUser(userId, scenarioTypeId);
+  const existing = await getScenario3InputByUser(userId, scenarioTypeId);
   if (existing) {
-    throw badRequest('Scenario 2 input already exists');
+    throw badRequest('Scenario 3 input already exists');
   }
 
-  return upsertScenario2Input(userId, payload, scenarioTypeId);
+  return upsertScenario3Input(userId, payload, scenarioTypeId);
 };
 
-export const updateScenario2Input = async (
+export const updateScenario3Input = async (
   userId: number,
-  payload: Scenario2InputDto,
+  payload: Scenario3InputDto,
 ) => {
   const scenarioTypeId = await findScenarioTypeIdByNo(SCENARIO_NO);
   if (!scenarioTypeId) throw notFound('Scenario type not found');
 
-  const existing = await getScenario2InputByUser(userId, scenarioTypeId);
+  const existing = await getScenario3InputByUser(userId, scenarioTypeId);
   if (!existing) {
-    throw notFound('Scenario 2 input not found');
+    throw notFound('Scenario 3 input not found');
   }
 
-  return upsertScenario2Input(userId, payload, scenarioTypeId);
+  return upsertScenario3Input(userId, payload, scenarioTypeId);
 };
 
-const upsertScenario2Input = async (
+const upsertScenario3Input = async (
   userId: number,
-  payload: Scenario2InputDto,
+  payload: Scenario3InputDto,
   scenarioTypeId: number,
 ) => {
   const context = await getScenarioContext(userId);
@@ -170,83 +201,111 @@ const upsertScenario2Input = async (
     throw badRequest('lifeExpectancy must be greater than current age');
   }
 
-  const stages = toLifeStages(context.stages, lifeExpectancy);
+  if (
+    !validateFFPAge(context.currentAge, payload.inputFfpAge, lifeExpectancy)
+  ) {
+    throw badRequest(
+      'inputFfpAge must be within current age and life expectancy',
+    );
+  }
 
-  const outputFfpAge = estimateFFPAge({
-    currentSavings: context.currentSavings,
-    currentAge: context.currentAge,
+  const retirementDuration = calculateRetirementDuration(
     lifeExpectancy,
+    payload.inputFfpAge,
+  );
+
+  if (retirementDuration <= 0) {
+    throw badRequest('Retirement duration must be greater than 0');
+  }
+
+  const stages = toLifeStages(context.stages, lifeExpectancy);
+  const assets = toPassiveIncomeAssets(context.assets);
+
+  const portfolioReturnPre = calculatePortfolioReturn(
+    context.portfolio.uPre,
+    context.portfolio.muPre,
+    context.portfolio.rFPre,
+  );
+
+  const wealthAtFFP = calculateWealthBeforeFFP(
+    context.currentSavings,
+    context.currentAge,
+    payload.inputFfpAge,
     stages,
-    annualSpending: payload.inputFfpAnnualSpending,
-    u_pre: context.portfolio.uPre,
+    portfolioReturnPre,
+  );
+
+  const result = runScenario3({
+    wealthAtFFP,
     u_post: context.portfolio.uPost,
-    mu_pre: context.portfolio.muPre,
-    r_f_pre: context.portfolio.rFPre,
-    mu_post: context.portfolio.muPost,
-    r_f_post: context.portfolio.rFPost,
+    mu: context.portfolio.muPost,
+    r_f: context.portfolio.rFPost,
+    retirementDuration,
+    assets,
   });
 
   await withTransaction(async (client) => {
-    await upsertScenario2(
+    await upsertScenario3(
       context.profileId,
       scenarioTypeId,
       lifeExpectancy,
-      payload.inputFfpAnnualSpending,
-      outputFfpAge,
+      payload.inputFfpAge,
+      result.availableSpending,
       client,
     );
   });
 
   return {
     lifeExpectancy,
-    inputFfpAnnualSpending: payload.inputFfpAnnualSpending,
+    inputFfpAge: payload.inputFfpAge,
   };
 };
 
-const getScenario2InputByUser = async (
+const getScenario3InputByUser = async (
   userId: number,
   scenarioTypeId: number,
 ) => {
   const profile = await findProfileContextByUserId(userId);
   if (!profile) throw notFound('Profile not found');
 
-  const input = await getScenario2Input(profile.profileId, scenarioTypeId);
+  const input = await getScenario3Input(profile.profileId, scenarioTypeId);
   if (!input) return null;
 
-  if (input.lifeExpectancy == null || input.inputFfpAnnualSpending == null) {
+  if (input.lifeExpectancy == null || input.inputFfpAge == null) {
     return null;
   }
 
   return {
     lifeExpectancy: input.lifeExpectancy,
-    inputFfpAnnualSpending: input.inputFfpAnnualSpending,
+    inputFfpAge: input.inputFfpAge,
   };
 };
 
-export const getScenario2InputService = async (userId: number) => {
+export const getScenario3InputService = async (userId: number) => {
   const scenarioTypeId = await findScenarioTypeIdByNo(SCENARIO_NO);
   if (!scenarioTypeId) throw notFound('Scenario type not found');
 
-  const input = await getScenario2InputByUser(userId, scenarioTypeId);
-  if (!input) throw notFound('Scenario 2 input not found');
+  const input = await getScenario3InputByUser(userId, scenarioTypeId);
+  if (!input) throw notFound('Scenario 3 input not found');
 
   return input;
 };
 
-export const getScenario2OutputService = async (userId: number) => {
+export const getScenario3OutputService = async (userId: number) => {
   const scenarioTypeId = await findScenarioTypeIdByNo(SCENARIO_NO);
   if (!scenarioTypeId) throw notFound('Scenario type not found');
 
   const profile = await findProfileContextByUserId(userId);
   if (!profile) throw notFound('Profile not found');
 
-  const output = await getScenario2Output(profile.profileId, scenarioTypeId);
+  const output = await getScenario3Output(profile.profileId, scenarioTypeId);
   if (
     !output ||
     output.lifeExpectancy == null ||
-    output.inputFfpAnnualSpending == null
+    output.inputFfpAge == null ||
+    output.outputFfpAnnualSpending == null
   ) {
-    throw notFound('Scenario 2 output not found');
+    throw notFound('Scenario 3 output not found');
   }
 
   const context = await getScenarioContext(userId);
@@ -255,36 +314,62 @@ export const getScenario2OutputService = async (userId: number) => {
     throw badRequest('lifeExpectancy must be greater than current age');
   }
 
+  if (
+    !validateFFPAge(
+      context.currentAge,
+      output.inputFfpAge,
+      output.lifeExpectancy,
+    )
+  ) {
+    throw badRequest(
+      'inputFfpAge must be within current age and life expectancy',
+    );
+  }
+
+  const retirementDuration = calculateRetirementDuration(
+    output.lifeExpectancy,
+    output.inputFfpAge,
+  );
+
+  if (retirementDuration <= 0) {
+    throw badRequest('Retirement duration must be greater than 0');
+  }
+
   const stages = toLifeStages(context.stages, output.lifeExpectancy);
-  const outputFfpAge = estimateFFPAge({
-    currentSavings: context.currentSavings,
-    currentAge: context.currentAge,
-    lifeExpectancy: output.lifeExpectancy,
+  const assets = toPassiveIncomeAssets(context.assets);
+  const portfolioReturnPre = calculatePortfolioReturn(
+    context.portfolio.uPre,
+    context.portfolio.muPre,
+    context.portfolio.rFPre,
+  );
+  const wealthAtFFP = calculateWealthBeforeFFP(
+    context.currentSavings,
+    context.currentAge,
+    output.inputFfpAge,
     stages,
-    annualSpending: output.inputFfpAnnualSpending,
-    u_pre: context.portfolio.uPre,
+    portfolioReturnPre,
+  );
+  const scenario3Output = runScenario3({
+    wealthAtFFP,
     u_post: context.portfolio.uPost,
-    mu_pre: context.portfolio.muPre,
-    r_f_pre: context.portfolio.rFPre,
-    mu_post: context.portfolio.muPost,
-    r_f_post: context.portfolio.rFPost,
+    mu: context.portfolio.muPost,
+    r_f: context.portfolio.rFPost,
+    retirementDuration,
+    assets,
   });
 
   return {
-    outputFfpAge,
-    wealthProjection: buildScenario2WealthProjection({
-      currentSavings: context.currentSavings,
-      currentAge: context.currentAge,
+    outputFfpAnnualSpending: scenario3Output.availableSpending,
+    outputFfpMonthlySpending: scenario3Output.availableSpending / 12,
+    retirementCashflow: buildScenario3RetirementCashflow({
+      wealthAtFFP,
+      annualSpending: scenario3Output.availableSpending,
       lifeExpectancy: output.lifeExpectancy,
-      outputFfpAge,
-      stages,
-      annualSpending: output.inputFfpAnnualSpending,
-      u_pre: context.portfolio.uPre,
+      ffpAge: output.inputFfpAge,
       u_post: context.portfolio.uPost,
-      mu_pre: context.portfolio.muPre,
-      r_f_pre: context.portfolio.rFPre,
-      mu_post: context.portfolio.muPost,
-      r_f_post: context.portfolio.rFPost,
+      mu: context.portfolio.muPost,
+      r_f: context.portfolio.rFPost,
+      assets,
     }),
   };
 };

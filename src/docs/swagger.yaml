@@ -15,6 +15,8 @@ tags:
   - name: User Info - Lifestyle
   - name: Scenario 1
   - name: Scenario 2
+  - name: Scenario 3
+  - name: Scenario 4
   - name: Reference
 
 paths:
@@ -584,6 +586,171 @@ paths:
           description: Unauthorized
         404:
           description: Scenario 2 output not found
+  /scenario-3/input:
+    get:
+      tags: [Scenario 3]
+      summary: Get scenario 3 input
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario3InputResponse'
+        401:
+          description: Unauthorized
+        404:
+          description: Scenario 3 input not found
+    post:
+      tags: [Scenario 3]
+      summary: Create scenario 3 input
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Scenario3InputRequest'
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario3InputResponse'
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+    patch:
+      tags: [Scenario 3]
+      summary: Update scenario 3 input
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Scenario3InputRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario3InputResponse'
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Scenario 3 input not found
+
+  /scenario-3/output:
+    get:
+      tags: [Scenario 3]
+      summary: Get scenario 3 output
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario3OutputResponse'
+        401:
+          description: Unauthorized
+        404:
+          description: Scenario 3 output not found
+
+  /scenario-4/input:
+    get:
+      tags: [Scenario 4]
+      summary: Get scenario 4 input
+      description: Returns the saved Scenario 4 input, including life expectancy, target FFP age, and annual spending at FFP.
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario4InputResponse'
+        401:
+          description: Unauthorized
+        404:
+          description: Scenario 4 input not found
+    post:
+      tags: [Scenario 4]
+      summary: Create scenario 4 input
+      description: Creates Scenario 4 input with life expectancy, target FFP age, and annual spending at FFP.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Scenario4InputRequest'
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario4InputResponse'
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+    patch:
+      tags: [Scenario 4]
+      summary: Update scenario 4 input
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Scenario4InputRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario4InputResponse'
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Scenario 4 input not found
+
+  /scenario-4/output:
+    get:
+      tags: [Scenario 4]
+      summary: Get scenario 4 output
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Scenario4OutputResponse'
+        401:
+          description: Unauthorized
+        404:
+          description: Scenario 4 output not found
   /reference/currencies:
     get:
       tags: [Reference]
@@ -1485,6 +1652,17 @@ components:
               properties:
                 outputIsAchievable:
                   type: boolean
+                requiredWealthAtFFPAge:
+                  type: number
+                wealthProjection:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      age:
+                        type: integer
+                      wealth:
+                        type: number
     Scenario2InputRequest:
       type: object
       required: [lifeExpectancy, inputFfpAnnualSpending]
@@ -1516,6 +1694,104 @@ components:
                 outputFfpAge:
                   type: integer
                   nullable: true
+                wealthProjection:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      age:
+                        type: integer
+                      wealth:
+                        type: number
+                      requiredWealth:
+                        type: number
+    Scenario3InputRequest:
+      type: object
+      required: [lifeExpectancy, inputFfpAge]
+      properties:
+        lifeExpectancy:
+          type: integer
+        inputFfpAge:
+          type: integer
+    Scenario3InputResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                lifeExpectancy:
+                  type: integer
+                inputFfpAge:
+                  type: integer
+    Scenario3OutputResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                outputFfpAnnualSpending:
+                  type: number
+                outputFfpMonthlySpending:
+                  type: number
+                retirementCashflow:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      age:
+                        type: integer
+                      wealth:
+                        type: number
+    Scenario4InputRequest:
+      type: object
+      required: [lifeExpectancy, inputFfpAge, inputFfpAnnualSpending]
+      properties:
+        lifeExpectancy:
+          type: integer
+          example: 85
+        inputFfpAge:
+          type: integer
+          example: 60
+        inputFfpAnnualSpending:
+          type: number
+          description: Annual spending target at the FFP age.
+          example: 12000
+    Scenario4InputResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                lifeExpectancy:
+                  type: integer
+                  example: 85
+                inputFfpAge:
+                  type: integer
+                  example: 60
+                inputFfpAnnualSpending:
+                  type: number
+                  description: Annual spending target at the FFP age.
+                  example: 12000
+    Scenario4OutputResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                requiredAnnualSaving:
+                  type: number
+                ffpAge:
+                  type: integer
+                requiredWealthAtFFPAge:
+                  type: number
     CurrencyListResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponseBase'

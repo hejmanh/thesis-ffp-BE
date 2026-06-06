@@ -6,6 +6,8 @@ import referenceRoutes from '@/modules/reference/reference.routes.js';
 import userInfoRoutes from '@/modules/registration/registration.routes.js';
 import scenario1Routes from '@/modules/scenario/scenario1/scenario1.routes.js';
 import scenario2Routes from '@/modules/scenario/scenario2/scenario2.routes.js';
+import scenario3Routes from '@/modules/scenario/scenario3/scenario3.routes.js';
+import scenario4Routes from '@/modules/scenario/scenario4/scenario4.routes.js';
 import { query } from '@/database/query.js';
 const router = Router();
 
@@ -38,5 +40,7 @@ router.use('/reference', referenceRoutes);
 router.use('/user-info', userInfoRoutes);
 router.use('/scenario-1', scenario1Routes);
 router.use('/scenario-2', scenario2Routes);
+router.use('/scenario-3', scenario3Routes);
+router.use('/scenario-4', scenario4Routes);
 
 export default router;
