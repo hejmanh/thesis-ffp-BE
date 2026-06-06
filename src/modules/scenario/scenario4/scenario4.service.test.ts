@@ -112,7 +112,7 @@ describe('Scenario4 Service', () => {
     expect(requiredAnnualSaving).toBeCloseTo(50, 2);
   });
 
-  it('returns the saved scenario 4 input including current savings', async () => {
+  it('returns the saved scenario 4 input', async () => {
     baseContextMocks();
 
     asMock(findScenarioTypeIdByNo).mockResolvedValue(4);

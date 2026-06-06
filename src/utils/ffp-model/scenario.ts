@@ -323,6 +323,8 @@ export function buildScenario3RetirementCashflow({
   let wealth = wealthAtFFP;
 
   for (let age = ffpAge; age < lifeExpectancy; age++) {
+    const yearsAfterFFP = age - ffpAge;
+    const passiveIncome = calculateTotalPassiveIncome(assets, yearsAfterFFP);
     wealth = calculateWealthAfterFFP(
       wealth,
       annualSpending,
@@ -453,7 +455,7 @@ function findSavingSearchUpperBound({
       return right;
     }
 
-    if (Number.isNaN(projectedWealth)) {
+    if (!Number.isFinite(projectedWealth)) {
       break;
     }
 
@@ -494,16 +496,11 @@ export function calculateScenario4RequiredWealthAtFFP({
   portfolioReturnPost: number;
   retirementDuration: number;
 }): number {
-  console.log('Input Annual Spending:', inputAnnualSpending);
-  console.log('Portfolio Return Post-FFP:', portfolioReturnPost);
-  console.log('Retirement Duration:', retirementDuration);
-  const result = calculateRequiredWealth(
+  return calculateRequiredWealth(
     inputAnnualSpending,
     portfolioReturnPost,
     retirementDuration,
   );
-  console.log('Calculated Required Wealth at FFP:', result);
-  return result;
 }
 
 export function solveScenario4RequiredAnnualSaving({

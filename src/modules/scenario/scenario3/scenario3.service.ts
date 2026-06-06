@@ -61,7 +61,8 @@ const toLifeStages = (
 
   return sorted.map((stage, index) => {
     const isLast = index === sorted.length - 1;
-    const endAge = stage.endingAge ?? (isLast ? fallbackEndAge : null);
+    const endAge =
+       stage.endingAge == null ? (isLast ? fallbackEndAge : null) : stage.endingAge + 1;
 
     if (endAge == null) {
       throw badRequest('Only the last stage can have a null endingAge');

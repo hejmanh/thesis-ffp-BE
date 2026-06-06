@@ -51,7 +51,8 @@ const toLifeStages = (
 
   return sorted.map((stage, index) => {
     const isLast = index === sorted.length - 1;
-    const endAge = stage.endingAge ?? (isLast ? fallbackEndAge : null);
+    const endAge =
+      stage.endingAge == null ? (isLast ? fallbackEndAge : null) : stage.endingAge + 1;
 
     if (endAge == null) {
       throw badRequest('Only the last stage can have a null endingAge');
@@ -186,7 +187,7 @@ const upsertScenario1Input = async (
     throw badRequest('Retirement duration must be greater than 0');
   }
 
-  const stages = toLifeStages(context.stages, payload.inputFfpAge);
+  const stages = toLifeStages(context.stages, lifeExpectancy);
 
   const result = runScenario1({
     currentSavings: context.currentSavings,
@@ -287,7 +288,7 @@ export const getScenario1OutputService = async (userId: number) => {
     throw badRequest('Retirement duration must be greater than 0');
   }
 
-  const stages = toLifeStages(context.stages, input.inputFfpAge);
+  const stages = toLifeStages(context.stages, input.lifeExpectancy);
   const result = runScenario1({
     currentSavings: context.currentSavings,
     currentAge: context.currentAge,
