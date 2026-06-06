@@ -57,7 +57,7 @@ const toLifeStages = (
     if (endAge == null) {
       throw badRequest('Only the last stage can have a null endingAge');
     }
-    if (!isLast && endAge <= stage.beginningAge) {
+    if (endAge <= stage.beginningAge) {
       throw badRequest('Stage endingAge must be greater than beginningAge');
     }
 

@@ -312,7 +312,6 @@ export function buildScenario3RetirementCashflow({
   assets: PassiveIncomeAsset[];
 }): Scenario3RetirementCashflowPoint[] {
   const portfolioReturnPost = calculatePortfolioReturn(u_post, mu, r_f);
-  const passiveIncome = calculateTotalPassiveIncome(assets, 0);
   const cashflow: Scenario3RetirementCashflowPoint[] = [
     {
       age: ffpAge,
