@@ -1,5 +1,4 @@
 import type { Request, Response } from 'express';
-import { z } from 'zod';
 import { asyncHandler } from '@/utils/asyncHandler.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginRequestDto } from './dto/login.dto.js';
@@ -18,9 +17,10 @@ import type {
   LogoutResponseDto,
 } from './dto/response.dto.js';
 import type { LoginSuccessResponseDto } from './dto/login.dto.js';
-import { badRequest, unauthorized } from '@/utils/error.js';
+import { unauthorized } from '@/utils/error.js';
 import config from '@/config/config.js';
 import { createCsrfToken } from '@/middlewares/csrf.js';
+import { ERROR_CODES } from '@/constants/errorCodes.js';
 
 const refreshCookieOptions = {
   httpOnly: true,
@@ -117,7 +117,9 @@ export const resetPasswordHandler = asyncHandler(
 
 export const updatePasswordHandler = asyncHandler(
   async (req: Request, res: Response<UpdatePasswordResponseDto>) => {
-    if (!req.userId) throw unauthorized('No token provided');
+    if (!req.userId) {
+      throw unauthorized(ERROR_CODES.AUTH.NO_TOKEN, 'No token provided');
+    }
 
     const data = UpdatePasswordDto.parse(req.body);
 
@@ -138,7 +140,12 @@ export const updatePasswordHandler = asyncHandler(
 export const refreshHandler = asyncHandler(
   async (req: Request, res: Response<RefreshResponseDto>) => {
     const rawToken = req.cookies?.refreshToken;
-    if (!rawToken) throw unauthorized('Missing refresh token');
+    if (!rawToken) {
+      throw unauthorized(
+        ERROR_CODES.AUTH.MISSING_REFRESH_TOKEN,
+        'Missing refresh token',
+      );
+    }
 
     const response = await authService.refresh(rawToken);
     const csrfToken = createCsrfToken();
@@ -157,7 +164,12 @@ export const refreshHandler = asyncHandler(
 export const logoutHandler = asyncHandler(
   async (req: Request, res: Response<LogoutResponseDto>) => {
     const rawToken = req.cookies?.refreshToken;
-    if (!rawToken) throw unauthorized('Missing refresh token');
+    if (!rawToken) {
+      throw unauthorized(
+        ERROR_CODES.AUTH.MISSING_REFRESH_TOKEN,
+        'Missing refresh token',
+      );
+    }
 
     await authService.logout(rawToken);
 

@@ -219,5 +219,9 @@ export const getScenario4OutputService = async (userId: number) => {
     throw notFound('Scenario 4 output not found');
   }
 
-  return output;
+  return {
+    requiredAnnualSaving: output.requiredAnnualSaving,
+    ffpAge: output.ffpAge,
+    requiredWealthAtFFPAge: output.requiredWealthAtFFPAge,
+  };
 };
