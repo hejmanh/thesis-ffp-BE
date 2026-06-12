@@ -22,7 +22,6 @@ vi.mock('@/modules/registration/registration.repository.js', () => ({
 
 vi.mock('./scenario4.repository.js', () => ({
   getScenario4Input: vi.fn(),
-  getScenario4Output: vi.fn(),
   upsertScenario4: vi.fn(),
 }));
 
@@ -72,7 +71,7 @@ describe('Scenario4 Service', () => {
     );
   });
 
-  it('persists the computed annual saving outcome', async () => {
+  it('persists scenario 4 input without computing output', async () => {
     baseContextMocks();
 
     asMock(findScenarioTypeIdByNo).mockResolvedValue(4);
@@ -90,8 +89,6 @@ describe('Scenario4 Service', () => {
       lifeExpectancy,
       inputFfpAge,
       inputFfpAnnualSpending,
-      requiredAnnualSaving,
-      requiredWealthAtFFPAge,
     ] = asMock(scenario4Repository.upsertScenario4).mock.calls[0] ?? [];
 
     expect({
@@ -100,16 +97,21 @@ describe('Scenario4 Service', () => {
       lifeExpectancy,
       inputFfpAge,
       inputFfpAnnualSpending,
-      requiredWealthAtFFPAge,
     }).toEqual({
       profileId: 10,
       scenarioTypeId: 4,
       lifeExpectancy: currentAge + 4,
       inputFfpAge: currentAge + 2,
       inputFfpAnnualSpending: 100,
-      requiredWealthAtFFPAge: 200,
     });
-    expect(requiredAnnualSaving).toBeCloseTo(50, 2);
+    expect(scenario4Repository.upsertScenario4).toHaveBeenCalledWith(
+      10,
+      4,
+      currentAge + 4,
+      currentAge + 2,
+      100,
+      expect.anything(),
+    );
   });
 
   it('returns the saved scenario 4 input', async () => {
@@ -129,22 +131,25 @@ describe('Scenario4 Service', () => {
     });
   });
 
-  it('returns the expanded computed output payload', async () => {
+  it('recomputes the output payload from saved input and current user info', async () => {
     baseContextMocks();
 
     asMock(findScenarioTypeIdByNo).mockResolvedValue(4);
-    asMock(scenario4Repository.getScenario4Output).mockResolvedValue({
-      requiredAnnualSaving: 50,
-      ffpAge: currentAge + 2,
+    asMock(scenario4Repository.getScenario4Input).mockResolvedValue({
+      lifeExpectancy: currentAge + 4,
+      inputFfpAge: currentAge + 2,
       inputFfpAnnualSpending: 100,
-      requiredWealthAtFFPAge: 200,
     });
 
-    await expect(getScenario4OutputService(99)).resolves.toEqual({
-      requiredAnnualSaving: 50,
+    const result = await getScenario4OutputService(99);
+
+    expect(result).toEqual({
+      requiredAnnualSaving: expect.any(Number),
       ffpAge: currentAge + 2,
       inputFfpAnnualSpending: 100,
       requiredWealthAtFFPAge: 200,
     });
+    expect(result.requiredAnnualSaving).toBeCloseTo(50, 2);
+    expect(scenario4Repository.upsertScenario4).not.toHaveBeenCalled();
   });
 });

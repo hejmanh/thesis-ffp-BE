@@ -14,7 +14,6 @@ import { validateFFPAge } from '@/utils/ffp-model/validation.js';
 import type { Scenario4InputDto } from './dto/input.dto.js';
 import {
   getScenario4Input,
-  getScenario4Output,
   upsertScenario4,
 } from './scenario4.repository.js';
 import { findScenarioTypeIdByNo } from '../scenario.repository.js';
@@ -125,28 +124,6 @@ const upsertScenario4Input = async (
     throw badRequest('Retirement duration must be greater than 0');
   }
 
-  let result;
-  try {
-    result = runScenario4({
-      currentSavings: context.currentSavings,
-      currentAge: context.currentAge,
-      ffpAge: payload.inputFfpAge,
-      inputAnnualSpending: payload.inputFfpAnnualSpending,
-      retirementDuration,
-      u_pre: context.portfolio.uPre,
-      u_post: context.portfolio.uPost,
-      mu_pre: context.portfolio.muPre,
-      r_f_pre: context.portfolio.rFPre,
-      mu_post: context.portfolio.muPost,
-      r_f_post: context.portfolio.rFPost,
-    });
-  } catch (error) {
-    if (error instanceof Error) {
-      throw badRequest(error.message);
-    }
-    throw error;
-  }
-
   await withTransaction(async (client) => {
     await upsertScenario4(
       context.profileId,
@@ -154,8 +131,6 @@ const upsertScenario4Input = async (
       lifeExpectancy,
       payload.inputFfpAge,
       payload.inputFfpAnnualSpending,
-      result.requiredAnnualSaving,
-      result.requiredWealthAtFFPAge,
       client,
     );
   });
@@ -206,24 +181,60 @@ export const getScenario4OutputService = async (userId: number) => {
   const scenarioTypeId = await findScenarioTypeIdByNo(SCENARIO_NO);
   if (!scenarioTypeId) throw notFound('Scenario type not found');
 
-  const profile = await findProfileContextByUserId(userId);
-  if (!profile) throw notFound('Profile not found');
-
-  const output = await getScenario4Output(profile.profileId, scenarioTypeId);
-  if (
-    !output ||
-    output.requiredAnnualSaving == null ||
-    output.ffpAge == null ||
-    output.inputFfpAnnualSpending == null ||
-    output.requiredWealthAtFFPAge == null
-  ) {
+  const input = await getScenario4InputByUser(userId, scenarioTypeId);
+  if (!input) {
     throw notFound('Scenario 4 output not found');
   }
 
+  const context = await getScenarioContext(userId);
+
+  if (input.lifeExpectancy <= context.currentAge) {
+    throw badRequest('lifeExpectancy must be greater than current age');
+  }
+
+  if (
+    !validateFFPAge(context.currentAge, input.inputFfpAge, input.lifeExpectancy)
+  ) {
+    throw badRequest(
+      'inputFfpAge must be within current age and life expectancy',
+    );
+  }
+
+  const retirementDuration = calculateRetirementDuration(
+    input.lifeExpectancy,
+    input.inputFfpAge,
+  );
+
+  if (retirementDuration <= 0) {
+    throw badRequest('Retirement duration must be greater than 0');
+  }
+
+  let result;
+  try {
+    result = runScenario4({
+      currentSavings: context.currentSavings,
+      currentAge: context.currentAge,
+      ffpAge: input.inputFfpAge,
+      inputAnnualSpending: input.inputFfpAnnualSpending,
+      retirementDuration,
+      u_pre: context.portfolio.uPre,
+      u_post: context.portfolio.uPost,
+      mu_pre: context.portfolio.muPre,
+      r_f_pre: context.portfolio.rFPre,
+      mu_post: context.portfolio.muPost,
+      r_f_post: context.portfolio.rFPost,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw badRequest(error.message);
+    }
+    throw error;
+  }
+
   return {
-    requiredAnnualSaving: output.requiredAnnualSaving,
-    ffpAge: output.ffpAge,
-    inputFfpAnnualSpending: output.inputFfpAnnualSpending,
-    requiredWealthAtFFPAge: output.requiredWealthAtFFPAge,
+    requiredAnnualSaving: result.requiredAnnualSaving,
+    ffpAge: input.inputFfpAge,
+    inputFfpAnnualSpending: input.inputFfpAnnualSpending,
+    requiredWealthAtFFPAge: result.requiredWealthAtFFPAge,
   };
 };

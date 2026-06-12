@@ -14,8 +14,6 @@ export const upsertScenario4 = async (
   lifeExpectancy: number,
   inputFfpAge: number,
   inputFfpAnnualSpending: number,
-  requiredAnnualSaving: number,
-  requiredWealthAtFFPAge: number,
   client: QueryClient = pool,
 ) => {
   let scenarioId = await findScenarioIdByProfile(
@@ -35,26 +33,20 @@ export const upsertScenario4 = async (
         scenario_id,
         input_life_expectancy,
         input_ffp_age,
-        input_ffp_annual_spending,
-        output_annual_saving,
-        output_required_wealth_at_ffp_age
+        input_ffp_annual_spending
       )
-      VALUES ($1, $2, $3, $4, $5, $6)
+      VALUES ($1, $2, $3, $4)
       ON CONFLICT (scenario_id)
       DO UPDATE SET
         input_life_expectancy = EXCLUDED.input_life_expectancy,
         input_ffp_age = EXCLUDED.input_ffp_age,
-        input_ffp_annual_spending = EXCLUDED.input_ffp_annual_spending,
-        output_annual_saving = EXCLUDED.output_annual_saving,
-        output_required_wealth_at_ffp_age = EXCLUDED.output_required_wealth_at_ffp_age
+        input_ffp_annual_spending = EXCLUDED.input_ffp_annual_spending
     `,
     [
       scenarioId,
       lifeExpectancy,
       inputFfpAge,
       inputFfpAnnualSpending,
-      requiredAnnualSaving,
-      requiredWealthAtFFPAge,
     ],
   );
 };
@@ -85,36 +77,5 @@ export const getScenario4Input = async (
     lifeExpectancy: toNumberOrNull(row.lifeExpectancy),
     inputFfpAge: toNumberOrNull(row.inputFfpAge),
     inputFfpAnnualSpending: toNumberOrNull(row.inputFfpAnnualSpending),
-  };
-};
-
-export const getScenario4Output = async (
-  profileId: number,
-  scenarioTypeId: number,
-  client: QueryClient = pool,
-) => {
-  const res = await execQuery(
-    client,
-    `
-      SELECT
-        s4.output_annual_saving AS "requiredAnnualSaving",
-        s4.input_ffp_age AS "ffpAge",
-        s4.input_ffp_annual_spending AS "inputFfpAnnualSpending",
-        s4.output_required_wealth_at_ffp_age AS "requiredWealthAtFFPAge"
-      FROM scenario s
-      JOIN scenario_4 s4 ON s4.scenario_id = s.id
-      WHERE s.profile_id = $1 AND s.scenario_type_id = $2
-    `,
-    [profileId, scenarioTypeId],
-  );
-
-  const row = res.rows[0];
-  if (!row) return null;
-
-  return {
-    requiredAnnualSaving: toNumberOrNull(row.requiredAnnualSaving),
-    ffpAge: toNumberOrNull(row.ffpAge),
-    inputFfpAnnualSpending: toNumberOrNull(row.inputFfpAnnualSpending),
-    requiredWealthAtFFPAge: toNumberOrNull(row.requiredWealthAtFFPAge),
   };
 };
