@@ -77,6 +77,7 @@ describe('Scenario4 Controller', () => {
     vi.mocked(scenario4Service.getScenario4OutputService).mockResolvedValue({
       requiredAnnualSaving: 12_450.75,
       ffpAge: 70,
+      inputFfpAnnualSpending: 12_000,
       requiredWealthAtFFPAge: 1_250_000,
     });
 
@@ -90,6 +91,7 @@ describe('Scenario4 Controller', () => {
       data: {
         requiredAnnualSaving: 12_450.75,
         ffpAge: 70,
+        inputFfpAnnualSpending: 12_000,
         requiredWealthAtFFPAge: 1_250_000,
       },
       message: 'Scenario 4 output retrieved',

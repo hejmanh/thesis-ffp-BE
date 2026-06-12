@@ -214,6 +214,7 @@ export const getScenario4OutputService = async (userId: number) => {
     !output ||
     output.requiredAnnualSaving == null ||
     output.ffpAge == null ||
+    output.inputFfpAnnualSpending == null ||
     output.requiredWealthAtFFPAge == null
   ) {
     throw notFound('Scenario 4 output not found');
@@ -222,6 +223,7 @@ export const getScenario4OutputService = async (userId: number) => {
   return {
     requiredAnnualSaving: output.requiredAnnualSaving,
     ffpAge: output.ffpAge,
+    inputFfpAnnualSpending: output.inputFfpAnnualSpending,
     requiredWealthAtFFPAge: output.requiredWealthAtFFPAge,
   };
 };

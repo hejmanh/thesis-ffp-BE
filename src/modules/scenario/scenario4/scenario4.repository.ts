@@ -99,6 +99,7 @@ export const getScenario4Output = async (
       SELECT
         s4.output_annual_saving AS "requiredAnnualSaving",
         s4.input_ffp_age AS "ffpAge",
+        s4.input_ffp_annual_spending AS "inputFfpAnnualSpending",
         s4.output_required_wealth_at_ffp_age AS "requiredWealthAtFFPAge"
       FROM scenario s
       JOIN scenario_4 s4 ON s4.scenario_id = s.id
@@ -113,6 +114,7 @@ export const getScenario4Output = async (
   return {
     requiredAnnualSaving: toNumberOrNull(row.requiredAnnualSaving),
     ffpAge: toNumberOrNull(row.ffpAge),
+    inputFfpAnnualSpending: toNumberOrNull(row.inputFfpAnnualSpending),
     requiredWealthAtFFPAge: toNumberOrNull(row.requiredWealthAtFFPAge),
   };
 };

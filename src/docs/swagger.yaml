@@ -1839,6 +1839,10 @@ components:
             data:
               type: object
               properties:
+                inputFfpAge:
+                  type: integer
+                inputFfpAnnualSpending:
+                  type: number
                 outputIsAchievable:
                   type: boolean
                 requiredWealthAtFFPAge:
@@ -1880,6 +1884,8 @@ components:
             data:
               type: object
               properties:
+                inputFfpAnnualSpending:
+                  type: number
                 outputFfpAge:
                   type: integer
                   nullable: true
@@ -1922,6 +1928,8 @@ components:
             data:
               type: object
               properties:
+                inputFfpAge:
+                  type: integer
                 outputFfpAnnualSpending:
                   type: number
                 outputFfpMonthlySpending:
@@ -1979,6 +1987,8 @@ components:
                   type: number
                 ffpAge:
                   type: integer
+                inputFfpAnnualSpending:
+                  type: number
                 requiredWealthAtFFPAge:
                   type: number
     CurrencyListResponse:

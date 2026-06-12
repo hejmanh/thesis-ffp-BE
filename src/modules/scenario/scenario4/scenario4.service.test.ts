@@ -136,12 +136,14 @@ describe('Scenario4 Service', () => {
     asMock(scenario4Repository.getScenario4Output).mockResolvedValue({
       requiredAnnualSaving: 50,
       ffpAge: currentAge + 2,
+      inputFfpAnnualSpending: 100,
       requiredWealthAtFFPAge: 200,
     });
 
     await expect(getScenario4OutputService(99)).resolves.toEqual({
       requiredAnnualSaving: 50,
       ffpAge: currentAge + 2,
+      inputFfpAnnualSpending: 100,
       requiredWealthAtFFPAge: 200,
     });
   });
