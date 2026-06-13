@@ -17,6 +17,10 @@ pnpm-debug.log*
 .env
 .env.*
 
+# Local trusted CA certificates
+certs/*
+!certs/README.md
+
 # Coverage
 coverage/
 .nyc_output/
