@@ -174,6 +174,52 @@ export const verifyEmail = async (token: string) => {
   );
 };
 
+export const resendVerificationEmail = async (email: string) => {
+  const normalizedEmail = normalizeEmail(email);
+  const user = await findUserByEmail(normalizedEmail);
+
+  if (!user || user.is_email_verified) {
+    return;
+  }
+
+  const { raw: rawToken, hashed: hashedToken } = generateOneTimeToken();
+
+  await withTransaction(async (client) => {
+    await execQuery(
+      client,
+      `UPDATE email_verification_token
+          SET used_at = NOW()
+          WHERE user_account_id = $1 AND used_at IS NULL`,
+      [user.id],
+    );
+
+    await execQuery(
+      client,
+      `INSERT INTO email_verification_token (user_account_id, token_hash, expires_at)
+          VALUES ($1, $2, NOW() + $3::interval)`,
+      [user.id, hashedToken, config.security.emailVerificationExpiresIn],
+    );
+  });
+
+  if (config.nodeEnv !== 'production') {
+    console.log('Email verification token (dev):', rawToken);
+  }
+
+  try {
+    await sendVerificationEmail(normalizedEmail, rawToken);
+  } catch (err) {
+    await execQuery(
+      pool,
+      `UPDATE email_verification_token
+          SET used_at = NOW()
+          WHERE token_hash = $1`,
+      [hashedToken],
+    );
+
+    throw internal('Failed to send verification email');
+  }
+};
+
 export const requestPasswordReset = async (email: string) => {
   const normalizedEmail = normalizeEmail(email);
   const res = await execQuery(

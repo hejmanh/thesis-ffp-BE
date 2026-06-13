@@ -3,6 +3,7 @@ import { asyncHandler } from '@/utils/asyncHandler.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginRequestDto } from './dto/login.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
+import { ResendVerificationEmailDto } from './dto/resend-verification-email.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { UpdatePasswordDto } from './dto/update-password.dto.js';
 import { VerifyEmailDto } from './dto/verify-email.dto.js';
@@ -10,6 +11,7 @@ import * as authService from './auth.service.js';
 import type {
   RegisterResponseDto,
   VerifyEmailResponseDto,
+  ResendVerificationEmailResponseDto,
   ForgotPasswordResponseDto,
   ResetPasswordResponseDto,
   UpdatePasswordResponseDto,
@@ -60,6 +62,20 @@ export const verifyEmailHandler = asyncHandler(
       success: true,
       data: null,
       message: 'Email verified',
+    });
+  },
+);
+
+export const resendVerificationEmailHandler = asyncHandler(
+  async (req: Request, res: Response<ResendVerificationEmailResponseDto>) => {
+    const { email } = ResendVerificationEmailDto.parse(req.body);
+
+    await authService.resendVerificationEmail(email);
+
+    res.json({
+      success: true,
+      data: null,
+      message: 'If the account exists and is not verified, a verification email has been sent',
     });
   },
 );

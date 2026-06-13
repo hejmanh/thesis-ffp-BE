@@ -239,6 +239,29 @@ paths:
         429:
           $ref: '#/components/responses/EmailVerificationRateLimitError'
 
+  /auth/resend-verification-email:
+    post:
+      tags: [Auth]
+      summary: Resend verification email
+      description: Sends a new verification email when the account exists and is not already verified. The response is intentionally generic to avoid revealing registered emails.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendVerificationEmailRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+        429:
+          $ref: '#/components/responses/EmailVerificationRateLimitError'
+
   /user-info/financial:
     get:
       tags: [User Info - Financial]
@@ -1228,6 +1251,13 @@ components:
         sexTypeId:
           type: integer
     ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+    ResendVerificationEmailRequest:
       type: object
       required: [email]
       properties:

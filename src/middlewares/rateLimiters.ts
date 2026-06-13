@@ -29,7 +29,18 @@ export const emailVerificationLimiter = rateLimit({
     code: ERROR_CODES.RATE_LIMIT.EMAIL_VERIFICATION,
     message: 'Too many email verification attempts, please try again later',
   }),
-  skip: (req) => !req.query.token, // only apply if token is present
+});
+
+export const resendVerificationEmailLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 5 req / 1 hour
+  max: 5,
+  keyGenerator: getEmailRateLimitKey,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: buildErrorPayload({
+    code: ERROR_CODES.RATE_LIMIT.EMAIL_VERIFICATION,
+    message: 'Too many email verification attempts, please try again later',
+  }),
 });
 
 export const passwordResetLimiter = rateLimit({
