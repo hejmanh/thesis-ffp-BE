@@ -141,6 +141,7 @@ describe('Scenario3 Service', () => {
     asMock(registrationRepository.listAssetDataDetails).mockResolvedValue([]);
 
     await expect(getScenario3OutputService(99)).resolves.toEqual({
+      inputFfpAge: currentAge + 1,
       outputFfpAnnualSpending: 60,
       outputFfpMonthlySpending: 5,
       retirementCashflow: [

@@ -271,6 +271,7 @@ export const getScenario2OutputService = async (userId: number) => {
   });
 
   return {
+    inputFfpAnnualSpending: output.inputFfpAnnualSpending,
     outputFfpAge,
     wealthProjection: buildScenario2WealthProjection({
       currentSavings: context.currentSavings,

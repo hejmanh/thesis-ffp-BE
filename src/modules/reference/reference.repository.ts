@@ -1,6 +1,7 @@
 import { pool } from '@/database/index.js';
 import { execQuery } from '@/database/query.js';
 import type { SortDirection } from '@/utils/pagination.js';
+import type { SupportedLocale } from '@/utils/locale.js';
 import type {
   AlcoholConsumptionTypeDto,
   AssetTypeDto,
@@ -18,6 +19,15 @@ export type PaginationOptions = {
   limit: number;
   offset: number;
 } | null;
+
+const localizedColumn = (
+  tableAlias: string,
+  column: 'name' | 'title' | 'description',
+  locale: SupportedLocale,
+) =>
+  locale === 'vi'
+    ? `COALESCE(${tableAlias}.${column}_vi, ${tableAlias}.${column})`
+    : `${tableAlias}.${column}`;
 
 const applyPagination = (
   sql: string,
@@ -64,6 +74,7 @@ export const listCurrencies = async (
 export const listCountries = async (
   pagination: PaginationOptions,
   sort: SortDirection,
+  locale: SupportedLocale,
 ) => {
   const countRes = await execQuery(
     pool,
@@ -74,7 +85,7 @@ export const listCountries = async (
     SELECT
       c.id,
       c.code,
-      c.name,
+      ${localizedColumn('c', 'name', locale)} AS name,
       c.currency_id AS "currencyId",
       cur.code AS "currencyCode"
     FROM country c
@@ -98,13 +109,14 @@ export const listCountries = async (
 export const listSexTypes = async (
   pagination: PaginationOptions,
   sort: SortDirection,
+  locale: SupportedLocale,
 ) => {
   const countRes = await execQuery(
     pool,
     'SELECT COUNT(*)::int AS count FROM sex_type',
   );
 
-  const baseSql = 'SELECT id, code, title FROM sex_type';
+  const baseSql = `SELECT id, code, ${localizedColumn('sex_type', 'title', locale)} AS title FROM sex_type`;
   const { sql, params } = applyPagination(
     baseSql,
     [],
@@ -122,13 +134,14 @@ export const listSexTypes = async (
 export const listAssetTypes = async (
   pagination: PaginationOptions,
   sort: SortDirection,
+  locale: SupportedLocale,
 ) => {
   const countRes = await execQuery(
     pool,
     'SELECT COUNT(*)::int AS count FROM asset_type',
   );
 
-  const baseSql = 'SELECT id, code, title FROM asset_type';
+  const baseSql = `SELECT id, code, ${localizedColumn('asset_type', 'title', locale)} AS title FROM asset_type`;
   const { sql, params } = applyPagination(
     baseSql,
     [],
@@ -146,13 +159,21 @@ export const listAssetTypes = async (
 export const listScenarioTypes = async (
   pagination: PaginationOptions,
   sort: SortDirection,
+  locale: SupportedLocale,
 ) => {
   const countRes = await execQuery(
     pool,
     'SELECT COUNT(*)::int AS count FROM scenario_type',
   );
 
-  const baseSql = 'SELECT id, no, title, description FROM scenario_type';
+  const baseSql = `
+    SELECT
+      id,
+      no,
+      ${localizedColumn('scenario_type', 'title', locale)} AS title,
+      ${localizedColumn('scenario_type', 'description', locale)} AS description
+    FROM scenario_type
+  `;
   const { sql, params } = applyPagination(
     baseSql,
     [],
@@ -170,6 +191,7 @@ export const listScenarioTypes = async (
 export const listLifeStageRanges = async (
   pagination: PaginationOptions,
   sort: SortDirection,
+  locale: SupportedLocale,
   currentAge?: number,
 ) => {
   const whereParams: unknown[] = [];
@@ -190,7 +212,7 @@ export const listLifeStageRanges = async (
     SELECT
       id,
       stage_no AS "stageNo",
-      title,
+      ${localizedColumn('life_stage_range', 'title', locale)} AS title,
       beginning_age AS "beginningAge",
       ending_age AS "endingAge"
     FROM life_stage_range
@@ -214,6 +236,7 @@ export const listLifeStageRanges = async (
 export const listSmokingTypes = async (
   pagination: PaginationOptions,
   sort: SortDirection,
+  locale: SupportedLocale,
 ) => {
   const countRes = await execQuery(
     pool,
@@ -224,7 +247,7 @@ export const listSmokingTypes = async (
     SELECT
       id,
       code,
-      title,
+      ${localizedColumn('smoking_type', 'title', locale)} AS title,
       adjustment_years AS "adjustmentYears"
     FROM smoking_type
   `;
@@ -246,6 +269,7 @@ export const listSmokingTypes = async (
 export const listPhysicalActivityTypes = async (
   pagination: PaginationOptions,
   sort: SortDirection,
+  locale: SupportedLocale,
 ) => {
   const countRes = await execQuery(
     pool,
@@ -256,7 +280,7 @@ export const listPhysicalActivityTypes = async (
     SELECT
       id,
       code,
-      title,
+      ${localizedColumn('physical_activity_type', 'title', locale)} AS title,
       adjustment_years AS "adjustmentYears"
     FROM physical_activity_type
   `;
@@ -278,6 +302,7 @@ export const listPhysicalActivityTypes = async (
 export const listDietQualityTypes = async (
   pagination: PaginationOptions,
   sort: SortDirection,
+  locale: SupportedLocale,
 ) => {
   const countRes = await execQuery(
     pool,
@@ -288,7 +313,7 @@ export const listDietQualityTypes = async (
     SELECT
       id,
       code,
-      title,
+      ${localizedColumn('diet_quality_type', 'title', locale)} AS title,
       adjustment_years AS "adjustmentYears"
     FROM diet_quality_type
   `;
@@ -310,6 +335,7 @@ export const listDietQualityTypes = async (
 export const listAlcoholConsumptionTypes = async (
   pagination: PaginationOptions,
   sort: SortDirection,
+  locale: SupportedLocale,
 ) => {
   const countRes = await execQuery(
     pool,
@@ -320,7 +346,7 @@ export const listAlcoholConsumptionTypes = async (
     SELECT
       id,
       code,
-      title,
+      ${localizedColumn('alcohol_consumption_type', 'title', locale)} AS title,
       adjustment_years AS "adjustmentYears"
     FROM alcohol_consumption_type
   `;

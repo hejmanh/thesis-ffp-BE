@@ -8,10 +8,10 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "dev": "tsx watch src/server.ts",
+    "dev": "node ./scripts/run-tsx.mjs watch src/server.ts",
     "format": "prettier --write .",
-    "migrate": "tsx src/migrate.ts",
-    "start": "npm run migrate && tsx src/server.ts",
+    "migrate": "node ./scripts/run-tsx.mjs src/migrate.ts",
+    "start": "npm run migrate && node ./scripts/run-tsx.mjs src/server.ts",
     "start-service": "docker compose up --build"
   },
   "repository": {

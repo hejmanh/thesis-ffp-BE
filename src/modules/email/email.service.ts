@@ -21,6 +21,15 @@ type CachedAccessToken = {
   expiresAt: number;
 };
 
+type EmailErrorDetails = {
+  code: string | undefined;
+  responseCode: number | undefined;
+  status: number | undefined;
+  error?: unknown;
+  errorDescription?: unknown;
+  message: string | undefined;
+};
+
 const ACCESS_TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
 let cachedAccessToken: CachedAccessToken | null = null;
 
@@ -129,6 +138,30 @@ const isAuthError = (err: unknown): boolean => {
   );
 };
 
+export const getEmailErrorDetails = (err: unknown): EmailErrorDetails => {
+  const error = err as {
+    code?: string;
+    responseCode?: number;
+    response?: {
+      status?: number;
+      data?: {
+        error?: unknown;
+        error_description?: unknown;
+      };
+    };
+    message?: string;
+  };
+
+  return {
+    code: error.code,
+    responseCode: error.responseCode,
+    status: error.response?.status,
+    error: error.response?.data?.error,
+    errorDescription: error.response?.data?.error_description,
+    message: error.message,
+  };
+};
+
 const sendEmail = async (
   label: string,
   emailConfig: EmailConfig,
@@ -149,22 +182,34 @@ const sendEmail = async (
     return info;
   } catch (err) {
     if (!isAuthError(err)) {
+      console.error(`[Email] ${label} failed`, getEmailErrorDetails(err));
       throw err;
     }
 
-    console.warn(`[Email] ${label} auth failed, retrying with fresh token`);
+    console.warn(
+      `[Email] ${label} auth failed, retrying with fresh token`,
+      getEmailErrorDetails(err),
+    );
     cachedAccessToken = null;
 
-    const transporter = await createTransporter(emailConfig, true);
-    const info = await transporter.sendMail(mailOptions);
+    try {
+      const transporter = await createTransporter(emailConfig, true);
+      const info = await transporter.sendMail(mailOptions);
 
-    if (Array.isArray(info.rejected) && info.rejected.length > 0) {
-      console.warn(`[Email] ${label} rejected by SMTP`, {
-        rejected: info.rejected,
-      });
+      if (Array.isArray(info.rejected) && info.rejected.length > 0) {
+        console.warn(`[Email] ${label} rejected by SMTP`, {
+          rejected: info.rejected,
+        });
+      }
+
+      return info;
+    } catch (retryErr) {
+      console.error(
+        `[Email] ${label} failed after auth retry`,
+        getEmailErrorDetails(retryErr),
+      );
+      throw retryErr;
     }
-
-    return info;
   }
 };
 

@@ -30,10 +30,13 @@ import {
   internal,
 } from '@/utils/error.js';
 import { pool } from '@/database/index.js';
+import { ERROR_CODES } from '@/constants/errorCodes.js';
 
 export const register = async (data: RegisterDto) => {
   const existingUser = await findUserByEmail(data.email);
-  if (existingUser) throw badRequest('Email already exists');
+  if (existingUser) {
+    throw badRequest(ERROR_CODES.AUTH.EMAIL_EXISTS, 'Email already exists');
+  }
 
   const normalizedEmail = normalizeEmail(data.email);
   const hashedPassword = await hashPassword(data.password);
@@ -87,12 +90,24 @@ export const login = async (
   data: LoginRequestDto,
 ): Promise<LoginResponseDto & { refreshToken: string }> => {
   const user = await findUserByEmail(data.email);
-  if (!user) throw unauthorized('Invalid credentials');
+  if (!user) {
+    throw unauthorized(
+      ERROR_CODES.AUTH.INVALID_CREDENTIALS,
+      'Invalid credentials',
+    );
+  }
 
   const match = await comparePassword(data.password, user.hashed_password);
-  if (!match) throw unauthorized('Invalid credentials');
+  if (!match) {
+    throw unauthorized(
+      ERROR_CODES.AUTH.INVALID_CREDENTIALS,
+      'Invalid credentials',
+    );
+  }
 
-  if (!user.is_email_verified) throw forbidden('Email not verified');
+  if (!user.is_email_verified) {
+    throw forbidden(ERROR_CODES.AUTH.EMAIL_NOT_VERIFIED, 'Email not verified');
+  }
 
   const accessToken = generateAccessToken({ userId: user.id });
   const { raw: refreshTokenRaw, hashed: refreshTokenHashed } =
@@ -136,7 +151,12 @@ export const verifyEmail = async (token: string) => {
   );
 
   const record = res.rows[0];
-  if (!record) throw badRequest('Invalid or expired token');
+  if (!record) {
+    throw badRequest(
+      ERROR_CODES.AUTH.INVALID_OR_EXPIRED_TOKEN,
+      'Invalid or expired token',
+    );
+  }
 
   await execQuery(
     pool,
@@ -152,6 +172,52 @@ export const verifyEmail = async (token: string) => {
         WHERE token_hash = $1`,
     [hashedToken],
   );
+};
+
+export const resendVerificationEmail = async (email: string) => {
+  const normalizedEmail = normalizeEmail(email);
+  const user = await findUserByEmail(normalizedEmail);
+
+  if (!user || user.is_email_verified) {
+    return;
+  }
+
+  const { raw: rawToken, hashed: hashedToken } = generateOneTimeToken();
+
+  await withTransaction(async (client) => {
+    await execQuery(
+      client,
+      `UPDATE email_verification_token
+          SET used_at = NOW()
+          WHERE user_account_id = $1 AND used_at IS NULL`,
+      [user.id],
+    );
+
+    await execQuery(
+      client,
+      `INSERT INTO email_verification_token (user_account_id, token_hash, expires_at)
+          VALUES ($1, $2, NOW() + $3::interval)`,
+      [user.id, hashedToken, config.security.emailVerificationExpiresIn],
+    );
+  });
+
+  if (config.nodeEnv !== 'production') {
+    console.log('Email verification token (dev):', rawToken);
+  }
+
+  try {
+    await sendVerificationEmail(normalizedEmail, rawToken);
+  } catch (err) {
+    await execQuery(
+      pool,
+      `UPDATE email_verification_token
+          SET used_at = NOW()
+          WHERE token_hash = $1`,
+      [hashedToken],
+    );
+
+    throw internal('Failed to send verification email');
+  }
 };
 
 export const requestPasswordReset = async (email: string) => {
@@ -210,7 +276,12 @@ export const resetPassword = async (token: string, password: string) => {
     );
 
     const record = res.rows[0];
-    if (!record) throw badRequest('Invalid or expired token');
+    if (!record) {
+      throw badRequest(
+        ERROR_CODES.AUTH.INVALID_OR_EXPIRED_TOKEN,
+        'Invalid or expired token',
+      );
+    }
 
     const hashedPassword = await hashPassword(password);
 
@@ -249,14 +320,22 @@ export const updatePassword = async (
     );
 
     const credential = credentialResult.rows[0];
-    if (!credential) throw unauthorized('Invalid credentials');
+    if (!credential) {
+      throw unauthorized(
+        ERROR_CODES.AUTH.INVALID_CREDENTIALS,
+        'Invalid credentials',
+      );
+    }
 
     const isCurrentPasswordValid = await comparePassword(
       currentPassword,
       credential.hashed_password,
     );
     if (!isCurrentPasswordValid) {
-      throw badRequest('Current password is incorrect');
+      throw badRequest(
+        ERROR_CODES.AUTH.CURRENT_PASSWORD_INCORRECT,
+        'Current password is incorrect',
+      );
     }
 
     const isSamePassword = await comparePassword(
@@ -264,7 +343,10 @@ export const updatePassword = async (
       credential.hashed_password,
     );
     if (isSamePassword) {
-      throw badRequest('New password must be different from current password');
+      throw badRequest(
+        ERROR_CODES.AUTH.NEW_PASSWORD_REUSED,
+        'New password must be different from current password',
+      );
     }
 
     const hashedPassword = await hashPassword(newPassword);
@@ -295,7 +377,12 @@ export const refresh = async (rawToken: string) => {
     );
 
     const token = res.rows[0];
-    if (!token) throw unauthorized('Invalid refresh token');
+    if (!token) {
+      throw unauthorized(
+        ERROR_CODES.AUTH.INVALID_REFRESH_TOKEN,
+        'Invalid refresh token',
+      );
+    }
 
     await execQuery(
       client,

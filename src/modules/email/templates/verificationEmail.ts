@@ -60,7 +60,7 @@ export const buildVerificationEmail = ({
                     <!-- Footer -->
                     <div style="text-align: center; padding: 20px 10px;">
                         <p style="font-size: 12px; color: #94a3b8; margin: 0;">
-                            (c) 2026 Coinfused. All rights reserved.
+                            © 2026 Coinfused. All rights reserved.
                         </p>
                     </div>
 

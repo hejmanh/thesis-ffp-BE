@@ -218,6 +218,7 @@ describe('Scenario2 Service', () => {
     ]);
 
     await expect(getScenario2OutputService(99)).resolves.toEqual({
+      inputFfpAnnualSpending: 80,
       outputFfpAge: 31,
       wealthProjection: [
         { age: 30, wealth: 100, requiredWealth: 160 },

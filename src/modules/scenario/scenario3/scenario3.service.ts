@@ -359,6 +359,7 @@ export const getScenario3OutputService = async (userId: number) => {
   });
 
   return {
+    inputFfpAge: output.inputFfpAge,
     outputFfpAnnualSpending: scenario3Output.availableSpending,
     outputFfpMonthlySpending: scenario3Output.availableSpending / 12,
     retirementCashflow: buildScenario3RetirementCashflow({

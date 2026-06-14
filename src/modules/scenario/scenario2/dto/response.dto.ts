@@ -12,6 +12,7 @@ export type Scenario2WealthProjectionPoint = {
 };
 
 export type Scenario2OutputData = {
+  inputFfpAnnualSpending: number;
   outputFfpAge: number | null;
   wealthProjection: Scenario2WealthProjectionPoint[];
 };

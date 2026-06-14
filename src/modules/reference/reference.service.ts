@@ -1,5 +1,6 @@
 import type { Pagination } from '@/utils/pagination.js';
 import type { SortDirection } from '@/utils/pagination.js';
+import type { SupportedLocale } from '@/utils/locale.js';
 import { buildPaginationMeta } from '@/utils/pagination.js';
 import { adjustFirstBeginningAge } from '@/utils/ffp-model/savings.js';
 import { badRequest } from '@/utils/error.js';
@@ -53,9 +54,10 @@ const getCurrentAge = (birthYear: number) =>
 export const getCurrencies = async (
   pagination: Pagination | null,
   sort: SortDirection,
+  locale: SupportedLocale = 'en',
 ) =>
   withCache(
-    cacheKey('currencies', pagination, sort),
+    cacheKey('currencies', pagination, sort, { locale }),
     CACHE_TTL.STATIC,
     async () => {
       const result = await listCurrencies(
@@ -72,12 +74,17 @@ export const getCurrencies = async (
 export const getCountries = async (
   pagination: Pagination | null,
   sort: SortDirection,
+  locale: SupportedLocale = 'en',
 ) =>
   withCache(
-    cacheKey('countries', pagination, sort),
+    cacheKey('countries', pagination, sort, { locale }),
     CACHE_TTL.STATIC,
     async () => {
-      const result = await listCountries(toPaginationOptions(pagination), sort);
+      const result = await listCountries(
+        toPaginationOptions(pagination),
+        sort,
+        locale,
+      );
       return {
         data: result.rows,
         meta: buildPaginationMeta(result.totalCount, pagination),
@@ -88,12 +95,17 @@ export const getCountries = async (
 export const getSexTypes = async (
   pagination: Pagination | null,
   sort: SortDirection,
+  locale: SupportedLocale = 'en',
 ) =>
   withCache(
-    cacheKey('sexTypes', pagination, sort),
+    cacheKey('sexTypes', pagination, sort, { locale }),
     CACHE_TTL.STATIC,
     async () => {
-      const result = await listSexTypes(toPaginationOptions(pagination), sort);
+      const result = await listSexTypes(
+        toPaginationOptions(pagination),
+        sort,
+        locale,
+      );
       return {
         data: result.rows,
         meta: buildPaginationMeta(result.totalCount, pagination),
@@ -104,14 +116,16 @@ export const getSexTypes = async (
 export const getAssetTypes = async (
   pagination: Pagination | null,
   sort: SortDirection,
+  locale: SupportedLocale = 'en',
 ) =>
   withCache(
-    cacheKey('assetTypes', pagination, sort),
+    cacheKey('assetTypes', pagination, sort, { locale }),
     CACHE_TTL.STATIC,
     async () => {
       const result = await listAssetTypes(
         toPaginationOptions(pagination),
         sort,
+        locale,
       );
       return {
         data: result.rows,
@@ -123,14 +137,16 @@ export const getAssetTypes = async (
 export const getScenarioTypes = async (
   pagination: Pagination | null,
   sort: SortDirection,
+  locale: SupportedLocale = 'en',
 ) =>
   withCache(
-    cacheKey('scenarioTypes', pagination, sort),
+    cacheKey('scenarioTypes', pagination, sort, { locale }),
     CACHE_TTL.STATIC,
     async () => {
       const result = await listScenarioTypes(
         toPaginationOptions(pagination),
         sort,
+        locale,
       );
       return {
         data: result.rows,
@@ -142,14 +158,16 @@ export const getScenarioTypes = async (
 export const getSmokingTypes = async (
   pagination: Pagination | null,
   sort: SortDirection,
+  locale: SupportedLocale = 'en',
 ) =>
   withCache(
-    cacheKey('smokingTypes', pagination, sort),
+    cacheKey('smokingTypes', pagination, sort, { locale }),
     CACHE_TTL.STATIC,
     async () => {
       const result = await listSmokingTypes(
         toPaginationOptions(pagination),
         sort,
+        locale,
       );
       return {
         data: result.rows,
@@ -161,14 +179,16 @@ export const getSmokingTypes = async (
 export const getPhysicalActivityTypes = async (
   pagination: Pagination | null,
   sort: SortDirection,
+  locale: SupportedLocale = 'en',
 ) =>
   withCache(
-    cacheKey('physicalActivityTypes', pagination, sort),
+    cacheKey('physicalActivityTypes', pagination, sort, { locale }),
     CACHE_TTL.STATIC,
     async () => {
       const result = await listPhysicalActivityTypes(
         toPaginationOptions(pagination),
         sort,
+        locale,
       );
       return {
         data: result.rows,
@@ -180,14 +200,16 @@ export const getPhysicalActivityTypes = async (
 export const getDietQualityTypes = async (
   pagination: Pagination | null,
   sort: SortDirection,
+  locale: SupportedLocale = 'en',
 ) =>
   withCache(
-    cacheKey('dietQualityTypes', pagination, sort),
+    cacheKey('dietQualityTypes', pagination, sort, { locale }),
     CACHE_TTL.STATIC,
     async () => {
       const result = await listDietQualityTypes(
         toPaginationOptions(pagination),
         sort,
+        locale,
       );
       return {
         data: result.rows,
@@ -199,14 +221,16 @@ export const getDietQualityTypes = async (
 export const getAlcoholConsumptionTypes = async (
   pagination: Pagination | null,
   sort: SortDirection,
+  locale: SupportedLocale = 'en',
 ) =>
   withCache(
-    cacheKey('alcoholConsumptionTypes', pagination, sort),
+    cacheKey('alcoholConsumptionTypes', pagination, sort, { locale }),
     CACHE_TTL.STATIC,
     async () => {
       const result = await listAlcoholConsumptionTypes(
         toPaginationOptions(pagination),
         sort,
+        locale,
       );
       return {
         data: result.rows,
@@ -218,10 +242,11 @@ export const getAlcoholConsumptionTypes = async (
 export const getLifeStageRanges = async (
   pagination: Pagination | null,
   sort: SortDirection,
+  locale: SupportedLocale = 'en',
   birthYear?: number,
 ) =>
   withCache(
-    cacheKey('lifeStageRanges', pagination, sort, { birthYear }),
+    cacheKey('lifeStageRanges', pagination, sort, { birthYear, locale }),
     CACHE_TTL.DYNAMIC,
     async () => {
       let currentAge: number | undefined = undefined;
@@ -240,6 +265,7 @@ export const getLifeStageRanges = async (
       const result = await listLifeStageRanges(
         toPaginationOptions(pagination),
         sort,
+        locale,
         currentAge,
       );
 

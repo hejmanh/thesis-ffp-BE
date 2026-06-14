@@ -305,6 +305,8 @@ export const getScenario1OutputService = async (userId: number) => {
   });
 
   return {
+    inputFfpAge: input.inputFfpAge,
+    inputFfpAnnualSpending: input.inputFfpAnnualSpending,
     outputIsAchievable: result.achievable,
     requiredWealthAtFFPAge: result.requiredWealth,
     wealthProjection: buildScenario1WealthProjection({
