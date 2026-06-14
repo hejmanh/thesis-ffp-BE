@@ -108,9 +108,6 @@ const getScenarioContext = async (userId: number) => {
   }
 
   const stages = await listStageDataDetails(profile.profileId);
-  if (stages.length === 0) {
-    throw badRequest('Life stages are required');
-  }
 
   return {
     profileId: profile.profileId,
