@@ -61,6 +61,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EmptyResponse'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+        429:
+          $ref: '#/components/responses/AuthRateLimitError'
 
   /auth/login:
     post:
@@ -79,11 +83,20 @@ paths:
             Set-Cookie:
               schema:
                 type: string
-              description: Refresh token cookie
+              description: Refresh token and CSRF token cookies
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+        429:
+          $ref: '#/components/responses/AuthRateLimitError'
+
 
   /auth/forgot-password:
     post:
@@ -102,6 +115,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EmptyResponse'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+        429:
+          $ref: '#/components/responses/PasswordResetRateLimitError'
 
   /auth/reset-password:
     post:
@@ -120,40 +137,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EmptyResponse'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+        429:
+          $ref: '#/components/responses/PasswordResetRateLimitError'
 
-  /auth/refresh:
+  /auth/update-password:
     post:
       tags: [Auth]
-      summary: Refresh access token
+      summary: Update password
+      security:
+        - BearerAuth: []
       parameters:
-        - in: header
-          name: X-CSRF-Token
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: OK
-          headers:
-            Set-Cookie:
-              schema:
-                type: string
-              description: Refresh token cookie
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RefreshResponse'
-
-  /auth/logout:
-    post:
-      tags: [Auth]
-      summary: Logout user
-      parameters:
-        - in: header
-          name: X-CSRF-Token
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/CsrfToken'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePasswordRequest'
       responses:
         200:
           description: OK
@@ -161,6 +163,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EmptyResponse'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+        429:
+          $ref: '#/components/responses/AuthRateLimitError'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        200:
+          description: OK
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Refresh token and CSRF token cookies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout user
+      parameters:
+        - $ref: '#/components/parameters/CsrfToken'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+        403:
+          $ref: '#/components/responses/ForbiddenError'
 
   /auth/verify-email:
     post:
@@ -183,6 +234,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EmptyResponse'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+        429:
+          $ref: '#/components/responses/EmailVerificationRateLimitError'
+
+  /auth/resend-verification-email:
+    post:
+      tags: [Auth]
+      summary: Resend verification email
+      description: Sends a new verification email when the account exists and is not already verified. The response is intentionally generic to avoid revealing registered emails.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendVerificationEmailRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        400:
+          $ref: '#/components/responses/BadRequestError'
+        429:
+          $ref: '#/components/responses/EmailVerificationRateLimitError'
 
   /user-info/financial:
     get:
@@ -771,10 +849,12 @@ paths:
     get:
       tags: [Reference]
       summary: List countries
+      description: Returns localized country names when a supported Accept-Language header is provided.
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/AcceptLanguage'
       responses:
         200:
           description: OK
@@ -787,10 +867,12 @@ paths:
     get:
       tags: [Reference]
       summary: List sex types
+      description: Returns localized titles when a supported Accept-Language header is provided.
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/AcceptLanguage'
       responses:
         200:
           description: OK
@@ -803,10 +885,12 @@ paths:
     get:
       tags: [Reference]
       summary: List asset types
+      description: Returns localized titles when a supported Accept-Language header is provided.
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/AcceptLanguage'
       responses:
         200:
           description: OK
@@ -819,10 +903,12 @@ paths:
     get:
       tags: [Reference]
       summary: List scenario types
+      description: Returns localized titles and descriptions when a supported Accept-Language header is provided.
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/AcceptLanguage'
       responses:
         200:
           description: OK
@@ -835,10 +921,12 @@ paths:
     get:
       tags: [Reference]
       summary: List life stage ranges
+      description: Returns localized titles when a supported Accept-Language header is provided.
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/AcceptLanguage'
         - $ref: '#/components/parameters/BirthYear'
       responses:
         200:
@@ -852,10 +940,12 @@ paths:
     get:
       tags: [Reference]
       summary: List smoking types
+      description: Returns localized titles when a supported Accept-Language header is provided.
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/AcceptLanguage'
       responses:
         200:
           description: OK
@@ -868,10 +958,12 @@ paths:
     get:
       tags: [Reference]
       summary: List physical activity types
+      description: Returns localized titles when a supported Accept-Language header is provided.
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/AcceptLanguage'
       responses:
         200:
           description: OK
@@ -884,10 +976,12 @@ paths:
     get:
       tags: [Reference]
       summary: List diet quality types
+      description: Returns localized titles when a supported Accept-Language header is provided.
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/AcceptLanguage'
       responses:
         200:
           description: OK
@@ -900,10 +994,12 @@ paths:
     get:
       tags: [Reference]
       summary: List alcohol consumption types
+      description: Returns localized titles when a supported Accept-Language header is provided.
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/AcceptLanguage'
       responses:
         200:
           description: OK
@@ -937,11 +1033,62 @@ components:
       schema:
         type: string
         enum: [asc, desc]
+    AcceptLanguage:
+      in: header
+      name: Accept-Language
+      required: false
+      description: Selects localized reference labels. Supported languages are en and vi; language-region tags such as vi-VN are accepted. Unsupported or missing values default to en.
+      schema:
+        type: string
+        example: vi-VN,vi;q=0.9,en;q=0.8
+    CsrfToken:
+      in: header
+      name: X-CSRF-Token
+      required: true
+      schema:
+        type: string
     BirthYear:
       in: query
       name: birthYear
       schema:
         type: integer
+  responses:
+    BadRequestError:
+      description: Bad request or validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    ForbiddenError:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    AuthRateLimitError:
+      description: Too many auth requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    EmailVerificationRateLimitError:
+      description: Too many email verification attempts
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    PasswordResetRateLimitError:
+      description: Too many password reset attempts
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
   schemas:
     PaginationQuery:
       type: object
@@ -965,23 +1112,63 @@ components:
           type: string
     ApiErrorResponse:
       type: object
+      required: [success, code, message]
       properties:
         success:
           type: boolean
           example: false
+        code:
+          $ref: '#/components/schemas/ErrorCode'
         message:
           type: string
+          example: Validation error
         errors:
           type: array
           items:
             $ref: '#/components/schemas/ErrorDetail'
+        stack:
+          type: string
+          description: Included only in development responses.
+    ErrorCode:
+      type: string
+      description: Machine-readable error code.
+      enum:
+        - VALIDATION.INVALID_INPUT
+        - VALIDATION.FIELD_INVALID
+        - VALIDATION.INVALID_JSON
+        - VALIDATION.BAD_REQUEST
+        - AUTH.UNAUTHORIZED
+        - AUTH.FORBIDDEN
+        - AUTH.NO_TOKEN
+        - AUTH.INVALID_TOKEN
+        - AUTH.INVALID_CSRF_TOKEN
+        - AUTH.MISSING_REFRESH_TOKEN
+        - AUTH.EMAIL_EXISTS
+        - AUTH.INVALID_CREDENTIALS
+        - AUTH.EMAIL_NOT_VERIFIED
+        - AUTH.INVALID_OR_EXPIRED_TOKEN
+        - AUTH.CURRENT_PASSWORD_INCORRECT
+        - AUTH.NEW_PASSWORD_REUSED
+        - AUTH.INVALID_REFRESH_TOKEN
+        - RATE_LIMIT.AUTH
+        - RATE_LIMIT.EMAIL_VERIFICATION
+        - RATE_LIMIT.PASSWORD_RESET
+        - SYSTEM.ROUTE_NOT_FOUND
+        - SYSTEM.NOT_FOUND
+        - SYSTEM.ERROR
+        - SYSTEM.INTERNAL_ERROR
+        - SYSTEM.UNKNOWN
     ErrorDetail:
       type: object
       properties:
         path:
           type: string
+          example: password
+        code:
+          $ref: '#/components/schemas/ErrorCode'
         message:
           type: string
+          example: Password must be at least 8 characters
     HealthResponse:
       allOf:
         - $ref: '#/components/schemas/ApiResponseBase'
@@ -1070,6 +1257,13 @@ components:
         email:
           type: string
           format: email
+    ResendVerificationEmailRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
     ResetPasswordRequest:
       type: object
       required: [token, password]
@@ -1079,6 +1273,21 @@ components:
         password:
           type: string
           format: password
+          minLength: 8
+          maxLength: 100
+    UpdatePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+          format: password
+          minLength: 1
+        newPassword:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 100
     FinancialProfileRequest:
       type: object
       required: [desiredLifeExpectancy, currentSavings, currencyId]
@@ -1470,6 +1679,7 @@ components:
           nullable: true
         name:
           type: string
+          description: Localized by Accept-Language when available.
           nullable: true
         currencyId:
           type: integer
@@ -1487,6 +1697,7 @@ components:
           nullable: true
         title:
           type: string
+          description: Localized by Accept-Language when available.
           nullable: true
     AssetType:
       type: object
@@ -1498,6 +1709,7 @@ components:
           nullable: true
         title:
           type: string
+          description: Localized by Accept-Language when available.
           nullable: true
     ScenarioType:
       type: object
@@ -1508,8 +1720,10 @@ components:
           type: integer
         title:
           type: string
+          description: Localized by Accept-Language when available.
         description:
           type: string
+          description: Localized by Accept-Language when available.
           nullable: true
     LifeStageRange:
       type: object
@@ -1521,6 +1735,7 @@ components:
           nullable: true
         title:
           type: string
+          description: Localized by Accept-Language when available.
         beginningAge:
           type: integer
           nullable: true
@@ -1537,6 +1752,7 @@ components:
           nullable: true
         title:
           type: string
+          description: Localized by Accept-Language when available.
           nullable: true
         adjustmentYears:
           type: number
@@ -1551,6 +1767,7 @@ components:
           nullable: true
         title:
           type: string
+          description: Localized by Accept-Language when available.
           nullable: true
         adjustmentYears:
           type: number
@@ -1565,6 +1782,7 @@ components:
           nullable: true
         title:
           type: string
+          description: Localized by Accept-Language when available.
           nullable: true
         adjustmentYears:
           type: number
@@ -1579,6 +1797,7 @@ components:
           nullable: true
         title:
           type: string
+          description: Localized by Accept-Language when available.
           nullable: true
         adjustmentYears:
           type: number
@@ -1650,6 +1869,10 @@ components:
             data:
               type: object
               properties:
+                inputFfpAge:
+                  type: integer
+                inputFfpAnnualSpending:
+                  type: number
                 outputIsAchievable:
                   type: boolean
                 requiredWealthAtFFPAge:
@@ -1691,6 +1914,8 @@ components:
             data:
               type: object
               properties:
+                inputFfpAnnualSpending:
+                  type: number
                 outputFfpAge:
                   type: integer
                   nullable: true
@@ -1733,6 +1958,8 @@ components:
             data:
               type: object
               properties:
+                inputFfpAge:
+                  type: integer
                 outputFfpAnnualSpending:
                   type: number
                 outputFfpMonthlySpending:
@@ -1790,6 +2017,8 @@ components:
                   type: number
                 ffpAge:
                   type: integer
+                inputFfpAnnualSpending:
+                  type: number
                 requiredWealthAtFFPAge:
                   type: number
     CurrencyListResponse:

@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as authService from './auth.service.js';
 import { execQuery } from '@/database/query.js';
-import { sendPasswordResetEmail } from '@/modules/email/email.service.js';
+import {
+  sendPasswordResetEmail,
+  sendVerificationEmail,
+} from '@/modules/email/email.service.js';
 import { generateOneTimeToken } from '@/utils/auth/token.js';
 import { withTransaction } from '@/database/transaction.js';
 import { hashPassword } from '@/utils/auth/hash.js';
@@ -101,6 +104,94 @@ describe('Auth Service - requestPasswordReset', () => {
     );
 
     expect(markUsedCall).toBeTruthy();
+  });
+});
+
+describe('Auth Service - resendVerificationEmail', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('does not reveal missing accounts', async () => {
+    const execQueryMock = asMock(execQuery);
+    execQueryMock.mockResolvedValue({ rows: [] });
+
+    await expect(
+      authService.resendVerificationEmail('missing@example.com'),
+    ).resolves.toBeUndefined();
+
+    expect(sendVerificationEmail).not.toHaveBeenCalled();
+  });
+
+  it('does not send when the email is already verified', async () => {
+    const execQueryMock = asMock(execQuery);
+    execQueryMock.mockResolvedValue({
+      rows: [
+        {
+          id: 10,
+          uid: 'user-uid',
+          last_login_at: null,
+          email: 'verified@example.com',
+          hashed_password: 'hash',
+          is_email_verified: true,
+        },
+      ],
+    });
+
+    await expect(
+      authService.resendVerificationEmail('verified@example.com'),
+    ).resolves.toBeUndefined();
+
+    expect(sendVerificationEmail).not.toHaveBeenCalled();
+  });
+
+  it('invalidates old tokens and sends a new verification email', async () => {
+    const execQueryMock = asMock(execQuery);
+    execQueryMock.mockImplementation((_client, query) => {
+      if (query.includes('FROM user_account')) {
+        return Promise.resolve({
+          rows: [
+            {
+              id: 10,
+              uid: 'user-uid',
+              last_login_at: null,
+              email: 'user@example.com',
+              hashed_password: 'hash',
+              is_email_verified: false,
+            },
+          ],
+        });
+      }
+
+      return Promise.resolve({ rows: [] });
+    });
+
+    asMock(withTransaction).mockImplementation(async (callback) =>
+      callback({} as any),
+    );
+    asMock(generateOneTimeToken).mockReturnValue({
+      raw: 'raw-token',
+      hashed: 'hashed-token',
+    });
+    asMock(sendVerificationEmail).mockResolvedValue(undefined);
+
+    await expect(
+      authService.resendVerificationEmail('USER@example.com'),
+    ).resolves.toBeUndefined();
+
+    const invalidateCall = execQueryMock.mock.calls.find((call) =>
+      (call[1] as string).includes('UPDATE email_verification_token'),
+    );
+    const insertCall = execQueryMock.mock.calls.find((call) =>
+      (call[1] as string).includes('INSERT INTO email_verification_token'),
+    );
+
+    expect(invalidateCall).toBeTruthy();
+    expect(insertCall).toBeTruthy();
+    expect(sendVerificationEmail).toHaveBeenCalledWith(
+      'user@example.com',
+      'raw-token',
+    );
   });
 });
 

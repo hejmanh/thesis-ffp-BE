@@ -4,6 +4,8 @@ export type RegisterResponseDto = ApiEmptyResponse;
 
 export type VerifyEmailResponseDto = ApiEmptyResponse;
 
+export type ResendVerificationEmailResponseDto = ApiEmptyResponse;
+
 export type ForgotPasswordResponseDto = ApiEmptyResponse;
 
 export type ResetPasswordResponseDto = ApiEmptyResponse;

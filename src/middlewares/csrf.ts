@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
 import { forbidden } from '@/utils/error.js';
+import { ERROR_CODES } from '@/constants/errorCodes.js';
 
 export const createCsrfToken = (): string =>
   crypto.randomBytes(32).toString('hex');
@@ -19,7 +20,9 @@ export const csrfProtection = (
     typeof headerToken !== 'string' ||
     headerToken !== cookieToken
   ) {
-    return next(forbidden('Invalid CSRF token'));
+    return next(
+      forbidden(ERROR_CODES.AUTH.INVALID_CSRF_TOKEN, 'Invalid CSRF token'),
+    );
   }
 
   next();

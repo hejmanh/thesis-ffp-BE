@@ -9,6 +9,7 @@ export type Scenario4InputData = {
 export type Scenario4OutputData = {
   requiredAnnualSaving: number;
   ffpAge: number;
+  inputFfpAnnualSpending: number;
   requiredWealthAtFFPAge: number;
 };
 

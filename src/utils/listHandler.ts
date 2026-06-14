@@ -9,6 +9,7 @@ import type {
 import { parsePaginationParams, parseSortParam } from '@/utils/pagination.js';
 import type { ApiResponse } from '@/types/api-response.js';
 import { z, type ZodTypeAny } from 'zod';
+import { pickSupportedLocale, type SupportedLocale } from '@/utils/locale.js';
 
 type ListResult<T> = {
   data: T[];
@@ -25,13 +26,15 @@ export const listHandler = <T, Schema extends ZodTypeAny>(
     pagination: Pagination | null,
     sort: SortDirection,
     query: z.infer<Schema>,
+    locale: SupportedLocale,
   ) => Promise<ListResult<T>>,
 ) =>
   asyncHandler(async (req: Request, res: Response<ApiListResponse<T>>) => {
     const query = schema.parse(req.query);
     const pagination = parsePaginationParams(query as PaginationParams);
     const sort = parseSortParam(query as PaginationParams);
-    const result = await handler(pagination, sort, query);
+    const locale = pickSupportedLocale(req.get('accept-language'));
+    const result = await handler(pagination, sort, query, locale);
 
     res.json({
       success: true,

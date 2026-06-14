@@ -105,11 +105,17 @@ describe('Reference Service', () => {
       totalCount: 2,
     });
 
-    const result = await referenceService.getLifeStageRanges(null, 'asc', 2000);
+    const result = await referenceService.getLifeStageRanges(
+      null,
+      'asc',
+      'en',
+      2000,
+    );
 
     expect(referenceRepository.listLifeStageRanges).toHaveBeenCalledWith(
       null,
       'asc',
+      'en',
       26,
     );
     expect(result.data).toHaveLength(2);
@@ -122,7 +128,7 @@ describe('Reference Service', () => {
     vi.setSystemTime(new Date('2026-05-07T00:00:00Z'));
 
     await expect(
-      referenceService.getLifeStageRanges(null, 'asc', 2027),
+      referenceService.getLifeStageRanges(null, 'asc', 'en', 2027),
     ).rejects.toBeInstanceOf(AppError);
   });
 });

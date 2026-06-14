@@ -3,10 +3,12 @@ import {
   authLimiter,
   emailVerificationLimiter,
   passwordResetLimiter,
+  resendVerificationEmailLimiter,
 } from '@/middlewares/rateLimiters.js';
 import {
   registerHandler,
   verifyEmailHandler,
+  resendVerificationEmailHandler,
   loginHandler,
   forgotPasswordHandler,
   resetPasswordHandler,
@@ -35,5 +37,10 @@ router.post(
 router.post('/refresh', csrfProtection, refreshHandler);
 router.post('/logout', csrfProtection, logoutHandler);
 router.post('/verify-email', emailVerificationLimiter, verifyEmailHandler); // rate limit by ip
+router.post(
+  '/resend-verification-email',
+  resendVerificationEmailLimiter,
+  resendVerificationEmailHandler,
+); // rate limit by email
 
 export default router;
