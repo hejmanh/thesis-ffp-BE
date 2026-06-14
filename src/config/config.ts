@@ -9,6 +9,7 @@ interface Config {
   jwt: JwtConfig;
   security: SecurityConfig;
   redis: RedisConfig;
+  email: EmailConfig;
 }
 
 interface DatabaseConfig {
@@ -47,6 +48,15 @@ interface CorsConfig {
 interface RedisConfig {
   redisUrl: string;
   enabled: boolean;
+}
+
+interface EmailConfig {
+  googleEmail: string | undefined;
+  googleClientId: string | undefined;
+  googleClientSecret: string | undefined;
+  googleRefreshToken: string | undefined;
+  googleRedirectUri: string | undefined;
+  frontendUrl: string | undefined;
 }
 
 const requireEnv = (key: string) => {
@@ -131,6 +141,25 @@ const config: Config = {
   redis: {
     redisUrl,
     enabled: redisEnabled,
+  },
+
+  email: {
+    googleEmail: isProd
+      ? requireEnv('GOOGLE_EMAIL')
+      : process.env.GOOGLE_EMAIL,
+    googleClientId: isProd
+      ? requireEnv('GOOGLE_CLIENT_ID')
+      : process.env.GOOGLE_CLIENT_ID,
+    googleClientSecret: isProd
+      ? requireEnv('GOOGLE_CLIENT_SECRET')
+      : process.env.GOOGLE_CLIENT_SECRET,
+    googleRefreshToken: isProd
+      ? requireEnv('GOOGLE_REFRESH_TOKEN')
+      : process.env.GOOGLE_REFRESH_TOKEN,
+    googleRedirectUri: isProd
+      ? requireEnv('GOOGLE_REDIRECT_URI')
+      : process.env.GOOGLE_REDIRECT_URI,
+    frontendUrl: isProd ? requireEnv('FRONTEND_URL') : process.env.FRONTEND_URL,
   },
 };
 

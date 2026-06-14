@@ -1,6 +1,7 @@
 import app from '@/app.js';
 import config from '@/config/config.js';
 import { checkDBConnection } from '@/utils/checkDB.js';
+import { warnMissingEmailEnv } from '@/utils/warnMissingEmailEnv.js';
 import { redisClient } from '@/modules/cache/redis.js';
 import { warmCache } from '@/modules/cache/warmCache.js';
 
@@ -19,6 +20,8 @@ function startServer(): Promise<void> {
 }
 
 async function start() {
+  warnMissingEmailEnv();
+
   try {
     await checkDBConnection();
   } catch (error) {
