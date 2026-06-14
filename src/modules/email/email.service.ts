@@ -34,14 +34,23 @@ const ACCESS_TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
 let cachedAccessToken: CachedAccessToken | null = null;
 
 const getEmailConfig = (): EmailConfig => {
-  const user = process.env.GOOGLE_EMAIL;
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
-  const frontendUrl = process.env.FRONTEND_URL;
+  const {
+    googleEmail: user,
+    googleClientId: clientId,
+    googleClientSecret: clientSecret,
+    googleRefreshToken: refreshToken,
+    googleRedirectUri: redirectUri,
+    frontendUrl,
+  } = config.email;
 
-  if (!user || !clientId || !clientSecret || !refreshToken || !frontendUrl) {
+  if (
+    !user ||
+    !clientId ||
+    !clientSecret ||
+    !refreshToken ||
+    !redirectUri ||
+    !frontendUrl
+  ) {
     throw internal('Email service not configured');
   }
 
