@@ -58,8 +58,8 @@ const baseContextMocks = () => {
   asMock(
     registrationRepository.listPortfolioAllocationDetails,
   ).mockResolvedValue([
-    { allocationType: 'PRE_FFP', u: 0, mu: 0, rf: 0 },
-    { allocationType: 'POST_FFP', u: 0, mu: 0, rf: 0 },
+    { allocationType: 'PRE_FFP', u: 0, mu: 0, rf: 0, sigma: 0 },
+    { allocationType: 'POST_FFP', u: 0, mu: 0, rf: 0, sigma: 0 },
   ]);
 };
 

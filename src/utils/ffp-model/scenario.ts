@@ -2,7 +2,10 @@ import type {
   LifeStage,
   PassiveIncomeAsset,
 } from '@/types/ffp-model/financial.js';
-import { calculatePortfolioReturn } from './portfolio.js';
+import {
+  calculatePortfolioReturn,
+  calculatePortfolioVolatility,
+} from './portfolio.js';
 import { calculateTotalPassiveIncome } from './passiveIncome.js';
 import { calculateSavingAtAge } from './savings.js';
 import {
@@ -13,18 +16,30 @@ import { calculateWealthAfterFFP, calculateWealthBeforeFFP } from './wealth.js';
 
 export type Scenario1WealthProjectionPoint = {
   age: number;
-  wealth: number;
+  wealthLow: number;
+  wealthExpected: number;
+  wealthHigh: number;
 };
 
 export type Scenario2WealthProjectionPoint = {
   age: number;
-  wealth: number;
+  wealthLow: number;
+  wealthExpected: number;
+  wealthHigh: number;
   requiredWealth: number;
+};
+
+export type Scenario2FfpAgeRange = {
+  low: number | null;
+  expected: number | null;
+  high: number | null;
 };
 
 export type Scenario3RetirementCashflowPoint = {
   age: number;
-  wealth: number;
+  wealthLow: number;
+  wealthExpected: number;
+  wealthHigh: number;
 };
 
 export function canReachFFPGoal(
@@ -45,8 +60,10 @@ export function runScenario1({
   u_post,
   mu_pre,
   r_f_pre,
+  sigma_pre = 0,
   mu_post,
   r_f_post,
+  sigma_post = 0,
 }: {
   currentSavings: number;
   currentAge: number;
@@ -58,11 +75,23 @@ export function runScenario1({
   u_post: number;
   mu_pre: number;
   r_f_pre: number;
+  sigma_pre?: number;
   mu_post: number;
   r_f_post: number;
+  sigma_post?: number;
 }) {
   // Pre-FFP: wealth accumulation with higher risk tolerance
   const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu_pre, r_f_pre);
+  const portfolioVolatilityPre = calculatePortfolioVolatility(
+    u_pre,
+    sigma_pre,
+  );
+  const lowReturnPre = portfolioReturnPre - portfolioVolatilityPre;
+  const highReturnPre = portfolioReturnPre + portfolioVolatilityPre;
+
+  if (lowReturnPre <= -1) {
+    throw new Error('Pre-FFP low return must be greater than -100%');
+  }
 
   const wealthAtFFP = calculateWealthBeforeFFP(
     currentSavings,
@@ -71,6 +100,20 @@ export function runScenario1({
     stages,
     portfolioReturnPre,
   );
+  const wealthAtFFPLow = calculateWealthBeforeFFP(
+    currentSavings,
+    currentAge,
+    ffpAge,
+    stages,
+    lowReturnPre,
+  );
+  const wealthAtFFPHigh = calculateWealthBeforeFFP(
+    currentSavings,
+    currentAge,
+    ffpAge,
+    stages,
+    highReturnPre,
+  );
 
   // Post-FFP: required wealth with more conservative allocation
   const portfolioReturnPost = calculatePortfolioReturn(
@@ -78,6 +121,14 @@ export function runScenario1({
     mu_post,
     r_f_post,
   );
+  const portfolioVolatilityPost = calculatePortfolioVolatility(
+    u_post,
+    sigma_post,
+  );
+  const lowReturnPost = portfolioReturnPost - portfolioVolatilityPost;
+  if (lowReturnPost <= -1) {
+    throw new Error('Post-FFP low return must be greater than -100%');
+  }
 
   const requiredWealth = calculateRequiredWealth(
     annualSpending,
@@ -87,8 +138,12 @@ export function runScenario1({
 
   return {
     wealthAtFFP,
+    wealthAtFFPLow,
+    wealthAtFFPHigh,
     requiredWealth,
     achievable: wealthAtFFP >= requiredWealth,
+    conservativeAchievable: wealthAtFFPLow >= requiredWealth,
+    optimisticAchievable: wealthAtFFPHigh >= requiredWealth,
   };
 }
 
@@ -162,11 +217,55 @@ export function estimateFFPAge({
   return null;
 }
 
+export function estimateFFPAgeRange({
+  sigma_pre = 0,
+  ...input
+}: Parameters<typeof estimateFFPAge>[0] & {
+  sigma_pre?: number;
+}): Scenario2FfpAgeRange {
+  const portfolioVolatilityPre = calculatePortfolioVolatility(
+    input.u_pre,
+    sigma_pre,
+  );
+  const expectedPortfolioReturn = calculatePortfolioReturn(
+    input.u_pre,
+    input.mu_pre,
+    input.r_f_pre,
+  );
+  const lowPortfolioReturn = expectedPortfolioReturn - portfolioVolatilityPre;
+
+  if (lowPortfolioReturn <= -1) {
+    throw new Error('Pre-FFP low return must be greater than -100%');
+  }
+
+  const estimateForReturn = (portfolioReturnPre: number) => {
+    const adjustedMu =
+      input.u_pre === 0
+        ? input.mu_pre
+        : (portfolioReturnPre - (1 - input.u_pre) * input.r_f_pre) /
+          input.u_pre;
+
+    return estimateFFPAge({
+      ...input,
+      mu_pre: adjustedMu,
+    });
+  };
+
+  return {
+    low: estimateForReturn(lowPortfolioReturn),
+    expected: estimateForReturn(expectedPortfolioReturn),
+    high: estimateForReturn(
+      expectedPortfolioReturn + portfolioVolatilityPre,
+    ),
+  };
+}
+
 export function runScenario3({
   wealthAtFFP,
   u_post,
   mu,
   r_f,
+  sigma_post = 0,
   retirementDuration,
   assets,
 }: {
@@ -174,24 +273,49 @@ export function runScenario3({
   u_post: number;
   mu: number;
   r_f: number;
+  sigma_post?: number;
   retirementDuration: number;
   assets: PassiveIncomeAsset[];
 }) {
   // Post-FFP portfolio return (conservative allocation)
   const portfolioReturnPost = calculatePortfolioReturn(u_post, mu, r_f);
+  const portfolioVolatilityPost = calculatePortfolioVolatility(
+    u_post,
+    sigma_post,
+  );
+  const lowReturnPost = portfolioReturnPost - portfolioVolatilityPost;
+  const highReturnPost = portfolioReturnPost + portfolioVolatilityPost;
+
+  if (lowReturnPost <= -1) {
+    throw new Error('Post-FFP low return must be greater than -100%');
+  }
 
   const passiveIncome = calculateTotalPassiveIncome(assets, 0);
 
+  const availableSpendingLow = calculateAvailableSpending(
+    wealthAtFFP,
+    lowReturnPost,
+    retirementDuration,
+    passiveIncome,
+  );
   const availableSpending = calculateAvailableSpending(
     wealthAtFFP,
     portfolioReturnPost,
     retirementDuration,
     passiveIncome,
   );
+  const availableSpendingHigh = calculateAvailableSpending(
+    wealthAtFFP,
+    highReturnPost,
+    retirementDuration,
+    passiveIncome,
+  );
 
   return {
     passiveIncome,
+    availableSpendingLow,
     availableSpending,
+    availableSpendingHigh,
   };
 }
 
@@ -203,6 +327,7 @@ export function buildScenario1WealthProjection({
   u_pre,
   mu_pre,
   r_f_pre,
+  sigma_pre = 0,
 }: {
   currentSavings: number;
   currentAge: number;
@@ -211,24 +336,44 @@ export function buildScenario1WealthProjection({
   u_pre: number;
   mu_pre: number;
   r_f_pre: number;
+  sigma_pre?: number;
 }): Scenario1WealthProjectionPoint[] {
   const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu_pre, r_f_pre);
+  const portfolioVolatilityPre = calculatePortfolioVolatility(
+    u_pre,
+    sigma_pre,
+  );
+  const lowReturn = portfolioReturnPre - portfolioVolatilityPre;
+  const highReturn = portfolioReturnPre + portfolioVolatilityPre;
+
+  if (lowReturn <= -1) {
+    throw new Error('Pre-FFP low return must be greater than -100%');
+  }
+
   const projection: Scenario1WealthProjectionPoint[] = [
     {
       age: currentAge,
-      wealth: currentSavings,
+      wealthLow: currentSavings,
+      wealthExpected: currentSavings,
+      wealthHigh: currentSavings,
     },
   ];
 
-  let wealth = currentSavings;
+  let wealthLow = currentSavings;
+  let wealthExpected = currentSavings;
+  let wealthHigh = currentSavings;
 
   for (let age = currentAge; age < ffpAge; age++) {
-    wealth =
-      wealth * (1 + portfolioReturnPre) + calculateSavingAtAge(age, stages);
+    const saving = calculateSavingAtAge(age, stages);
+    wealthLow = wealthLow * (1 + lowReturn) + saving;
+    wealthExpected = wealthExpected * (1 + portfolioReturnPre) + saving;
+    wealthHigh = wealthHigh * (1 + highReturn) + saving;
 
     projection.push({
       age: age + 1,
-      wealth,
+      wealthLow,
+      wealthExpected,
+      wealthHigh,
     });
   }
 
@@ -239,47 +384,77 @@ export function buildScenario2WealthProjection({
   currentSavings,
   currentAge,
   lifeExpectancy,
-  outputFfpAge,
+  outputFfpAgeLow,
   stages,
   annualSpending,
   u_pre,
   u_post,
   mu_pre,
   r_f_pre,
+  sigma_pre = 0,
   mu_post,
   r_f_post,
 }: {
   currentSavings: number;
   currentAge: number;
   lifeExpectancy: number;
-  outputFfpAge: number | null;
+  outputFfpAgeLow: number | null;
   stages: LifeStage[];
   annualSpending: number;
   u_pre: number;
   u_post: number;
   mu_pre: number;
   r_f_pre: number;
+  sigma_pre?: number;
   mu_post: number;
   r_f_post: number;
 }): Scenario2WealthProjectionPoint[] {
   const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu_pre, r_f_pre);
+  const portfolioVolatilityPre = calculatePortfolioVolatility(
+    u_pre,
+    sigma_pre,
+  );
+  const lowReturnPre = portfolioReturnPre - portfolioVolatilityPre;
+  const highReturnPre = portfolioReturnPre + portfolioVolatilityPre;
+
+  if (lowReturnPre <= -1) {
+    throw new Error('Pre-FFP low return must be greater than -100%');
+  }
   const portfolioReturnPost = calculatePortfolioReturn(
     u_post,
     mu_post,
     r_f_post,
   );
-  const projectionEndAge = outputFfpAge ?? lifeExpectancy;
+  const lastValidFfpAge = lifeExpectancy - 1;
+  const projectionEndAge = Math.min(
+    outputFfpAgeLow ?? lastValidFfpAge,
+    lastValidFfpAge,
+  );
   const projection: Scenario2WealthProjectionPoint[] = [];
 
   for (let age = currentAge; age <= projectionEndAge; age++) {
     projection.push({
       age,
-      wealth: calculateWealthBeforeFFP(
+      wealthLow: calculateWealthBeforeFFP(
+        currentSavings,
+        currentAge,
+        age,
+        stages,
+        lowReturnPre,
+      ),
+      wealthExpected: calculateWealthBeforeFFP(
         currentSavings,
         currentAge,
         age,
         stages,
         portfolioReturnPre,
+      ),
+      wealthHigh: calculateWealthBeforeFFP(
+        currentSavings,
+        currentAge,
+        age,
+        stages,
+        highReturnPre,
       ),
       requiredWealth: calculateRequiredWealth(
         annualSpending,
@@ -300,6 +475,7 @@ export function buildScenario3RetirementCashflow({
   u_post,
   mu,
   r_f,
+  sigma_post = 0,
   assets,
 }: {
   wealthAtFFP: number;
@@ -309,32 +485,67 @@ export function buildScenario3RetirementCashflow({
   u_post: number;
   mu: number;
   r_f: number;
+  sigma_post?: number;
   assets: PassiveIncomeAsset[];
 }): Scenario3RetirementCashflowPoint[] {
   const portfolioReturnPost = calculatePortfolioReturn(u_post, mu, r_f);
+  const portfolioVolatilityPost = calculatePortfolioVolatility(
+    u_post,
+    sigma_post,
+  );
+  const lowReturnPost = portfolioReturnPost - portfolioVolatilityPost;
+  const highReturnPost = portfolioReturnPost + portfolioVolatilityPost;
+
+  if (lowReturnPost <= -1) {
+    throw new Error('Post-FFP low return must be greater than -100%');
+  }
+
   const cashflow: Scenario3RetirementCashflowPoint[] = [
     {
       age: ffpAge,
-      wealth: wealthAtFFP,
+      wealthLow: wealthAtFFP,
+      wealthExpected: wealthAtFFP,
+      wealthHigh: wealthAtFFP,
     },
   ];
 
-  let wealth = wealthAtFFP;
+  let wealthLow = wealthAtFFP;
+  let wealthExpected = wealthAtFFP;
+  let wealthHigh = wealthAtFFP;
+
+  const normalizeWealth = (wealth: number) =>
+    Math.abs(wealth) < 1e-9 ? 0 : wealth;
 
   for (let age = ffpAge; age < lifeExpectancy; age++) {
     const yearsAfterFFP = age - ffpAge;
     const passiveIncome = calculateTotalPassiveIncome(assets, yearsAfterFFP);
-    wealth = calculateWealthAfterFFP(
-      wealth,
+    wealthLow = calculateWealthAfterFFP(
+      wealthLow,
+      annualSpending,
+      passiveIncome,
+      lowReturnPost,
+      1,
+    );
+    wealthExpected = calculateWealthAfterFFP(
+      wealthExpected,
       annualSpending,
       passiveIncome,
       portfolioReturnPost,
       1,
     );
+    wealthHigh = calculateWealthAfterFFP(
+      wealthHigh,
+      annualSpending,
+      passiveIncome,
+      highReturnPost,
+      1,
+    );
 
     cashflow.push({
       age: age + 1,
-      wealth: Math.abs(wealth) < 1e-9 ? 0 : wealth,
+      wealthLow: normalizeWealth(wealthLow),
+      wealthExpected: normalizeWealth(wealthExpected),
+      wealthHigh: normalizeWealth(wealthHigh),
     });
   }
 

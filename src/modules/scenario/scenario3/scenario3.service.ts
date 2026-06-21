@@ -155,6 +155,7 @@ const getScenarioContext = async (userId: number) => {
       rFPre: pre.rf,
       muPost: post.mu,
       rFPost: post.rf,
+      sigmaPost: post.sigma ?? 0,
     },
   };
 };
@@ -240,6 +241,7 @@ const upsertScenario3Input = async (
     u_post: context.portfolio.uPost,
     mu: context.portfolio.muPost,
     r_f: context.portfolio.rFPost,
+    sigma_post: context.portfolio.sigmaPost,
     retirementDuration,
     assets,
   });
@@ -354,14 +356,19 @@ export const getScenario3OutputService = async (userId: number) => {
     u_post: context.portfolio.uPost,
     mu: context.portfolio.muPost,
     r_f: context.portfolio.rFPost,
+    sigma_post: context.portfolio.sigmaPost,
     retirementDuration,
     assets,
   });
 
   return {
     inputFfpAge: output.inputFfpAge,
+    outputFfpAnnualSpendingLow: scenario3Output.availableSpendingLow,
     outputFfpAnnualSpending: scenario3Output.availableSpending,
+    outputFfpAnnualSpendingHigh: scenario3Output.availableSpendingHigh,
+    outputFfpMonthlySpendingLow: scenario3Output.availableSpendingLow / 12,
     outputFfpMonthlySpending: scenario3Output.availableSpending / 12,
+    outputFfpMonthlySpendingHigh: scenario3Output.availableSpendingHigh / 12,
     retirementCashflow: buildScenario3RetirementCashflow({
       wealthAtFFP,
       annualSpending: scenario3Output.availableSpending,
@@ -370,6 +377,7 @@ export const getScenario3OutputService = async (userId: number) => {
       u_post: context.portfolio.uPost,
       mu: context.portfolio.muPost,
       r_f: context.portfolio.rFPost,
+      sigma_post: context.portfolio.sigmaPost,
       assets,
     }),
   };
