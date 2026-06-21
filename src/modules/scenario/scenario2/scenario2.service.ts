@@ -9,7 +9,7 @@ import {
 import { calculateCurrentAge } from '@/utils/ffp-model/lifeExpectancy.js';
 import {
   buildScenario2WealthProjection,
-  estimateFFPAge,
+  estimateFFPAgeRange,
 } from '@/utils/ffp-model/scenario.js';
 import type { LifeStage } from '@/types/ffp-model/financial.js';
 import type { Scenario2InputDto } from './dto/input.dto.js';
@@ -119,6 +119,7 @@ const getScenarioContext = async (userId: number) => {
       uPost: post.u,
       muPre: pre.mu,
       rFPre: pre.rf,
+      sigmaPre: pre.sigma ?? 0,
       muPost: post.mu,
       rFPost: post.rf,
     },
@@ -169,7 +170,7 @@ const upsertScenario2Input = async (
 
   const stages = toLifeStages(context.stages, lifeExpectancy);
 
-  const outputFfpAge = estimateFFPAge({
+  const outputFfpAges = estimateFFPAgeRange({
     currentSavings: context.currentSavings,
     currentAge: context.currentAge,
     lifeExpectancy,
@@ -179,6 +180,7 @@ const upsertScenario2Input = async (
     u_post: context.portfolio.uPost,
     mu_pre: context.portfolio.muPre,
     r_f_pre: context.portfolio.rFPre,
+    sigma_pre: context.portfolio.sigmaPre,
     mu_post: context.portfolio.muPost,
     r_f_post: context.portfolio.rFPost,
   });
@@ -189,7 +191,7 @@ const upsertScenario2Input = async (
       scenarioTypeId,
       lifeExpectancy,
       payload.inputFfpAnnualSpending,
-      outputFfpAge,
+      outputFfpAges.expected,
       client,
     );
   });
@@ -253,7 +255,7 @@ export const getScenario2OutputService = async (userId: number) => {
   }
 
   const stages = toLifeStages(context.stages, output.lifeExpectancy);
-  const outputFfpAge = estimateFFPAge({
+  const outputFfpAges = estimateFFPAgeRange({
     currentSavings: context.currentSavings,
     currentAge: context.currentAge,
     lifeExpectancy: output.lifeExpectancy,
@@ -263,24 +265,28 @@ export const getScenario2OutputService = async (userId: number) => {
     u_post: context.portfolio.uPost,
     mu_pre: context.portfolio.muPre,
     r_f_pre: context.portfolio.rFPre,
+    sigma_pre: context.portfolio.sigmaPre,
     mu_post: context.portfolio.muPost,
     r_f_post: context.portfolio.rFPost,
   });
 
   return {
     inputFfpAnnualSpending: output.inputFfpAnnualSpending,
-    outputFfpAge,
+    outputFfpAgeLow: outputFfpAges.low,
+    outputFfpAge: outputFfpAges.expected,
+    outputFfpAgeHigh: outputFfpAges.high,
     wealthProjection: buildScenario2WealthProjection({
       currentSavings: context.currentSavings,
       currentAge: context.currentAge,
       lifeExpectancy: output.lifeExpectancy,
-      outputFfpAge,
+      outputFfpAgeLow: outputFfpAges.low,
       stages,
       annualSpending: output.inputFfpAnnualSpending,
       u_pre: context.portfolio.uPre,
       u_post: context.portfolio.uPost,
       mu_pre: context.portfolio.muPre,
       r_f_pre: context.portfolio.rFPre,
+      sigma_pre: context.portfolio.sigmaPre,
       mu_post: context.portfolio.muPost,
       r_f_post: context.portfolio.rFPost,
     }),

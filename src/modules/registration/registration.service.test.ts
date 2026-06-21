@@ -55,12 +55,14 @@ const financialSectionPayload = {
         u: 0.7,
         mu: 0.12,
         rf: 0.03,
+        sigma: 0,
       },
       {
         allocationType: 'POST_FFP' as const,
         u: 0.4,
         mu: 0.08,
         rf: 0.03,
+        sigma: 0,
       },
     ],
     lifestyleProfile: {
@@ -86,12 +88,14 @@ const financialSectionResponse = {
         u: 0.7,
         mu: 0.12,
         rf: 0.03,
+        sigma: 0,
       },
       {
         allocationType: 'POST_FFP' as const,
         u: 0.4,
         mu: 0.08,
         rf: 0.03,
+        sigma: 0,
       },
     ],
     lifestyleProfile: {
@@ -162,12 +166,14 @@ describe('Registration Service', () => {
             u: 0.7,
             mu: 0.12,
             rf: 0.03,
+            sigma: 0,
           },
           {
             allocationType: 'POST_FFP',
             u: 0.4,
             mu: 0.08,
             rf: 0.03,
+            sigma: 0,
           },
         ],
         lifestyleProfile: {
@@ -216,12 +222,14 @@ describe('Registration Service', () => {
             u: 0.7,
             mu: 0.12,
             rf: 0.03,
+            sigma: 0,
           },
           {
             allocationType: 'POST_FFP',
             u: 0.4,
             mu: 0.08,
             rf: 0.03,
+            sigma: 0,
           },
         ],
         lifestyleProfile: {
@@ -583,12 +591,14 @@ describe('Registration Service', () => {
             u: 0.7,
             mu: 0.12,
             rf: 0.03,
+            sigma: null,
           },
           {
             allocationType: 'POST_FFP',
             u: 0.4,
             mu: 0.08,
             rf: 0.03,
+            sigma: null,
           },
         ],
         lifestyleProfile: {
@@ -788,8 +798,20 @@ describe('Registration Service', () => {
       asMock(
         registrationRepository.listPortfolioAllocationDetails,
       ).mockResolvedValue([
-        { allocationType: 'PRE_FFP', u: 0.6, mu: 0.11, rf: 0.02 },
-        { allocationType: 'POST_FFP', u: 0.35, mu: 0.07, rf: 0.02 },
+        {
+          allocationType: 'PRE_FFP',
+          u: 0.6,
+          mu: 0.11,
+          rf: 0.02,
+          sigma: null,
+        },
+        {
+          allocationType: 'POST_FFP',
+          u: 0.35,
+          mu: 0.07,
+          rf: 0.02,
+          sigma: null,
+        },
       ]);
       asMock(registrationRepository.getHabitsProfileDetails).mockResolvedValue({
         smokingTypeId: 1,
@@ -805,8 +827,20 @@ describe('Registration Service', () => {
           currencyId: 2,
         },
         portfolioAllocations: [
-          { allocationType: 'PRE_FFP', u: 0.6, mu: 0.11, rf: 0.02 },
-          { allocationType: 'POST_FFP', u: 0.35, mu: 0.07, rf: 0.02 },
+          {
+            allocationType: 'PRE_FFP',
+            u: 0.6,
+            mu: 0.11,
+            rf: 0.02,
+            sigma: 0,
+          },
+          {
+            allocationType: 'POST_FFP',
+            u: 0.35,
+            mu: 0.07,
+            rf: 0.02,
+            sigma: 0,
+          },
         ],
         lifestyleProfile: {
           smokingTypeId: 1,
@@ -850,8 +884,20 @@ describe('Registration Service', () => {
             currencyId: 2,
           },
           portfolioAllocations: [
-            { allocationType: 'PRE_FFP', u: 0.6, mu: 0.11, rf: 0.02 },
-            { allocationType: 'POST_FFP', u: 0.35, mu: 0.07, rf: 0.02 },
+            {
+              allocationType: 'PRE_FFP',
+              u: 0.6,
+              mu: 0.11,
+              rf: 0.02,
+              sigma: null,
+            },
+            {
+              allocationType: 'POST_FFP',
+              u: 0.35,
+              mu: 0.07,
+              rf: 0.02,
+              sigma: null,
+            },
           ],
           lifestyleProfile: {
             smokingTypeId: 1,
@@ -1023,8 +1069,20 @@ describe('Registration Service', () => {
       mockFullProfile();
 
       await registrationService.updatePortfolioAllocationsService(99, [
-        { allocationType: 'PRE_FFP', u: 0.6, mu: 0.1, rf: 0.02 },
-        { allocationType: 'POST_FFP', u: 0.4, mu: 0.08, rf: 0.02 },
+        {
+          allocationType: 'PRE_FFP',
+          u: 0.6,
+          mu: 0.1,
+          rf: 0.02,
+          sigma: 0,
+        },
+        {
+          allocationType: 'POST_FFP',
+          u: 0.4,
+          mu: 0.08,
+          rf: 0.02,
+          sigma: 0,
+        },
       ]);
 
       expect(
@@ -1032,7 +1090,7 @@ describe('Registration Service', () => {
       ).toHaveBeenCalledTimes(2);
       expect(
         registrationRepository.updatePortfolioAllocation,
-      ).toHaveBeenCalledWith(11, 'PRE_FFP', 0.6, 0.1, 0.02, expect.anything());
+      ).toHaveBeenCalledWith(11, 'PRE_FFP', 0.6, 0.1, 0.02, 0, expect.anything());
       expect(
         registrationRepository.updatePortfolioAllocation,
       ).toHaveBeenCalledWith(
@@ -1041,6 +1099,7 @@ describe('Registration Service', () => {
         0.4,
         0.08,
         0.02,
+        0,
         expect.anything(),
       );
     });
@@ -1052,8 +1111,20 @@ describe('Registration Service', () => {
 
       await expect(
         registrationService.updatePortfolioAllocationsService(99, [
-          { allocationType: 'PRE_FFP', u: 0.6, mu: 0.1, rf: 0.02 },
-          { allocationType: 'POST_FFP', u: 0.4, mu: 0.08, rf: 0.02 },
+          {
+            allocationType: 'PRE_FFP',
+            u: 0.6,
+            mu: 0.1,
+            rf: 0.02,
+            sigma: 0,
+          },
+          {
+            allocationType: 'POST_FFP',
+            u: 0.4,
+            mu: 0.08,
+            rf: 0.02,
+            sigma: 0,
+          },
         ]),
       ).rejects.toBeTruthy();
     });
@@ -1063,8 +1134,20 @@ describe('Registration Service', () => {
 
       await expect(
         registrationService.updatePortfolioAllocationsService(99, [
-          { allocationType: 'PRE_FFP', u: 0.6, mu: 0.1, rf: 0.02 },
-          { allocationType: 'POST_FFP', u: 0.4, mu: 0.08, rf: 0.02 },
+          {
+            allocationType: 'PRE_FFP',
+            u: 0.6,
+            mu: 0.1,
+            rf: 0.02,
+            sigma: 0,
+          },
+          {
+            allocationType: 'POST_FFP',
+            u: 0.4,
+            mu: 0.08,
+            rf: 0.02,
+            sigma: 0,
+          },
         ]),
       ).rejects.toBeTruthy();
       expect(
@@ -1082,8 +1165,20 @@ describe('Registration Service', () => {
       mockFullProfile({ hasPortfolioProfile: false });
 
       await registrationService.createPortfolioAllocationsService(99, [
-        { allocationType: 'PRE_FFP', u: 0.6, mu: 0.1, rf: 0.02 },
-        { allocationType: 'POST_FFP', u: 0.4, mu: 0.08, rf: 0.02 },
+        {
+          allocationType: 'PRE_FFP',
+          u: 0.6,
+          mu: 0.1,
+          rf: 0.02,
+          sigma: 0,
+        },
+        {
+          allocationType: 'POST_FFP',
+          u: 0.4,
+          mu: 0.08,
+          rf: 0.02,
+          sigma: 0,
+        },
       ]);
 
       expect(
@@ -1091,7 +1186,7 @@ describe('Registration Service', () => {
       ).toHaveBeenCalledTimes(2);
       expect(
         registrationRepository.insertPortfolioProfile,
-      ).toHaveBeenCalledWith(11, 'PRE_FFP', 0.6, 0.1, 0.02, expect.anything());
+      ).toHaveBeenCalledWith(11, 'PRE_FFP', 0.6, 0.1, 0.02, 0, expect.anything());
     });
 
     it('throws when portfolio allocations already exist', async () => {
@@ -1099,8 +1194,20 @@ describe('Registration Service', () => {
 
       await expect(
         registrationService.createPortfolioAllocationsService(99, [
-          { allocationType: 'PRE_FFP', u: 0.6, mu: 0.1, rf: 0.02 },
-          { allocationType: 'POST_FFP', u: 0.4, mu: 0.08, rf: 0.02 },
+          {
+            allocationType: 'PRE_FFP',
+            u: 0.6,
+            mu: 0.1,
+            rf: 0.02,
+            sigma: 0,
+          },
+          {
+            allocationType: 'POST_FFP',
+            u: 0.4,
+            mu: 0.08,
+            rf: 0.02,
+            sigma: 0,
+          },
         ]),
       ).rejects.toBeTruthy();
       expect(

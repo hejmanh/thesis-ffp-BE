@@ -103,8 +103,14 @@ const getScenarioContext = async (userId: number) => {
   if (pre.u == null || pre.mu == null || pre.rf == null) {
     throw badRequest('PRE_FFP portfolio allocation is incomplete');
   }
+  if (pre.sigma == null) {
+    throw badRequest('PRE_FFP portfolio allocation sigma is required');
+  }
   if (post.u == null || post.mu == null || post.rf == null) {
     throw badRequest('POST_FFP portfolio allocation is incomplete');
+  }
+  if (post.sigma == null) {
+    throw badRequest('POST_FFP portfolio allocation sigma is required');
   }
 
   const stages = await listStageDataDetails(profile.profileId);
@@ -119,8 +125,10 @@ const getScenarioContext = async (userId: number) => {
       uPost: post.u,
       muPre: pre.mu,
       rFPre: pre.rf,
+      sigmaPre: pre.sigma,
       muPost: post.mu,
       rFPost: post.rf,
+      sigmaPost: post.sigma,
     },
   };
 };
@@ -197,8 +205,10 @@ const upsertScenario1Input = async (
     u_post: context.portfolio.uPost,
     mu_pre: context.portfolio.muPre,
     r_f_pre: context.portfolio.rFPre,
+    sigma_pre: context.portfolio.sigmaPre,
     mu_post: context.portfolio.muPost,
     r_f_post: context.portfolio.rFPost,
+    sigma_post: context.portfolio.sigmaPost,
   });
 
   await withTransaction(async (client) => {
@@ -297,15 +307,20 @@ export const getScenario1OutputService = async (userId: number) => {
     u_post: context.portfolio.uPost,
     mu_pre: context.portfolio.muPre,
     r_f_pre: context.portfolio.rFPre,
+    sigma_pre: context.portfolio.sigmaPre,
     mu_post: context.portfolio.muPost,
     r_f_post: context.portfolio.rFPost,
+    sigma_post: context.portfolio.sigmaPost,
   });
 
   return {
     inputFfpAge: input.inputFfpAge,
     inputFfpAnnualSpending: input.inputFfpAnnualSpending,
     outputIsAchievable: result.achievable,
+    outputLowIsAchievable: result.conservativeAchievable,
+    outputHighIsAchievable: result.optimisticAchievable,
     requiredWealthAtFFPAge: result.requiredWealth,
+    expectedWealthAtFFPAge: result.wealthAtFFP,
     wealthProjection: buildScenario1WealthProjection({
       currentSavings: context.currentSavings,
       currentAge: context.currentAge,
@@ -314,6 +329,7 @@ export const getScenario1OutputService = async (userId: number) => {
       u_pre: context.portfolio.uPre,
       mu_pre: context.portfolio.muPre,
       r_f_pre: context.portfolio.rFPre,
+      sigma_pre: context.portfolio.sigmaPre,
     }),
   };
 };

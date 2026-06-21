@@ -185,6 +185,7 @@ const mapFinancialInfoSection = (
     u: number;
     mu: number;
     rf: number;
+    sigma?: number | null | undefined;
   }[],
   lifestyleProfile: {
     smokingTypeId: number;
@@ -366,6 +367,7 @@ export const createUserInfo = async (
         allocation.u,
         allocation.mu,
         allocation.rf,
+        allocation.sigma ?? 0,
         client,
       );
     }
@@ -474,6 +476,7 @@ export const createFinancialInfo = async (
         allocation.u,
         allocation.mu,
         allocation.rf,
+        allocation.sigma ?? 0,
         client,
       );
     }
@@ -555,13 +558,14 @@ export const getFinancialInfo = async (userId: number) => {
         throw notFound('Financial info not found');
       }
 
-      return {
-        allocationType: allocation.allocationType,
-        u: allocation.u,
-        mu: allocation.mu,
-        rf: allocation.rf,
-      };
-    }),
+        return {
+          allocationType: allocation.allocationType,
+          u: allocation.u,
+          mu: allocation.mu,
+          rf: allocation.rf,
+          sigma: allocation.sigma ?? null,
+        };
+      }),
     {
       smokingTypeId: lifestyleProfile.smokingTypeId,
       physicalActivityTypeId: lifestyleProfile.physicalActivityTypeId,
@@ -640,6 +644,7 @@ export const getUserInfo = async (userId: number) => {
           u: allocation.u,
           mu: allocation.mu,
           rf: allocation.rf,
+          sigma: allocation.sigma ?? null,
         };
       }),
       lifestyleProfile,
@@ -731,6 +736,7 @@ export const createPortfolioAllocationsService = async (
         allocation.u,
         allocation.mu,
         allocation.rf,
+        allocation.sigma ?? 0,
         client,
       );
     }
@@ -878,6 +884,7 @@ export const updateFinancialInfo = async (
           allocation.u,
           allocation.mu,
           allocation.rf,
+          allocation.sigma ?? 0,
           client,
         );
       }
@@ -974,6 +981,7 @@ export const updatePortfolioAllocationsService = async (
         allocation.u,
         allocation.mu,
         allocation.rf,
+        allocation.sigma ?? 0,
         client,
       );
     }

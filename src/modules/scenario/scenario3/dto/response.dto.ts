@@ -7,13 +7,19 @@ export type Scenario3InputData = {
 
 export type Scenario3RetirementCashflowPoint = {
   age: number;
-  wealth: number;
+  wealthLow: number;
+  wealthExpected: number;
+  wealthHigh: number;
 };
 
 export type Scenario3OutputData = {
   inputFfpAge: number;
+  outputFfpAnnualSpendingLow: number;
   outputFfpAnnualSpending: number;
+  outputFfpAnnualSpendingHigh: number;
+  outputFfpMonthlySpendingLow: number;
   outputFfpMonthlySpending: number;
+  outputFfpMonthlySpendingHigh: number;
   retirementCashflow: Scenario3RetirementCashflowPoint[];
 };
 

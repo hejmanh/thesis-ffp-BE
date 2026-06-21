@@ -38,6 +38,7 @@ export const PortfolioAllocationItemDto = z.object({
     .max(1, 'u must be at most 1'),
   mu: z.number().gt(-1, 'mu must be greater than -1'),
   rf: z.number().gt(-1, 'rf must be greater than -1'),
+  sigma: z.number().min(0, 'sigma must be at least 0').optional(),
 });
 
 export const portfolioAllocationsRefine = (

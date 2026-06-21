@@ -5,3 +5,10 @@ export function calculatePortfolioReturn(
 ): number {
   return u * mu + (1 - u) * r_f;
 }
+
+export function calculatePortfolioVolatility(
+  u: number,
+  sigma: number,
+): number {
+  return u * sigma;
+}
