@@ -7,6 +7,7 @@ import {
   calculateScenario4RequiredWealthAtFFP,
   calculateRequiredSaving,
   estimateFFPAge,
+  estimateFFPAgeRange,
   projectWealthBeforeFFPWithConstantSaving,
   runScenario1,
   runScenario3,
@@ -175,11 +176,33 @@ describe('runScenario3', () => {
       u_post: 0,
       mu: 0,
       r_f: 0,
+      sigma_post: 0,
       retirementDuration: 10,
       assets: [],
     });
 
     expect(result.availableSpending).toBe(10);
+    expect(result.availableSpendingLow).toBe(10);
+    expect(result.availableSpendingHigh).toBe(10);
+  });
+
+  it('calculates a sustainable spending range from post-FFP volatility', () => {
+    const result = runScenario3({
+      wealthAtFFP: 100,
+      u_post: 0.5,
+      mu: 0.1,
+      r_f: 0,
+      sigma_post: 0.2,
+      retirementDuration: 10,
+      assets: [],
+    });
+
+    expect(result.availableSpendingLow).toBeLessThan(
+      result.availableSpending,
+    );
+    expect(result.availableSpending).toBeLessThan(
+      result.availableSpendingHigh,
+    );
   });
 });
 
@@ -200,23 +223,24 @@ describe('buildScenario1WealthProjection', () => {
       u_pre: 0,
       mu_pre: 0,
       r_f_pre: 0,
+      sigma_pre: 0,
     });
 
     expect(projection).toEqual([
-      { age: 30, wealth: 100 },
-      { age: 31, wealth: 150 },
-      { age: 32, wealth: 200 },
+      { age: 30, wealthLow: 100, wealthExpected: 100, wealthHigh: 100 },
+      { age: 31, wealthLow: 150, wealthExpected: 150, wealthHigh: 150 },
+      { age: 32, wealthLow: 200, wealthExpected: 200, wealthHigh: 200 },
     ]);
   });
 });
 
 describe('buildScenario2WealthProjection', () => {
-  it('returns yearly wealth and required wealth points until the goal age', () => {
+  it('returns yearly wealth ranges and required wealth until the conservative goal age', () => {
     const projection = buildScenario2WealthProjection({
       currentSavings: 100,
       currentAge: 30,
       lifeExpectancy: 32,
-      outputFfpAge: 31,
+      outputFfpAgeLow: 31,
       stages: [
         {
           startAge: 30,
@@ -230,14 +254,84 @@ describe('buildScenario2WealthProjection', () => {
       u_post: 0,
       mu_pre: 0,
       r_f_pre: 0,
+      sigma_pre: 0,
       mu_post: 0,
       r_f_post: 0,
     });
 
     expect(projection).toEqual([
-      { age: 30, wealth: 100, requiredWealth: 160 },
-      { age: 31, wealth: 150, requiredWealth: 80 },
+      {
+        age: 30,
+        wealthLow: 100,
+        wealthExpected: 100,
+        wealthHigh: 100,
+        requiredWealth: 160,
+      },
+      {
+        age: 31,
+        wealthLow: 150,
+        wealthExpected: 150,
+        wealthHigh: 150,
+        requiredWealth: 80,
+      },
     ]);
+  });
+
+  it('calculates different FFP ages for low, expected, and high returns', () => {
+    const ages = estimateFFPAgeRange({
+      currentSavings: 100,
+      currentAge: 30,
+      lifeExpectancy: 40,
+      stages: [
+        {
+          startAge: 30,
+          endAge: 40,
+          initialAnnualSaving: 20,
+          growthRate: 0,
+        },
+      ],
+      annualSpending: 50,
+      u_pre: 1,
+      u_post: 0,
+      mu_pre: 0.1,
+      r_f_pre: 0,
+      sigma_pre: 0.1,
+      mu_post: 0,
+      r_f_post: 0,
+    });
+
+    expect(ages.high).not.toBeNull();
+    expect(ages.expected).not.toBeNull();
+    expect(ages.low).not.toBeNull();
+    expect(ages.high!).toBeLessThanOrEqual(ages.expected!);
+    expect(ages.expected!).toBeLessThanOrEqual(ages.low!);
+  });
+
+  it('does not project an unreachable FFP path into the zero-retirement-year boundary', () => {
+    const projection = buildScenario2WealthProjection({
+      currentSavings: 0,
+      currentAge: 30,
+      lifeExpectancy: 32,
+      outputFfpAgeLow: null,
+      stages: [
+        {
+          startAge: 30,
+          endAge: 32,
+          initialAnnualSaving: 0,
+          growthRate: 0,
+        },
+      ],
+      annualSpending: 100,
+      u_pre: 0,
+      u_post: 0,
+      mu_pre: 0,
+      r_f_pre: 0,
+      sigma_pre: 0,
+      mu_post: 0,
+      r_f_post: 0,
+    });
+
+    expect(projection.map((point) => point.age)).toEqual([30, 31]);
   });
 });
 
@@ -251,14 +345,34 @@ describe('buildScenario3RetirementCashflow', () => {
       u_post: 0,
       mu: 0,
       r_f: 0,
+      sigma_post: 0,
       assets: [],
     });
 
     expect(cashflow).toEqual([
-      { age: 30, wealth: 100 },
-      { age: 31, wealth: 90 },
-      { age: 32, wealth: 80 },
+      { age: 30, wealthLow: 100, wealthExpected: 100, wealthHigh: 100 },
+      { age: 31, wealthLow: 90, wealthExpected: 90, wealthHigh: 90 },
+      { age: 32, wealthLow: 80, wealthExpected: 80, wealthHigh: 80 },
     ]);
+  });
+
+  it('returns low, expected, and high post-FFP return paths', () => {
+    const cashflow = buildScenario3RetirementCashflow({
+      wealthAtFFP: 100,
+      annualSpending: 10,
+      lifeExpectancy: 31,
+      ffpAge: 30,
+      u_post: 0.5,
+      mu: 0.1,
+      r_f: 0,
+      sigma_post: 0.2,
+      assets: [],
+    });
+
+    expect(cashflow[1]?.age).toBe(31);
+    expect(cashflow[1]?.wealthLow).toBeCloseTo(85);
+    expect(cashflow[1]?.wealthExpected).toBeCloseTo(95);
+    expect(cashflow[1]?.wealthHigh).toBeCloseTo(105);
   });
 });
 

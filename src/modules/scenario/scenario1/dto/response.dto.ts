@@ -8,14 +8,19 @@ export type Scenario1InputData = {
 
 export type Scenario1WealthProjectionPoint = {
   age: number;
-  wealth: number;
+  wealthLow: number;
+  wealthExpected: number;
+  wealthHigh: number;
 };
 
 export type Scenario1OutputData = {
   inputFfpAge: number;
   inputFfpAnnualSpending: number;
   outputIsAchievable: boolean;
+  outputLowIsAchievable: boolean;
+  outputHighIsAchievable: boolean;
   requiredWealthAtFFPAge: number;
+  expectedWealthAtFFPAge: number;
   wealthProjection: Scenario1WealthProjectionPoint[];
 };
 

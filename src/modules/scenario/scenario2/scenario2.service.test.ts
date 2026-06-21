@@ -57,8 +57,8 @@ const baseContextMocks = () => {
   asMock(
     registrationRepository.listPortfolioAllocationDetails,
   ).mockResolvedValue([
-    { allocationType: 'PRE_FFP', u: 0, mu: 0, rf: 0 },
-    { allocationType: 'POST_FFP', u: 0, mu: 0, rf: 0 },
+    { allocationType: 'PRE_FFP', u: 0, mu: 0, rf: 0, sigma: 0 },
+    { allocationType: 'POST_FFP', u: 0, mu: 0, rf: 0, sigma: 0 },
   ]);
 };
 
@@ -219,10 +219,24 @@ describe('Scenario2 Service', () => {
 
     await expect(getScenario2OutputService(99)).resolves.toEqual({
       inputFfpAnnualSpending: 80,
+      outputFfpAgeLow: 31,
       outputFfpAge: 31,
+      outputFfpAgeHigh: 31,
       wealthProjection: [
-        { age: 30, wealth: 100, requiredWealth: 160 },
-        { age: 31, wealth: 150, requiredWealth: 80 },
+        {
+          age: 30,
+          wealthLow: 100,
+          wealthExpected: 100,
+          wealthHigh: 100,
+          requiredWealth: 160,
+        },
+        {
+          age: 31,
+          wealthLow: 150,
+          wealthExpected: 150,
+          wealthHigh: 150,
+          requiredWealth: 80,
+        },
       ],
     });
   });

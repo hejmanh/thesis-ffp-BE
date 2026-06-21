@@ -36,6 +36,7 @@ export type PortfolioAllocationDetails = {
   u: number | null;
   mu: number | null;
   rf: number | null;
+  sigma?: number | null;
 };
 
 export type StageDataDetails = {
@@ -390,6 +391,7 @@ export const insertPortfolioProfile = async (
   u: number,
   mu: number,
   rf: number,
+  sigma: number,
   client: QueryClient = pool,
 ) => {
   await execQuery(
@@ -400,11 +402,12 @@ export const insertPortfolioProfile = async (
         type,
         u,
         mu,
-        r_f
+        r_f,
+        sigma
       )
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES ($1, $2, $3, $4, $5, $6)
     `,
-    [profileId, allocationType, u, mu, rf],
+    [profileId, allocationType, u, mu, rf, sigma],
   );
 };
 
@@ -419,7 +422,8 @@ export const listPortfolioAllocationDetails = async (
         type AS "allocationType",
         u,
         mu,
-        r_f AS rf
+        r_f AS rf,
+        sigma
       FROM portfolio_profile
       WHERE profile_id = $1
       ORDER BY CASE type WHEN 'PRE_FFP' THEN 1 ELSE 2 END
@@ -434,6 +438,7 @@ export const listPortfolioAllocationDetails = async (
         u: toNumberOrNull(row.u),
         mu: toNumberOrNull(row.mu),
         rf: toNumberOrNull(row.rf),
+        sigma: toNumberOrNull(row.sigma),
       }) satisfies PortfolioAllocationDetails,
   );
 };
@@ -744,16 +749,17 @@ export const updatePortfolioAllocation = async (
   u: number,
   mu: number,
   rf: number,
+  sigma: number,
   client: QueryClient = pool,
 ) => {
   await execQuery(
     client,
     `
       UPDATE portfolio_profile
-      SET u = $3, mu = $4, r_f = $5
+      SET u = $3, mu = $4, r_f = $5, sigma = $6
       WHERE profile_id = $1 AND type = $2
     `,
-    [profileId, allocationType, u, mu, rf],
+    [profileId, allocationType, u, mu, rf, sigma],
   );
 };
 

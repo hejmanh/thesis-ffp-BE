@@ -49,6 +49,7 @@ type PortfolioAllocationResponseItem = {
   u: number;
   mu: number;
   rf: number;
+  sigma?: number | null | undefined;
 };
 
 type LifestyleProfileResponseData = {

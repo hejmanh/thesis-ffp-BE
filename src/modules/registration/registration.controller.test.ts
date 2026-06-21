@@ -31,8 +31,20 @@ describe('Registration Controller', () => {
             currencyId: 2,
           },
           portfolioAllocations: [
-            { allocationType: 'PRE_FFP', u: 0.6, mu: 0.11, rf: 0.02 },
-            { allocationType: 'POST_FFP', u: 0.35, mu: 0.07, rf: 0.02 },
+            {
+              allocationType: 'PRE_FFP',
+              u: 0.6,
+              mu: 0.11,
+              rf: 0.02,
+              sigma: 0.15,
+            },
+            {
+              allocationType: 'POST_FFP',
+              u: 0.35,
+              mu: 0.07,
+              rf: 0.02,
+              sigma: 0.1,
+            },
           ],
           lifestyleProfile: {
             smokingTypeId: 1,
@@ -54,8 +66,20 @@ describe('Registration Controller', () => {
           currencyId: 2,
         },
         portfolioAllocations: [
-          { allocationType: 'PRE_FFP' as const, u: 0.6, mu: 0.11, rf: 0.02 },
-          { allocationType: 'POST_FFP' as const, u: 0.35, mu: 0.07, rf: 0.02 },
+          {
+            allocationType: 'PRE_FFP' as const,
+            u: 0.6,
+            mu: 0.11,
+            rf: 0.02,
+            sigma: 0.15,
+          },
+          {
+            allocationType: 'POST_FFP' as const,
+            u: 0.35,
+            mu: 0.07,
+            rf: 0.02,
+            sigma: 0.1,
+          },
         ],
         lifestyleProfile: {
           smokingTypeId: 1,
@@ -79,8 +103,20 @@ describe('Registration Controller', () => {
         currencyId: 2,
       },
       portfolioAllocations: [
-        { allocationType: 'PRE_FFP', u: 0.6, mu: 0.11, rf: 0.02 },
-        { allocationType: 'POST_FFP', u: 0.35, mu: 0.07, rf: 0.02 },
+        {
+          allocationType: 'PRE_FFP',
+          u: 0.6,
+          mu: 0.11,
+          rf: 0.02,
+          sigma: 0.15,
+        },
+        {
+          allocationType: 'POST_FFP',
+          u: 0.35,
+          mu: 0.07,
+          rf: 0.02,
+          sigma: 0.1,
+        },
       ],
       lifestyleProfile: {
         smokingTypeId: 1,

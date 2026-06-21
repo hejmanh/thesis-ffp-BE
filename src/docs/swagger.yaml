@@ -1457,6 +1457,10 @@ components:
         rf:
           type: number
           exclusiveMinimum: -1
+        sigma:
+          type: number
+          minimum: 0
+          description: Annual volatility of the risky asset.
     CreateAssetItem:
       type: object
       required: [assetTypeId, initialAnnualIncome, growthRate]
@@ -1649,6 +1653,10 @@ components:
           type: number
         rf:
           type: number
+        sigma:
+          type: number
+          nullable: true
+          description: Annual volatility of the risky asset; may be null for legacy rows.
     StageDataResponse:
       type: object
       properties:
@@ -2016,7 +2024,13 @@ components:
                   type: number
                 outputIsAchievable:
                   type: boolean
+                outputLowIsAchievable:
+                  type: boolean
+                outputHighIsAchievable:
+                  type: boolean
                 requiredWealthAtFFPAge:
+                  type: number
+                expectedWealthAtFFPAge:
                   type: number
                 wealthProjection:
                   type: array
@@ -2025,7 +2039,11 @@ components:
                     properties:
                       age:
                         type: integer
-                      wealth:
+                      wealthLow:
+                        type: number
+                      wealthExpected:
+                        type: number
+                      wealthHigh:
                         type: number
     Scenario2InputRequest:
       type: object
@@ -2057,9 +2075,18 @@ components:
               properties:
                 inputFfpAnnualSpending:
                   type: number
+                outputFfpAgeLow:
+                  type: integer
+                  nullable: true
+                  description: FFP age under the low-return (minus one portfolio standard deviation) path.
                 outputFfpAge:
                   type: integer
                   nullable: true
+                  description: FFP age under the expected-return path.
+                outputFfpAgeHigh:
+                  type: integer
+                  nullable: true
+                  description: FFP age under the high-return (plus one portfolio standard deviation) path.
                 wealthProjection:
                   type: array
                   items:
@@ -2067,8 +2094,15 @@ components:
                     properties:
                       age:
                         type: integer
-                      wealth:
+                      wealthLow:
                         type: number
+                        description: Projected wealth using the low-return path.
+                      wealthExpected:
+                        type: number
+                        description: Projected wealth using the expected-return path.
+                      wealthHigh:
+                        type: number
+                        description: Projected wealth using the high-return path.
                       requiredWealth:
                         type: number
     Scenario3InputRequest:
@@ -2101,10 +2135,24 @@ components:
               properties:
                 inputFfpAge:
                   type: integer
+                outputFfpAnnualSpendingLow:
+                  type: number
+                  description: Sustainable annual spending under the low post-FFP return path.
                 outputFfpAnnualSpending:
                   type: number
+                  description: Sustainable annual spending under the expected post-FFP return path.
+                outputFfpAnnualSpendingHigh:
+                  type: number
+                  description: Sustainable annual spending under the high post-FFP return path.
+                outputFfpMonthlySpendingLow:
+                  type: number
+                  description: Sustainable monthly spending under the low post-FFP return path.
                 outputFfpMonthlySpending:
                   type: number
+                  description: Sustainable monthly spending under the expected post-FFP return path.
+                outputFfpMonthlySpendingHigh:
+                  type: number
+                  description: Sustainable monthly spending under the high post-FFP return path.
                 retirementCashflow:
                   type: array
                   items:
@@ -2112,8 +2160,15 @@ components:
                     properties:
                       age:
                         type: integer
-                      wealth:
+                      wealthLow:
                         type: number
+                        description: Retirement wealth using the low post-FFP return path.
+                      wealthExpected:
+                        type: number
+                        description: Retirement wealth using the expected post-FFP return path.
+                      wealthHigh:
+                        type: number
+                        description: Retirement wealth using the high post-FFP return path.
     Scenario4InputRequest:
       type: object
       required: [lifeExpectancy, inputFfpAge, inputFfpAnnualSpending]
