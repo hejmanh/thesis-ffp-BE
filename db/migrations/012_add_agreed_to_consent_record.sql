@@ -1,0 +1,2 @@
+ALTER TABLE consent_record
+ADD COLUMN agreed BOOLEAN NOT NULL DEFAULT true;
