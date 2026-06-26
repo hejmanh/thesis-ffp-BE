@@ -92,10 +92,10 @@ const toPassiveIncomeAssets = (
 ): PassiveIncomeAsset[] =>
   assetDetails.map((asset) => {
     if (asset.initialAnnualIncome == null) {
-      throw badRequest('Post-FFP asset initialAnnualIncome is required');
+      throw badRequest('Post-SRP asset initialAnnualIncome is required');
     }
     if (asset.growthRate == null) {
-      throw badRequest('Post-FFP asset growthRate is required');
+      throw badRequest('Post-SRP asset growthRate is required');
     }
 
     return {
