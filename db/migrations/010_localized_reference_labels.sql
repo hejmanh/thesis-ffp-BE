@@ -62,24 +62,24 @@ UPDATE asset_type SET title_vi = 'Thu nhập thụ động khác' WHERE code = '
 
 UPDATE scenario_type
 SET
-  title_vi = 'Tính khả thi của mục tiêu FFP',
-  description_vi = 'Tôi có thể đạt mục tiêu Tự Do Tài Chính (FFP) không?'
+  title_vi = 'Tính khả thi của mục tiêu SRP',
+  description_vi = 'Tôi có thể đạt mục tiêu Nghỉ Hưu An Toàn (SRP) không?'
 WHERE no = 1;
 
 UPDATE scenario_type
 SET
-  title_vi = 'Ước tính tuổi đạt FFP',
-  description_vi = 'Khi nào tôi đạt Tự Do Tài Chính (FFP)?'
+  title_vi = 'Ước tính tuổi đạt SRP',
+  description_vi = 'Khi nào tôi đạt mục tiêu Nghỉ Hưu An Toàn (SRP)?'
 WHERE no = 2;
 
 UPDATE scenario_type
 SET
-  title_vi = 'Chi tiêu tại FFP',
-  description_vi = 'Tôi có thể chi bao nhiêu khi đạt Tự Do Tài Chính (FFP)?'
+  title_vi = 'Chi tiêu tại SRP',
+  description_vi = 'Tôi có thể chi bao nhiêu khi đạt tuổi Nghỉ Hưu An Toàn (SRP)?'
 WHERE no = 3;
 
 UPDATE scenario_type
 SET
   title_vi = 'Tiết kiệm cần thiết',
-  description_vi = 'Tôi nên tiết kiệm bao nhiêu để đạt Tự Do Tài Chính (FFP)?'
+  description_vi = 'Tôi nên tiết kiệm bao nhiêu để đạt tuổi Nghỉ Hưu An Toàn (SRP)?'
 WHERE no = 4;

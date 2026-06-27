@@ -97,14 +97,14 @@ const getScenarioContext = async (userId: number) => {
   const post = allocations.find((item) => item.allocationType === 'POST_FFP');
 
   if (!pre || !post) {
-    throw badRequest('Portfolio allocations must include PRE_FFP and POST_FFP');
+    throw badRequest('Portfolio allocations must include pre- and post-SRP allocations');
   }
 
   if (pre.u == null || pre.mu == null || pre.rf == null) {
-    throw badRequest('PRE_FFP portfolio allocation is incomplete');
+    throw badRequest('Pre-SRP portfolio allocation is incomplete');
   }
   if (post.u == null || post.mu == null || post.rf == null) {
-    throw badRequest('POST_FFP portfolio allocation is incomplete');
+    throw badRequest('Post-SRP portfolio allocation is incomplete');
   }
 
   const stages = await listStageDataDetails(profile.profileId);

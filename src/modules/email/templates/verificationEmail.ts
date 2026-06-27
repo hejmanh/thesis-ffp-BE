@@ -16,7 +16,7 @@ export const buildVerificationEmail = ({
                     <!-- Header -->
                     <div style="background: linear-gradient(135deg, #4da3ff 0%, #1e6fe8 100%); padding: 36px 24px; border-radius: 10px 10px 0 0; text-align: center;">
                         <h1 style="margin: 0; color: #ffffff; font-size: 30px; font-weight: 800; letter-spacing: 0.5px;">
-                            Welcome to Coinfused
+                            Welcome to Retire Safely
                         </h1>
                     </div>
 
@@ -28,7 +28,7 @@ export const buildVerificationEmail = ({
                         </p>
 
                         <p style="font-size: 15px; line-height: 1.7; color: #334155; margin: 0 0 28px;">
-                            Thanks for joining <strong style="color:#1e6fe8;">Coinfused</strong>.  
+                            Thanks for joining <strong style="color:#1e6fe8;">Retire Safely</strong>.  
                             Please confirm your email address to activate your account and get started.
                         </p>
 
@@ -60,7 +60,7 @@ export const buildVerificationEmail = ({
                     <!-- Footer -->
                     <div style="text-align: center; padding: 20px 10px;">
                         <p style="font-size: 12px; color: #94a3b8; margin: 0;">
-                            © 2026 Coinfused. All rights reserved.
+                            © 2026 Retire Safely. All rights reserved.
                         </p>
                     </div>
 

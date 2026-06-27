@@ -1008,14 +1008,14 @@ INSERT INTO asset_type (code, title) VALUES
 
 -- scenario
 INSERT INTO scenario_type (no, title, description) VALUES
-    (1, 'FFP Goal Feasibility',
-    'Can I reach my Financial Freedom (FFP) goal?'),
+    (1, 'SRP Goal Feasibility',
+    'Can I reach my Safe Retirement (SRP) goal?'),
 
-    (2, 'FFP Age Estimation',
-    'When will I reach Financial Freedom (FFP)?'),
+    (2, 'SRP Age Estimation',
+    'When will I reach Safe Retirement (SRP)?'),
 
-    (3, 'Spending at FFP',
-    'How much can I spend at Financial Freedom (FFP)?'),
+    (3, 'Spending at SRP',
+    'How much can I spend at Safe Retirement (SRP)?'),
 
     (4, 'Required Savings',
-    'How much should I save to reach Financial Freedom (FFP)?');
+    'How much should I save to reach Safe Retirement (SRP)?');

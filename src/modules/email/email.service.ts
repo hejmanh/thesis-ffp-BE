@@ -232,7 +232,7 @@ export const sendVerificationEmail = async (to: string, token: string) => {
   const html = buildVerificationEmail({ verificationLink, expiresText });
 
   await sendEmail('verification email', emailConfig, {
-    from: `Coinfused <${user}>`,
+    from: `Retire Safely <${user}>`,
     to: recipient,
     subject: 'Verify Your Email',
     html,
@@ -249,7 +249,7 @@ export const sendPasswordResetEmail = async (to: string, token: string) => {
   const html = buildPasswordResetEmail({ resetLink, expiresText });
 
   await sendEmail('password reset email', emailConfig, {
-    from: `Coinfused <${user}>`,
+    from: `Retire Safely <${user}>`,
     to: recipient,
     subject: 'Reset Your Password',
     html,

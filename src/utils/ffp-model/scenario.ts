@@ -80,7 +80,7 @@ export function runScenario1({
   r_f_post: number;
   sigma_post?: number;
 }) {
-  // Pre-FFP: wealth accumulation with higher risk tolerance
+  // Pre-SRP: wealth accumulation with higher risk tolerance
   const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu_pre, r_f_pre);
   const portfolioVolatilityPre = calculatePortfolioVolatility(
     u_pre,
@@ -90,7 +90,7 @@ export function runScenario1({
   const highReturnPre = portfolioReturnPre + portfolioVolatilityPre;
 
   if (lowReturnPre <= -1) {
-    throw new Error('Pre-FFP low return must be greater than -100%');
+    throw new Error('Pre-SRP low return must be greater than -100%');
   }
 
   const wealthAtFFP = calculateWealthBeforeFFP(
@@ -115,7 +115,7 @@ export function runScenario1({
     highReturnPre,
   );
 
-  // Post-FFP: required wealth with more conservative allocation
+  // Post-SRP: required wealth with more conservative allocation
   const portfolioReturnPost = calculatePortfolioReturn(
     u_post,
     mu_post,
@@ -127,7 +127,7 @@ export function runScenario1({
   );
   const lowReturnPost = portfolioReturnPost - portfolioVolatilityPost;
   if (lowReturnPost <= -1) {
-    throw new Error('Post-FFP low return must be greater than -100%');
+    throw new Error('Post-SRP low return must be greater than -100%');
   }
 
   const requiredWealth = calculateRequiredWealth(
@@ -172,17 +172,17 @@ export function estimateFFPAge({
   mu_post: number;
   r_f_post: number;
 }): number | null {
-  // Pre-FFP portfolio return (growth-oriented)
+  // Pre-SRP portfolio return (growth-oriented)
   const portfolioReturnPre = calculatePortfolioReturn(u_pre, mu_pre, r_f_pre);
 
-  // Post-FFP portfolio return (conservative)
+  // Post-SRP portfolio return (conservative)
   const portfolioReturnPost = calculatePortfolioReturn(
     u_post,
     mu_post,
     r_f_post,
   );
 
-  // Iterate through possible FFP ages
+  // Iterate through possible SRP ages
   for (let age = currentAge; age <= lifeExpectancy; age++) {
     // Remaining retirement years from this age
     const remainingRetirementYears = lifeExpectancy - age;
@@ -201,14 +201,14 @@ export function estimateFFPAge({
       portfolioReturnPre,
     );
 
-    // Required wealth to support spending for retirement duration (post-FFP allocation)
+    // Required wealth to support spending for retirement duration (post-SRP allocation)
     const requiredWealth = calculateRequiredWealth(
       annualSpending,
       portfolioReturnPost,
       remainingRetirementYears,
     );
 
-    // Check if we can reach FFP at this age
+    // Check if we can reach SRP at this age
     if (wealthAtFFP >= requiredWealth) {
       return age;
     }
@@ -235,7 +235,7 @@ export function estimateFFPAgeRange({
   const lowPortfolioReturn = expectedPortfolioReturn - portfolioVolatilityPre;
 
   if (lowPortfolioReturn <= -1) {
-    throw new Error('Pre-FFP low return must be greater than -100%');
+    throw new Error('Pre-SRP low return must be greater than -100%');
   }
 
   const estimateForReturn = (portfolioReturnPre: number) => {
@@ -277,7 +277,7 @@ export function runScenario3({
   retirementDuration: number;
   assets: PassiveIncomeAsset[];
 }) {
-  // Post-FFP portfolio return (conservative allocation)
+  // Post-SRP portfolio return (conservative allocation)
   const portfolioReturnPost = calculatePortfolioReturn(u_post, mu, r_f);
   const portfolioVolatilityPost = calculatePortfolioVolatility(
     u_post,
@@ -287,7 +287,7 @@ export function runScenario3({
   const highReturnPost = portfolioReturnPost + portfolioVolatilityPost;
 
   if (lowReturnPost <= -1) {
-    throw new Error('Post-FFP low return must be greater than -100%');
+    throw new Error('Post-SRP low return must be greater than -100%');
   }
 
   const passiveIncome = calculateTotalPassiveIncome(assets, 0);
@@ -347,7 +347,7 @@ export function buildScenario1WealthProjection({
   const highReturn = portfolioReturnPre + portfolioVolatilityPre;
 
   if (lowReturn <= -1) {
-    throw new Error('Pre-FFP low return must be greater than -100%');
+    throw new Error('Pre-SRP low return must be greater than -100%');
   }
 
   const projection: Scenario1WealthProjectionPoint[] = [
@@ -418,7 +418,7 @@ export function buildScenario2WealthProjection({
   const highReturnPre = portfolioReturnPre + portfolioVolatilityPre;
 
   if (lowReturnPre <= -1) {
-    throw new Error('Pre-FFP low return must be greater than -100%');
+    throw new Error('Pre-SRP low return must be greater than -100%');
   }
   const portfolioReturnPost = calculatePortfolioReturn(
     u_post,
@@ -497,7 +497,7 @@ export function buildScenario3RetirementCashflow({
   const highReturnPost = portfolioReturnPost + portfolioVolatilityPost;
 
   if (lowReturnPost <= -1) {
-    throw new Error('Post-FFP low return must be greater than -100%');
+    throw new Error('Post-SRP low return must be greater than -100%');
   }
 
   const cashflow: Scenario3RetirementCashflowPoint[] = [

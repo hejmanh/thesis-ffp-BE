@@ -28,7 +28,7 @@ export const buildPasswordResetEmail = ({
                         </p>
 
                         <p style="font-size: 15px; line-height: 1.7; color: #334155; margin: 0 0 28px;">
-                            We received a request to reset your <strong style="color:#1e6fe8;">Coinfused</strong> password.
+                            We received a request to reset your <strong style="color:#1e6fe8;">Retire Safely</strong> password.
                             Click the button below to set a new password.
                         </p>
 
@@ -60,7 +60,7 @@ export const buildPasswordResetEmail = ({
                     <!-- Footer -->
                     <div style="text-align: center; padding: 20px 10px;">
                         <p style="font-size: 12px; color: #94a3b8; margin: 0;">
-                            © 2026 Coinfused. All rights reserved.
+                            © 2026 Retire Safely. All rights reserved.
                         </p>
                     </div>
 
