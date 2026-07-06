@@ -26,14 +26,14 @@ import { ERROR_CODES } from '@/constants/errorCodes.js';
 
 const refreshCookieOptions = {
   httpOnly: true,
-  secure: config.nodeEnv === 'production',
+  secure: config.security.cookieSecure,
   sameSite: 'strict' as const,
   path: '/api/v1/auth',
 };
 
 const csrfCookieOptions = {
   httpOnly: false,
-  secure: config.nodeEnv === 'production',
+  secure: config.security.cookieSecure,
   sameSite: 'strict' as const,
   path: '/',
 };

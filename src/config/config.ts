@@ -36,6 +36,7 @@ interface SecurityConfig {
   refreshTokenExpiresIn: string;
   emailVerificationExpiresIn: string;
   passwordResetExpiresIn: string;
+  cookieSecure: boolean;
 }
 
 interface CorsConfig {
@@ -82,6 +83,14 @@ const parseSaltRounds = (value: string | undefined) => {
   }
 
   return parsed;
+};
+
+const parseBooleanEnv = (value: string | undefined, defaultValue: boolean) => {
+  if (value === undefined || value === '') {
+    return defaultValue;
+  }
+
+  return value === 'true';
 };
 
 const nodeEnv = process.env.NODE_ENV || 'development';
@@ -136,6 +145,7 @@ const config: Config = {
     emailVerificationExpiresIn:
       process.env.EMAIL_VERIFICATION_EXPIRES_IN || '1 day',
     passwordResetExpiresIn: process.env.PASSWORD_RESET_EXPIRES_IN || '1 day',
+    cookieSecure: parseBooleanEnv(process.env.COOKIE_SECURE, isProd),
   },
 
   redis: {

@@ -46,6 +46,8 @@ services:
       - .env
     environment:
       NODE_ENV: ${NODE_ENV:-production}
+      # Set to false when serving over HTTP only; true (default in production) for HTTPS
+      COOKIE_SECURE: ${COOKIE_SECURE:-}
       PORT: ${PORT:-5000}
       DB_HOST: postgres
       DB_PORT: 5432

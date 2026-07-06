@@ -125,6 +125,8 @@ Example:
 ```env
 PORT=5000
 NODE_ENV=production
+# Set to false when the API is served over HTTP only (browsers reject Secure cookies on HTTP)
+COOKIE_SECURE=false
 CORS_ORIGIN=http://localhost:3000
 FRONTEND_URL=http://localhost:3000
 
