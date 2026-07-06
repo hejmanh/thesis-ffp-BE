@@ -28,4 +28,17 @@ jobs:
             docker compose up -d --build
 
             docker compose ps
-            curl -fsS http://127.0.0.1:5000/api/v1/health
+
+            echo "Waiting for backend health check..."
+            for i in $(seq 1 30); do
+              if curl -fsS http://127.0.0.1:5000/api/v1/health; then
+                echo "Backend is healthy"
+                exit 0
+              fi
+              echo "Attempt $i/30 failed, retrying in 5s..."
+              sleep 5
+            done
+
+            echo "Health check failed after 150s"
+            docker compose logs backend --tail 100
+            exit 1
