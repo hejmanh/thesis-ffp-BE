@@ -1,0 +1,31 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to GCP VM
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd ${{ secrets.VM_BE_PATH }}
+
+            git fetch origin main
+            git reset --hard origin/main
+
+            docker compose pull || true
+            docker compose up -d --build
+
+            docker compose ps
+            curl -fsS http://127.0.0.1:5000/api/v1/health
