@@ -15,67 +15,12 @@ import {
   runScenario1,
 } from '@/utils/ffp-model/scenario.js';
 import { validateFFPAge } from '@/utils/ffp-model/validation.js';
-import type { LifeStage } from '@/types/ffp-model/financial.js';
 import type { Scenario1InputDto } from './dto/input.dto.js';
 import { getScenario1Input, upsertScenario1 } from './scenario1.repository.js';
 import { findScenarioTypeIdByNo } from '../scenario.repository.js';
+import { toLifeStages } from '../life-stages.js';
 
 const SCENARIO_NO = 1;
-
-const toLifeStages = (
-  stageDetails: Awaited<ReturnType<typeof listStageDataDetails>>,
-  fallbackEndAge: number,
-): LifeStage[] => {
-  const normalized = stageDetails.map((stage) => {
-    if (stage.beginningAge == null) {
-      throw badRequest('Stage beginningAge is required');
-    }
-    if (stage.initialAnnualSavings == null) {
-      throw badRequest('Stage initialAnnualSavings is required');
-    }
-    if (stage.growthRate == null) {
-      throw badRequest('Stage growthRate is required');
-    }
-
-    return {
-      beginningAge: stage.beginningAge,
-      endingAge: stage.endingAge,
-      initialAnnualSavings: stage.initialAnnualSavings,
-      growthRate: stage.growthRate,
-    };
-  });
-
-  const sorted = [...normalized].sort(
-    (a, b) => a.beginningAge - b.beginningAge,
-  );
-
-  return sorted.map((stage, index) => {
-    const isLast = index === sorted.length - 1;
-    const endAge =
-      stage.endingAge == null ? (isLast ? fallbackEndAge : null) : stage.endingAge + 1;
-
-    if (endAge == null) {
-      throw badRequest('Only the last stage can have a null endingAge');
-    }
-    if (endAge <= stage.beginningAge) {
-      throw badRequest('Stage endingAge must be greater than beginningAge');
-    }
-
-    if (index > 0) {
-      const prevEndAge = sorted[index - 1]!.endingAge ?? fallbackEndAge;
-      if (prevEndAge + 1 !== stage.beginningAge) {
-        throw badRequest('Stages must be contiguous and non-overlapping');
-      }
-    }
-
-    return {
-      startAge: stage.beginningAge,
-      endAge,
-      initialAnnualSaving: stage.initialAnnualSavings,
-      growthRate: stage.growthRate,
-    };
-  });
-};
 
 const getScenarioContext = async (userId: number) => {
   const profile = await findProfileContextByUserId(userId);
